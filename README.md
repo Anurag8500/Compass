@@ -22,7 +22,10 @@ The system combines:
 
 ---
 
-## Project Status: Phase 0 Completed
+## Project Status: Phase 0 — Technical Verification Complete
 - Scaffolding and environment verified.
-- Non-destructive dataset inspection tooling implemented (`scripts/inspect_iovnbd.py`).
-- Raw IO-VNBD dataset discovery foundation established.
+- Non-destructive dataset inspection tooling implemented and verified (`scripts/inspect_iovnbd.py`).
+- Raw IO-VNBD dataset verified in `data/raw/io_vnbd/` (360 extracted files: 288 CSVs + 72 trip photos; duplicate zip deleted).
+- Measured median sampling rate verified at 10 Hz across all 288 CSV files.
+- Vector extreme-motion detection, dual-signal stationary detection, and folder-aware S/V pairing verified across 144 pairs.
+- Raw data remains completely immutable.
