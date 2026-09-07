@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "IOVNBDPhase0ManifestRecord",
+  "description": "Per-file manifest schema for IO-VNBD dataset discovery (Phase 0).",
+  "type": "object",
+  "required": [
+    "filename",
+    "prefix",
+    "driver_id",
+    "vehicle_id",
+    "country",
+    "row_count",
+    "measured_rate_hz",
+    "has_v_pair",
+    "stationary_segments_present",
+    "outage_index_present"
+  ],
+  "properties": {
+    "filename": {
+      "type": "string",
+      "description": "Base filename of the raw CSV recording."
+    },
+    "prefix": {
+      "type": "string",
+      "enum": ["S-", "V-", "OUTAGE", "OTHER"],
+      "description": "File prefix indicating data source (S- for smartphone, V- for vehicle CAN/VBOX)."
+    },
+    "driver_id": {
+      "type": ["string", "null"],
+      "description": "Identifier of the driver (e.g. D1, D2)."
+    },
+    "vehicle_id": {
+      "type": ["string", "null"],
+      "description": "Identifier of the vehicle (e.g. V1, V2)."
+    },
+    "country": {
+      "type": ["string", "null"],
+      "description": "Country where the recording was collected (UK, France, Nigeria)."
+    },
+    "row_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of data rows excluding headers."
+    },
+    "measured_rate_hz": {
+      "type": "number",
+      "minimum": 0.0,
+      "description": "Empirically measured sampling rate computed as 1 / median(diff(timestamps))."
+    },
+    "has_v_pair": {
+      "type": "boolean",
+      "description": "Whether an S- file has a corresponding V- file pair in Synchronised V and S."
+    },
+    "stationary_segments_present": {
+      "type": "boolean",
+      "description": "Whether one or more candidate stationary segments are detected."
+    },
+    "outage_index_present": {
+      "type": "boolean",
+      "description": "Whether the recording intersects a documented GPS outage window in the outage index."
+    }
+  }
+}

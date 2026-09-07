@@ -1,0 +1,31 @@
+# Python virtual environment
+.venv/
+env/
+venv/
+
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Raw dataset files (Immutable raw data must NEVER be committed to Git)
+data/raw/
+data/raw/*
+
+# ML models and binary artifacts
+models/*.onnx
+models/*.tflite
+models/*.pt
+models/*.pth
+*.onnx
+*.tflite
+
+# IDE / Editor folders
+.ipynb_checkpoints/
+.idea/
+.vscode/
+
+# OS specific
+.DS_Store
+Thumbs.db

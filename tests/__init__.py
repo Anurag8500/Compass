@@ -1,0 +1,1 @@
+"""COMPASS test suite."""
