@@ -83,30 +83,34 @@ def run_ablation_stage1(
     valid_win = preprocessed.is_validated[win_slice]
 
     # 4. Initialize Rigid Session Origin & Local ENU Frame
+    # Use consistent Racelogic VBOX ground-truth coordinates at the evaluation start sample
     ref_lat = float(trip.v_ref_lat[start_sample_idx])
     ref_lon = float(trip.v_ref_lon[start_sample_idx])
-    ref_alt = float(trip.s_gnss_alt[start_sample_idx])
+    ref_alt = float(trip.v_ref_alt_m[start_sample_idx])
     geo_ref = GeoReference(lat_ref=ref_lat, lon_ref=ref_lon, alt_ref=ref_alt)
 
-    # Convert Ground Truth reference trajectory to ENU
+    # Convert Ground Truth reference trajectory to ENU using consistent VBOX fields
     gt_east, gt_north, gt_up = geo_ref.geodetic_to_enu(
         trip.v_ref_lat[win_slice],
         trip.v_ref_lon[win_slice],
-        trip.s_gnss_alt[win_slice],
+        trip.v_ref_alt_m[win_slice],
     )
 
-    # 5. Initialization Policy
-    # Initial velocity from GT finite difference at start
-    dt0 = (ts_win[1] - ts_win[0]) * 1e-9
-    v_e0 = float(gt_east[1] - gt_east[0]) / dt0
-    v_n0 = float(gt_north[1] - gt_north[0]) / dt0
-    v_u0 = 0.0
-
-    # Initial attitude: level pose with initial track heading from reference GNSS fix
+    # 5. Initialization Policy (Oracle Initial Condition for Open-Loop Benchmark)
+    # NOTE (Issues 10 & 11): Benchmark evaluates open-loop strapdown INS divergence
+    # starting from a controlled initial condition. Initial velocity and heading are initialized
+    # from VBOX ground truth at t=0 (oracle initialization) so that divergence reflects
+    # sensor integration errors rather than startup alignment error. After t=0, NO aiding
+    # or GNSS data is consumed.
+    init_speed_mps = float(trip.v_ref_speed_mps[start_sample_idx])
     init_heading_deg = float(trip.v_ref_heading_deg[start_sample_idx])
     psi_track = math.radians(init_heading_deg)
 
     # In ENU (X=East, Y=North), vehicle forward is [sin(psi), cos(psi), 0]
+    v_e0 = float(init_speed_mps * math.sin(psi_track))
+    v_n0 = float(init_speed_mps * math.cos(psi_track))
+    v_u0 = 0.0
+
     R_init = np.array([
         [math.sin(psi_track), -math.cos(psi_track), 0.0],
         [math.cos(psi_track),  math.sin(psi_track), 0.0],
@@ -114,7 +118,9 @@ def run_ablation_stage1(
     ], dtype=np.float64)
     q_init = rotation_matrix_to_quaternion(R_init)
 
-    print(f"[Ablation Stage 1] Initial Velocity: [{v_e0:.2f}, {v_n0:.2f}, {v_u0:.2f}] m/s")
+    print("[Ablation Stage 1] Benchmark Mode: Open-loop propagation with oracle initial velocity and heading.")
+    print(f"[Ablation Stage 1] Session Reference Origin: lat={ref_lat:.7f}°, lon={ref_lon:.7f}°, alt={ref_alt:.2f} m")
+    print(f"[Ablation Stage 1] Initial Velocity: [{v_e0:.3f}, {v_n0:.3f}, {v_u0:.3f}] m/s (from VBOX speed {init_speed_mps:.3f} m/s and heading {init_heading_deg:.2f}°)")
     print(f"[Ablation Stage 1] Initial Heading: {init_heading_deg:.2f}° (VBOX Ground Truth)")
     print(f"[Ablation Stage 1] Initial Quaternion: {q_init}")
 
@@ -181,7 +187,7 @@ def run_ablation_stage1(
         axes[0].set_ylabel("Position Error (m)", fontsize=12)
         axes[0].set_title(
             f"Ablation Stage 1: Classical Open-Loop Strapdown INS Drift\n"
-            f"Trip: {trip.trip_id} | 0 aiding (No GNSS, No ESKF, No ML, No NHC)",
+            f"Trip: {trip.trip_id} | Oracle Initialized (v0, q0) | Zero aiding afterwards",
             fontsize=13,
             fontweight="bold",
         )
@@ -206,6 +212,8 @@ def run_ablation_stage1(
     # 9. Structure Results
     results: Dict[str, Any] = {
         "trip_id": trip.trip_id,
+        "benchmark_mode": "open_loop_strapdown_ins_with_oracle_initialization",
+        "ground_truth_source": "Racelogic VBOX (v_ref_lat, v_ref_lon, v_ref_alt_m, v_ref_speed_mps, v_ref_heading_deg)",
         "evaluation_window": {
             "start_sample_idx": start_sample_idx,
             "end_sample_idx": end_sample_idx,
@@ -216,6 +224,7 @@ def run_ablation_stage1(
             "ref_lat": ref_lat,
             "ref_lon": ref_lon,
             "ref_alt_m": ref_alt,
+            "initial_speed_mps": round(init_speed_mps, 3),
             "initial_velocity_enu": [round(v_e0, 3), round(v_n0, 3), round(v_u0, 3)],
             "initial_heading_deg": round(init_heading_deg, 2),
             "initial_quaternion": [round(float(x), 6) for x in q_init],

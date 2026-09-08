@@ -1,13 +1,18 @@
 """Mandatory synthetic unit tests for attitude and strapdown INS propagation (Phase 4).
 
-Validates closed-form known answers:
+Validates closed-form known answers and strict hardening invariants:
 - Test A: Constant forward acceleration (closed-form velocity and position)
 - Test B: Stationary gravity cancellation (zero velocity and position drift)
 - Test C: Constant angular velocity (exact analytical rotation angle)
 - Test D: 90-degree known rotation (axis, sign, and composition order)
 - Test E: Coupled rotation + acceleration (time-varying ENU acceleration rotation)
 - Test F: Quaternion stability (10,000 iterations maintain unit norm and orthogonality)
-- Test H: Input validation and timestep bounds
+- Test H: Input validation and timestep bounds (NaN, +/-Inf, <= 0, > max)
+- Test I: Timestamp consistency in step() (backwards, duplicate, dt mismatch)
+- Test J: Batch input shape and mask validation (reject impossible shapes)
+- Test K: Invalid-sample handling (corrupted/invalid sample measurements are NEVER consumed)
+- Test L: Initial coordinate acceleration is unmeasured (no fabricated measurements)
+- Test M: Heading to ENU rotation geometry across all 4 cardinal quadrants
 """
 
 from __future__ import annotations
@@ -84,7 +89,6 @@ class TestAttitudeAndQuaternions:
 
     def test_d_known_90deg_rotation(self) -> None:
         """TEST D: 90-degree yaw rotation maps vehicle Forward (+X_v) to North (+Y_n)."""
-        # Exactly +90 degrees about Z: theta = pi/2
         theta = math.pi / 2.0
         q_90z = np.array([math.cos(theta / 2.0), 0.0, 0.0, math.sin(theta / 2.0)])
 
@@ -118,7 +122,6 @@ class TestAttitudeAndQuaternions:
 
         assert np.allclose(q_inv, q_conj, atol=1e-15)
 
-        # q ⊗ q^(-1) = [1, 0, 0, 0]
         prod = quaternion_multiply(q, q_inv)
         assert np.allclose(prod, [1.0, 0.0, 0.0, 0.0], atol=1e-15)
 
@@ -128,12 +131,10 @@ class TestAttitudeAndQuaternions:
         q = np.array([1.0, 0.0, 0.0, 0.0])
 
         for _ in range(10_000):
-            # Random angular rate up to 1 rad/s
             omega = (np.random.rand(3) - 0.5) * 2.0
             dt = 0.01
             q = propagate_attitude(q, omega, dt)
 
-        # Check finiteness and strict unit norm
         assert np.isfinite(q).all()
         assert quaternion_norm(q) == pytest.approx(1.0, abs=1e-12)
 
@@ -142,18 +143,47 @@ class TestAttitudeAndQuaternions:
         assert np.linalg.det(R) == pytest.approx(1.0, abs=1e-12)
         assert np.allclose(R @ R.T, np.eye(3), atol=1e-12)
 
+    def test_m_heading_to_enu_cardinal_geometry(self) -> None:
+        """TEST M: Verify heading to ENU rotation matrix for all cardinal directions."""
+        cardinals = [
+            (0.0,   np.array([0.0,  1.0, 0.0]), np.array([-1.0,  0.0, 0.0])),  # North
+            (90.0,  np.array([1.0,  0.0, 0.0]), np.array([ 0.0,  1.0, 0.0])),  # East
+            (180.0, np.array([0.0, -1.0, 0.0]), np.array([ 1.0,  0.0, 0.0])),  # South
+            (270.0, np.array([-1.0, 0.0, 0.0]), np.array([ 0.0, -1.0, 0.0])),  # West
+        ]
+
+        for heading_deg, expected_fwd, expected_left in cardinals:
+            psi = math.radians(heading_deg)
+            R = np.array([
+                [math.sin(psi), -math.cos(psi), 0.0],
+                [math.cos(psi),  math.sin(psi), 0.0],
+                [0.0,            0.0,           1.0],
+            ], dtype=np.float64)
+
+            # Check properties
+            assert np.linalg.det(R) == pytest.approx(1.0, abs=1e-14)
+            assert np.allclose(R @ R.T, np.eye(3), atol=1e-14)
+
+            # Check forward vector (+X_v) mapping
+            fwd_enu = R @ [1.0, 0.0, 0.0]
+            assert np.allclose(fwd_enu, expected_fwd, atol=1e-12)
+
+            # Check left vector (+Y_v) mapping
+            left_enu = R @ [0.0, 1.0, 0.0]
+            assert np.allclose(left_enu, expected_left, atol=1e-12)
+
 
 class TestStrapdownINSPropagation:
     """Unit tests for deterministic strapdown INS propagation in local ENU frame."""
 
-    def test_b_stationary_gravity_cancellation(self) -> None:
-        """TEST B: Stationary vehicle level on horizontal surface experiences zero coordinate acceleration.
+    def test_l_initialization_does_not_fabricate_coordinate_accel(self) -> None:
+        """TEST L: Constructor must initialize coordinate acceleration to zero, not fabricate measurements."""
+        ins = StrapdownINS()
+        assert np.array_equal(ins.current_state.coordinate_accel_enu, [0.0, 0.0, 0.0])
+        assert ins.current_state.timestamp_ns == 0
 
-        f_m^v = [0, 0, +g]
-        b_a^v = [0, 0, 0]
-        g^n   = [0, 0, -g]
-        => a_true^n = [0, 0, 0] identically. Position and velocity remain zero.
-        """
+    def test_b_stationary_gravity_cancellation(self) -> None:
+        """TEST B: Stationary vehicle level on horizontal surface experiences zero coordinate acceleration."""
         ins = StrapdownINS(
             initial_position=[0.0, 0.0, 0.0],
             initial_velocity=[0.0, 0.0, 0.0],
@@ -165,7 +195,6 @@ class TestStrapdownINSPropagation:
         f_stationary = np.array([0.0, 0.0, STANDARD_GRAVITY])
         w_stationary = np.array([0.0, 0.0, 0.0])
 
-        # Propagate for 1,000 steps (100 seconds)
         for k in range(1, 1001):
             state = ins.step(
                 f_m_v=f_stationary,
@@ -180,15 +209,7 @@ class TestStrapdownINSPropagation:
         assert np.allclose(state.q, [1.0, 0.0, 0.0, 0.0], atol=1e-12)
 
     def test_a_constant_acceleration_closed_form(self) -> None:
-        """TEST A: Known constant forward acceleration yields exact closed-form velocity and position.
-
-        Vehicle level (R_v^n = I). Forward axis is +X_v (East in ENU).
-        f_m^v = [a_const, 0, +g]
-        a_true^n = [a_const, 0, 0]
-        Exact:
-            v_E(T) = a_const * T
-            p_E(T) = 0.5 * a_const * T^2
-        """
+        """TEST A: Known constant forward acceleration yields exact closed-form velocity and position."""
         a_const = 2.0  # m/s^2 forward acceleration
         duration_s = 10.0
         dt = 0.05  # 20 Hz
@@ -212,37 +233,22 @@ class TestStrapdownINSPropagation:
                 timestamp_ns=int(k * dt * 1e9),
             )
 
-        expected_v_east = a_const * duration_s             # 20.0 m/s
-        expected_p_east = 0.5 * a_const * (duration_s ** 2)  # 100.0 m
+        expected_v_east = a_const * duration_s
+        expected_p_east = 0.5 * a_const * (duration_s ** 2)
 
         assert state.velocity_enu[0] == pytest.approx(expected_v_east, rel=1e-5)
         assert state.position_enu[0] == pytest.approx(expected_p_east, rel=1e-5)
-
-        # Cross-axes must remain zero
         assert state.velocity_enu[1] == pytest.approx(0.0, abs=1e-10)
         assert state.velocity_enu[2] == pytest.approx(0.0, abs=1e-10)
         assert state.position_enu[1] == pytest.approx(0.0, abs=1e-10)
         assert state.position_enu[2] == pytest.approx(0.0, abs=1e-10)
 
     def test_e_coupled_rotation_and_acceleration(self) -> None:
-        """TEST E: Coupled rotation + acceleration verifies frame-order and body-to-ENU transformation.
-
-        Vehicle begins facing East (q_0 = [1,0,0,0]).
-        Yaw rate: omega_z = 0.1 rad/s.
-        Vehicle forward acceleration: f_x^v = 1.0 m/s^2.
-        As vehicle turns:
-            a_E(t) = a_0 * cos(omega_z * t)
-            a_N(t) = a_0 * sin(omega_z * t)
-        Exact integrals:
-            v_E(T) = (a_0 / omega_z) * sin(omega_z * T)
-            v_N(T) = (a_0 / omega_z) * (1 - cos(omega_z * T))
-            p_E(T) = (a_0 / omega_z^2) * (1 - cos(omega_z * T))
-            p_N(T) = (a_0 / omega_z) * T - (a_0 / omega_z^2) * sin(omega_z * T)
-        """
+        """TEST E: Coupled rotation + acceleration verifies frame-order and body-to-ENU transformation."""
         a_0 = 1.0       # m/s^2
         omega_z = 0.1   # rad/s
         duration_s = 5.0
-        dt = 0.001      # High-rate discrete step to test numerical integration convergence
+        dt = 0.001
         n_steps = int(duration_s / dt)
 
         ins = StrapdownINS(
@@ -263,14 +269,12 @@ class TestStrapdownINSPropagation:
                 timestamp_ns=int(k * dt * 1e9),
             )
 
-        # Analytical answers
         T = duration_s
         expected_v_E = (a_0 / omega_z) * math.sin(omega_z * T)
         expected_v_N = (a_0 / omega_z) * (1.0 - math.cos(omega_z * T))
         expected_p_E = (a_0 / (omega_z ** 2)) * (1.0 - math.cos(omega_z * T))
         expected_p_N = (a_0 / omega_z) * T - (a_0 / (omega_z ** 2)) * math.sin(omega_z * T)
 
-        # Agreement within 0.1% due to discrete 1st-order step
         assert state.velocity_enu[0] == pytest.approx(expected_v_E, rel=1e-3)
         assert state.velocity_enu[1] == pytest.approx(expected_v_N, rel=1e-3)
         assert state.position_enu[0] == pytest.approx(expected_p_E, rel=1e-3)
@@ -278,8 +282,20 @@ class TestStrapdownINSPropagation:
         assert state.position_enu[2] == pytest.approx(0.0, abs=1e-6)
 
     def test_h_input_validation_and_bounds(self) -> None:
-        """TEST H: Strict validation of timesteps and finite numbers."""
+        """TEST H: Strict validation of timesteps and finite numbers including NaN and Inf."""
         ins = StrapdownINS()
+
+        # NaN dt
+        with pytest.raises(ValueError, match="finite"):
+            ins.step([0.0, 0.0, 9.8], [0.0, 0.0, 0.0], dt=float("nan"), timestamp_ns=100)
+
+        # +Inf dt
+        with pytest.raises(ValueError, match="finite"):
+            ins.step([0.0, 0.0, 9.8], [0.0, 0.0, 0.0], dt=float("inf"), timestamp_ns=100)
+
+        # -Inf dt
+        with pytest.raises(ValueError, match="finite"):
+            ins.step([0.0, 0.0, 9.8], [0.0, 0.0, 0.0], dt=float("-inf"), timestamp_ns=100)
 
         # Non-positive dt
         with pytest.raises(ValueError, match="strictly positive"):
@@ -290,28 +306,95 @@ class TestStrapdownINSPropagation:
 
         # Excessive dt (> 1.0s)
         with pytest.raises(ValueError, match="exceeds maximum allowable limit"):
-            ins.step([0.0, 0.0, 9.8], [0.0, 0.0, 0.0], dt=1.5, timestamp_ns=100)
+            ins.step([0.0, 0.0, 9.8], [0.0, 0.0, 0.0], dt=1.5, timestamp_ns=1_500_000_000)
 
-        # Non-finite values
+        # Non-finite values in measurements
         with pytest.raises(ValueError, match="non-finite"):
-            ins.step([float("nan"), 0.0, 9.8], [0.0, 0.0, 0.0], dt=0.1, timestamp_ns=100)
+            ins.step([float("nan"), 0.0, 9.8], [0.0, 0.0, 0.0], dt=0.1, timestamp_ns=100_000_000)
 
         with pytest.raises(ValueError, match="non-finite"):
-            ins.step([0.0, 0.0, 9.8], [0.0, float("inf"), 0.0], dt=0.1, timestamp_ns=100)
+            ins.step([0.0, 0.0, 9.8], [0.0, float("inf"), 0.0], dt=0.1, timestamp_ns=100_000_000)
 
-    def test_batch_trajectory_propagation(self) -> None:
-        """Verify propagate_trajectory batch interface handles masks and sequence correctly."""
-        n_samples = 50
-        timestamps = np.arange(n_samples, dtype=np.int64) * 100_000_000  # 10 Hz
+    def test_i_step_timestamp_consistency(self) -> None:
+        """TEST I: Strict step timestamp consistency (backwards, duplicate, dt mismatch)."""
+        ins = StrapdownINS(initial_timestamp_ns=1_000_000_000)
+
+        # Duplicate timestamp
+        with pytest.raises(ValueError, match="strictly greater"):
+            ins.step([0.0, 0.0, 9.8], [0.0, 0.0, 0.0], dt=0.1, timestamp_ns=1_000_000_000)
+
+        # Backwards timestamp
+        with pytest.raises(ValueError, match="strictly greater"):
+            ins.step([0.0, 0.0, 9.8], [0.0, 0.0, 0.0], dt=0.1, timestamp_ns=900_000_000)
+
+        # Non-integer timestamp
+        with pytest.raises(TypeError, match="integer"):
+            ins.step([0.0, 0.0, 9.8], [0.0, 0.0, 0.0], dt=0.1, timestamp_ns="not_int")  # type: ignore
+
+        # Discrepant dt vs timestamp delta (dt=0.1s but delta is 0.2s)
+        with pytest.raises(ValueError, match="inconsistent with timestamp increment"):
+            ins.step([0.0, 0.0, 9.8], [0.0, 0.0, 0.0], dt=0.1, timestamp_ns=1_200_000_000)
+
+    def test_j_trajectory_shape_validation(self) -> None:
+        """TEST J: Reject invalid array shapes and broadcasting attempts."""
+        ins = StrapdownINS()
+        n = 10
+        ts = np.arange(n, dtype=np.int64) * 100_000_000
+        f_good = np.tile([0.0, 0.0, 9.8], (n, 1))
+        w_good = np.zeros((n, 3))
+
+        # Empty trajectory
+        with pytest.raises(ValueError, match="empty trajectory"):
+            ins.propagate_trajectory(np.array([], dtype=np.int64), np.zeros((0, 3)), np.zeros((0, 3)))
+
+        # 2D timestamps
+        with pytest.raises(ValueError, match="1D array"):
+            ins.propagate_trajectory(ts.reshape(2, 5), f_good, w_good)
+
+        # f_m_v wrong columns (N, 2)
+        with pytest.raises(ValueError, match="f_m_v must have shape"):
+            ins.propagate_trajectory(ts, f_good[:, :2], w_good)
+
+        # omega_m_v wrong length (N-1, 3)
+        with pytest.raises(ValueError, match="omega_m_v must have shape"):
+            ins.propagate_trajectory(ts, f_good, w_good[:n-1])
+
+        # is_validated wrong shape
+        with pytest.raises(ValueError, match="is_validated mask must have shape"):
+            ins.propagate_trajectory(ts, f_good, w_good, is_validated=np.ones(n+1, dtype=bool))
+
+    def test_k_invalid_sample_handling_never_consumes_corrupted_measurement(self) -> None:
+        """TEST K: An invalid middle sample must NEVER have its measurements consumed.
+
+        Sequence:
+            Sample 0..4: valid level stationary
+            Sample 5: INVALID with catastrophic 1000 m/s^2 spike and 100 rad/s spin
+            Sample 6..10: valid level stationary
+
+        If sample 5's measurement were used in either step 4->5 or 5->6, velocity would spike by 100 m/s.
+        With correct handling, velocity and position remain bounded near zero!
+        """
+        n_samples = 11
+        dt = 0.1
+        timestamps = np.arange(n_samples, dtype=np.int64) * 100_000_000
+
         f_m_v = np.tile([0.0, 0.0, STANDARD_GRAVITY], (n_samples, 1))
         omega_m_v = np.zeros((n_samples, 3))
+        is_validated = np.ones(n_samples, dtype=bool)
 
-        ins = StrapdownINS()
-        traj = ins.propagate_trajectory(timestamps, f_m_v, omega_m_v)
+        # Inject corrupt measurement into sample 5
+        is_validated[5] = False
+        f_m_v[5] = [9999.0, -8888.0, 7777.0]
+        omega_m_v[5] = [50.0, -50.0, 50.0]
 
-        assert traj.positions_enu.shape == (n_samples, 3)
-        assert traj.velocities_enu.shape == (n_samples, 3)
-        assert traj.quaternions.shape == (n_samples, 4)
-        assert traj.steps_integrated == n_samples
-        assert traj.steps_skipped == 0
-        assert np.allclose(traj.positions_enu, 0.0, atol=1e-12)
+        ins = StrapdownINS(initial_timestamp_ns=0)
+        traj = ins.propagate_trajectory(timestamps, f_m_v, omega_m_v, is_validated=is_validated)
+
+        # Both step 4->5 (target is invalid) and 5->6 (source is invalid) must be skipped
+        assert traj.steps_skipped == 2
+        assert traj.steps_integrated == 9
+
+        # Crucial: Catastrophic spike was NEVER integrated!
+        assert np.allclose(traj.velocities_enu, 0.0, atol=1e-10)
+        assert np.allclose(traj.positions_enu, 0.0, atol=1e-10)
+        assert np.allclose(traj.quaternions, [1.0, 0.0, 0.0, 0.0], atol=1e-10)

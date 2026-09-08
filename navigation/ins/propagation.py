@@ -22,6 +22,7 @@ Architectural Invariants:
 3. Deterministic & Independently Testable:
    - Reusable by downstream Phase 5 ESKF prediction step.
    - No hidden global state; rigorous input validation; skips non-computable samples cleanly.
+   - Never integrates or propagates using invalid / corrupted IMU samples.
 """
 
 from __future__ import annotations
@@ -131,13 +132,11 @@ class StrapdownINS:
         self.gravity_magnitude = float(gravity_magnitude)
         self.g_n = np.array([0.0, 0.0, -self.gravity_magnitude], dtype=np.float64)
 
-        # Compute initial coordinate acceleration assuming level stationary start
-        R_v_n_init = quaternion_to_rotation_matrix(q)
-        f_init = np.array([0.0, 0.0, self.gravity_magnitude], dtype=np.float64)
-        a_init = R_v_n_init @ (f_init - bias) + self.g_n
+        # Coordinate acceleration is zero at initialization (unmeasured prior to first step)
+        a_init = np.zeros(3, dtype=np.float64)
 
         self._state = INSState(
-            timestamp_ns=initial_timestamp_ns,
+            timestamp_ns=int(initial_timestamp_ns),
             position_enu=pos,
             velocity_enu=vel,
             q=q,
@@ -169,17 +168,38 @@ class StrapdownINS:
         Args:
             f_m_v: Vehicle-frame specific force measurement [m/s^2].
             omega_m_v: Vehicle-frame angular velocity measurement [rad/s].
-            dt: Timestep duration in seconds. Must satisfy 0 < dt <= MAX_ALLOWABLE_DT_S.
-            timestamp_ns: Target epoch timestamp in nanoseconds.
+            dt: Timestep duration in seconds. Must satisfy 0 < dt <= MAX_ALLOWABLE_DT_S and be finite.
+            timestamp_ns: Target epoch timestamp in nanoseconds. Must be strictly greater than
+                          current state timestamp and consistent with dt.
 
         Returns:
             INSState: New propagated state at timestamp_ns.
         """
+        # 1. Strict finite and bounds validation on dt
+        if not math.isfinite(dt):
+            raise ValueError(f"Integration timestep dt must be finite, got {dt}")
         if dt <= 0.0:
             raise ValueError(f"Integration timestep dt must be strictly positive, got {dt}")
         if dt > MAX_ALLOWABLE_DT_S:
             raise ValueError(f"Integration timestep dt={dt:.3f}s exceeds maximum allowable limit ({MAX_ALLOWABLE_DT_S}s)")
 
+        # 2. Strict timestamp consistency check
+        if not isinstance(timestamp_ns, (int, np.integer)):
+            raise TypeError(f"timestamp_ns must be an integer, got {type(timestamp_ns).__name__}")
+        t_ns = int(timestamp_ns)
+        if t_ns <= self._state.timestamp_ns:
+            raise ValueError(
+                f"Target timestamp_ns ({t_ns}) must be strictly greater than "
+                f"current state timestamp_ns ({self._state.timestamp_ns})"
+            )
+
+        dt_expected = (t_ns - self._state.timestamp_ns) * 1e-9
+        if abs(dt - dt_expected) > 1e-6:
+            raise ValueError(
+                f"Supplied dt ({dt:.9f}s) is inconsistent with timestamp increment ({dt_expected:.9f}s)"
+            )
+
+        # 3. Finite measurement inputs
         f_v = np.asarray(f_m_v, dtype=np.float64)
         w_v = np.asarray(omega_m_v, dtype=np.float64)
 
@@ -193,20 +213,20 @@ class StrapdownINS:
         q_k = self._state.q
         bias = self._state.accel_bias
 
-        # 1. Kinematic coordinate acceleration using current attitude R_v^n[k]
+        # 4. Kinematic coordinate acceleration using current attitude R_v^n[k]
         R_v_n_k = quaternion_to_rotation_matrix(q_k)
         f_debiased = f_v - bias
         a_true_n = R_v_n_k @ f_debiased + self.g_n
 
-        # 2. Position and velocity propagation (canonical discrete integral)
+        # 5. Position and velocity propagation (canonical discrete integral)
         p_next = p_k + v_k * dt + 0.5 * a_true_n * (dt * dt)
         v_next = v_k + a_true_n * dt
 
-        # 3. Attitude propagation to k+1
+        # 6. Attitude propagation to k+1
         q_next = propagate_attitude(q_k, w_v, dt)
 
         self._state = INSState(
-            timestamp_ns=timestamp_ns,
+            timestamp_ns=t_ns,
             position_enu=p_next,
             velocity_enu=v_next,
             q=q_next,
@@ -225,6 +245,12 @@ class StrapdownINS:
     ) -> INSTrajectory:
         """Batch propagate strapdown INS over continuous vehicle-frame streams.
 
+        Correctness Invariant:
+            - Only valid samples are permitted to drive propagation.
+            - If a sample is invalid/non-computable (or if a gap occurs), its sensor values
+              are NEVER passed into step().
+            - State is held constant across unpropagated samples with zero coordinate acceleration.
+
         Args:
             timestamps_ns: (N,) int64 monotonic non-decreasing timestamp sequence.
             f_m_v: (N, 3) float64 vehicle-frame specific force [m/s^2].
@@ -235,21 +261,45 @@ class StrapdownINS:
         Returns:
             INSTrajectory: Full record of positions, velocities, attitudes, and accelerations.
         """
-        n_samples = len(timestamps_ns)
-        if len(f_m_v) != n_samples or len(omega_m_v) != n_samples:
-            raise ValueError(
-                f"Array length mismatch: timestamps ({n_samples}), "
-                f"f_m_v ({len(f_m_v)}), omega_m_v ({len(omega_m_v)})"
-            )
+        ts_arr = np.asarray(timestamps_ns)
+        if ts_arr.ndim != 1:
+            raise ValueError(f"timestamps_ns must be a 1D array of shape (N,), got shape {ts_arr.shape}")
+        n_samples = len(ts_arr)
         if n_samples == 0:
             raise ValueError("Cannot propagate empty trajectory (0 samples)")
 
-        valid_mask = np.ones(n_samples, dtype=bool) if is_validated is None else is_validated
+        f_arr = np.asarray(f_m_v, dtype=np.float64)
+        if f_arr.shape != (n_samples, 3):
+            raise ValueError(f"f_m_v must have shape ({n_samples}, 3), got shape {f_arr.shape}")
+
+        w_arr = np.asarray(omega_m_v, dtype=np.float64)
+        if w_arr.shape != (n_samples, 3):
+            raise ValueError(f"omega_m_v must have shape ({n_samples}, 3), got shape {w_arr.shape}")
+
+        if is_validated is not None:
+            val_arr = np.asarray(is_validated)
+            if val_arr.shape != (n_samples,):
+                raise ValueError(f"is_validated mask must have shape ({n_samples},), got shape {val_arr.shape}")
+            val_mask = val_arr.astype(bool)
+        else:
+            val_mask = np.ones(n_samples, dtype=bool)
 
         pos_hist = np.zeros((n_samples, 3), dtype=np.float64)
         vel_hist = np.zeros((n_samples, 3), dtype=np.float64)
         q_hist = np.zeros((n_samples, 4), dtype=np.float64)
         accel_hist = np.zeros((n_samples, 3), dtype=np.float64)
+
+        # Synchronize initial state timestamp with first sample if needed
+        first_t = int(ts_arr[0])
+        if self._state.timestamp_ns != first_t:
+            self._state = INSState(
+                timestamp_ns=first_t,
+                position_enu=self._state.position_enu,
+                velocity_enu=self._state.velocity_enu,
+                q=self._state.q,
+                accel_bias=self._state.accel_bias,
+                coordinate_accel_enu=self._state.coordinate_accel_enu,
+            )
 
         pos_hist[0] = self._state.position_enu
         vel_hist[0] = self._state.velocity_enu
@@ -260,33 +310,48 @@ class StrapdownINS:
         skipped_count = 0
 
         for k in range(n_samples - 1):
-            t_curr = int(timestamps_ns[k])
-            t_next = int(timestamps_ns[k + 1])
+            t_curr = int(ts_arr[k])
+            t_next = int(ts_arr[k + 1])
 
-            # Check validity mask
-            if not valid_mask[k + 1]:
-                skipped_count += 1
-                pos_hist[k + 1] = pos_hist[k]
-                vel_hist[k + 1] = vel_hist[k]
-                q_hist[k + 1] = q_hist[k]
-                accel_hist[k + 1] = accel_hist[k]
-                continue
-
+            # Both source measurement sample k and target sample k+1 must be valid
+            is_step_valid = bool(val_mask[k]) and bool(val_mask[k + 1])
             dt = (t_next - t_curr) * 1e-9
 
-            # Reject non-positive or excessive time gaps
-            if dt <= 0.0 or dt > max_dt_s or not math.isfinite(dt):
+            # Reject invalid samples, negative/zero dt, non-finite dt, or excessive gaps
+            if not is_step_valid or not math.isfinite(dt) or dt <= 0.0 or dt > max_dt_s:
                 skipped_count += 1
                 pos_hist[k + 1] = pos_hist[k]
                 vel_hist[k + 1] = vel_hist[k]
                 q_hist[k + 1] = q_hist[k]
-                accel_hist[k + 1] = accel_hist[k]
+                accel_hist[k + 1] = np.zeros(3, dtype=np.float64)
+
+                # Advance state timestamp to target if valid and monotonic, with zero coordinate acceleration
+                if math.isfinite(dt) and dt > 0.0:
+                    self._state = INSState(
+                        timestamp_ns=t_next,
+                        position_enu=self._state.position_enu,
+                        velocity_enu=self._state.velocity_enu,
+                        q=self._state.q,
+                        accel_bias=self._state.accel_bias,
+                        coordinate_accel_enu=np.zeros(3, dtype=np.float64),
+                    )
                 continue
 
-            # Step propagation
+            # Ensure state timestamp matches t_curr before stepping
+            if self._state.timestamp_ns != t_curr:
+                self._state = INSState(
+                    timestamp_ns=t_curr,
+                    position_enu=self._state.position_enu,
+                    velocity_enu=self._state.velocity_enu,
+                    q=self._state.q,
+                    accel_bias=self._state.accel_bias,
+                    coordinate_accel_enu=self._state.coordinate_accel_enu,
+                )
+
+            # Step propagation using valid measurement at sample k
             state = self.step(
-                f_m_v=f_m_v[k],
-                omega_m_v=omega_m_v[k],
+                f_m_v=f_arr[k],
+                omega_m_v=w_arr[k],
                 dt=dt,
                 timestamp_ns=t_next,
             )
@@ -298,7 +363,7 @@ class StrapdownINS:
             integrated_count += 1
 
         return INSTrajectory(
-            timestamps_ns=timestamps_ns.copy(),
+            timestamps_ns=ts_arr.copy(),
             positions_enu=pos_hist,
             velocities_enu=vel_hist,
             quaternions=q_hist,

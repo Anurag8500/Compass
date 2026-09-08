@@ -1,5 +1,7 @@
 {
   "trip_id": "S1",
+  "benchmark_mode": "open_loop_strapdown_ins_with_oracle_initialization",
+  "ground_truth_source": "Racelogic VBOX (v_ref_lat, v_ref_lon, v_ref_alt_m, v_ref_speed_mps, v_ref_heading_deg)",
   "evaluation_window": {
     "start_sample_idx": 19500,
     "end_sample_idx": 20100,
@@ -9,10 +11,11 @@
   "initial_conditions": {
     "ref_lat": 52.4165342,
     "ref_lon": -1.5785448,
-    "ref_alt_m": 172.82,
+    "ref_alt_m": 127390.0,
+    "initial_speed_mps": 11.813,
     "initial_velocity_enu": [
-      -11.462,
-      3.225,
+      -11.399,
+      3.099,
       0.0
     ],
     "initial_heading_deg": 285.21,
@@ -34,18 +37,18 @@
     ]
   },
   "drift_metrics": {
-    "final_horizontal_error_m": 3257.64,
-    "final_3d_error_m": 3301.07,
-    "horizontal_rmse_m": 1492.18,
-    "max_horizontal_error_m": 3257.64,
+    "final_horizontal_error_m": 3249.32,
+    "final_3d_error_m": 5809.57,
+    "horizontal_rmse_m": 1487.53,
+    "max_horizontal_error_m": 3249.32,
     "checkpoints": {
-      "drift_5s_m": 4.94,
-      "drift_10s_m": 21.27,
-      "drift_15s_m": 102.64,
-      "drift_20s_m": 254.01,
-      "drift_30s_m": 793.14,
-      "drift_45s_m": 1933.62,
-      "drift_60s_m": 3257.64
+      "drift_5s_m": 4.83,
+      "drift_10s_m": 20.52,
+      "drift_15s_m": 100.64,
+      "drift_20s_m": 251.21,
+      "drift_30s_m": 788.97,
+      "drift_45s_m": 1927.34,
+      "drift_60s_m": 3249.32
     }
   },
   "steps_integrated": 601,

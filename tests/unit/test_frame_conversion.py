@@ -31,7 +31,7 @@ class TestLocalGeoFrameConversion:
         lat0, lon0 = 20.0, 78.0
         ref = GeoReference(lat_ref=lat0, lon_ref=lon0, alt_ref=100.0)
 
-        # 1. Exact 1000m North
+        # 1. Exact 1000m North / South (-North)
         target_north_m = 1000.0
         d_lat_deg = (target_north_m / R_EARTH_METERS) * (180.0 / math.pi)
         lat_north = lat0 + d_lat_deg
@@ -41,7 +41,13 @@ class TestLocalGeoFrameConversion:
         assert n == pytest.approx(target_north_m, abs=1e-6)
         assert u == pytest.approx(0.0, abs=1e-6)
 
-        # 2. Exact 1000m East
+        lat_south = lat0 - d_lat_deg
+        e_s, n_s, u_s = ref.geodetic_to_enu(lat_south, lon0, 100.0)
+        assert e_s == pytest.approx(0.0, abs=1e-6)
+        assert n_s == pytest.approx(-target_north_m, abs=1e-6)
+        assert u_s == pytest.approx(0.0, abs=1e-6)
+
+        # 2. Exact 1000m East / West (-East)
         target_east_m = 1000.0
         d_lon_deg = (target_east_m / (R_EARTH_METERS * math.cos(math.radians(lat0)))) * (180.0 / math.pi)
         lon_east = lon0 + d_lon_deg
@@ -51,11 +57,32 @@ class TestLocalGeoFrameConversion:
         assert n == pytest.approx(0.0, abs=1e-6)
         assert u == pytest.approx(0.0, abs=1e-6)
 
-        # 3. Exact 50m Up
+        lon_west = lon0 - d_lon_deg
+        e_w, n_w, u_w = ref.geodetic_to_enu(lat0, lon_west, 100.0)
+        assert e_w == pytest.approx(-target_east_m, abs=1e-6)
+        assert n_w == pytest.approx(0.0, abs=1e-6)
+        assert u_w == pytest.approx(0.0, abs=1e-6)
+
+        # 3. Exact 50m Up / Down (-Up)
         e, n, u = ref.geodetic_to_enu(lat0, lon0, 150.0)
         assert e == pytest.approx(0.0, abs=1e-6)
         assert n == pytest.approx(0.0, abs=1e-6)
         assert u == pytest.approx(50.0, abs=1e-6)
+
+        e_d, n_d, u_d = ref.geodetic_to_enu(lat0, lon0, 50.0)
+        assert e_d == pytest.approx(0.0, abs=1e-6)
+        assert n_d == pytest.approx(0.0, abs=1e-6)
+        assert u_d == pytest.approx(-50.0, abs=1e-6)
+
+    def test_reference_immutability(self) -> None:
+        """Reference origin must be immutable (frozen dataclass) to prevent mid-session mutation."""
+        ref = GeoReference(lat_ref=12.0, lon_ref=77.0, alt_ref=100.0)
+        with pytest.raises(Exception):  # FrozenInstanceError / AttributeError
+            ref.lat_ref = 13.0  # type: ignore[misc]
+        with pytest.raises(Exception):
+            ref.lon_ref = 78.0  # type: ignore[misc]
+        with pytest.raises(Exception):
+            ref.alt_ref = 200.0  # type: ignore[misc]
 
     def test_enu_round_trip_accuracy(self) -> None:
         """Verify ENU -> Geodetic -> ENU preserves coordinates to sub-millimeter accuracy."""
