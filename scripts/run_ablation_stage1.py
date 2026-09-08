@@ -20,7 +20,7 @@ import argparse
 import json
 import math
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
@@ -29,11 +29,7 @@ import matplotlib.pyplot as plt
 from data.pipeline.stationary_detect import StationaryDetector
 from data.pipeline.sync import SynchronizedTrip
 from navigation.frames.local_geo import GeoReference
-from navigation.ins.attitude import (
-    quaternion_to_euler_deg,
-    quaternion_to_rotation_matrix,
-    rotation_matrix_to_quaternion,
-)
+from navigation.ins.attitude import rotation_matrix_to_quaternion
 from navigation.ins.propagation import StrapdownINS
 from navigation.preprocessing.pipeline import PreprocessingPipeline
 
@@ -46,7 +42,6 @@ def run_ablation_stage1(
     output_json_path: Optional[Path] = None,
 ) -> Dict[str, Any]:
     """Execute Ablation Stage 1 open-loop drift experiment on a real driving sequence."""
-    proj_root = Path(__file__).resolve().parents[1]
 
     # 1. Load real synchronized trip
     print(f"[Ablation Stage 1] Loading synchronized trip from: {trip_path}")
@@ -65,7 +60,6 @@ def run_ablation_stage1(
     )
     preprocessed = pipeline.process_trip(trip, stationary_mask=stat_mask)
     calib = preprocessed.calibration
-    align = preprocessed.alignment
 
     # 3. Define Evaluation Window
     t_ns = preprocessed.timestamps_ns
