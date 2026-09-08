@@ -1,0 +1,53 @@
+{
+  "trip_id": "S1",
+  "evaluation_window": {
+    "start_sample_idx": 19500,
+    "end_sample_idx": 20100,
+    "sample_count": 601,
+    "duration_s": 60.0
+  },
+  "initial_conditions": {
+    "ref_lat": 52.4165342,
+    "ref_lon": -1.5785448,
+    "ref_alt_m": 172.82,
+    "initial_velocity_enu": [
+      -11.462,
+      3.225,
+      0.0
+    ],
+    "initial_heading_deg": 285.21,
+    "initial_quaternion": [
+      0.132334,
+      0.0,
+      0.0,
+      0.991205
+    ],
+    "accelerometer_bias_prior": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "gyro_bias_estimated": [
+      -0.000494,
+      0.003477,
+      9e-05
+    ]
+  },
+  "drift_metrics": {
+    "final_horizontal_error_m": 3257.64,
+    "final_3d_error_m": 3301.07,
+    "horizontal_rmse_m": 1492.18,
+    "max_horizontal_error_m": 3257.64,
+    "checkpoints": {
+      "drift_5s_m": 4.94,
+      "drift_10s_m": 21.27,
+      "drift_15s_m": 102.64,
+      "drift_20s_m": 254.01,
+      "drift_30s_m": 793.14,
+      "drift_45s_m": 1933.62,
+      "drift_60s_m": 3257.64
+    }
+  },
+  "steps_integrated": 601,
+  "steps_skipped": 0
+}
