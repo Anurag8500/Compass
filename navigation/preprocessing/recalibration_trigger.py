@@ -41,6 +41,7 @@ class RecalibrationDetector:
         gravity_shift_threshold_deg: float = 35.0,
         angular_rate_step_threshold_rads: float = 5.0,
         persistence_samples: int = 20,
+        stationary_persistence_samples: int = 5,
         cooldown_samples: int = 50,
     ) -> None:
         """Initialize RecalibrationDetector.
@@ -48,12 +49,14 @@ class RecalibrationDetector:
         Args:
             gravity_shift_threshold_deg: Persistent gravity direction shift threshold (degrees).
             angular_rate_step_threshold_rads: Max instantaneous angular velocity step (rad/s).
-            persistence_samples: Consecutive samples the shift must persist before triggering.
+            persistence_samples: Consecutive samples the shift must persist before triggering in motion.
+            stationary_persistence_samples: Required persistence samples when vehicle is confirmed stationary.
             cooldown_samples: Number of samples to wait before triggering another event.
         """
         self.shift_threshold_rad = math.radians(gravity_shift_threshold_deg)
         self.gyro_step_threshold = float(angular_rate_step_threshold_rads)
         self.persistence_samples = int(persistence_samples)
+        self.stationary_persistence_samples = int(stationary_persistence_samples)
         self.cooldown_samples = int(cooldown_samples)
 
         self._last_gyro: Optional[np.ndarray] = None
@@ -61,10 +64,11 @@ class RecalibrationDetector:
         self._persistent_shift_counter: int = 0
         self._cooldown_counter: int = 0
 
-    def reset(self) -> None:
+    def reset(self, keep_baseline: bool = False) -> None:
         """Reset internal detector state."""
         self._last_gyro = None
-        self._baseline_gravity_unit = None
+        if not keep_baseline:
+            self._baseline_gravity_unit = None
         self._persistent_shift_counter = 0
         self._cooldown_counter = 0
 
@@ -96,6 +100,15 @@ class RecalibrationDetector:
         a_vec = np.asarray(accel, dtype=np.float64)
         g_vec = np.asarray(gyro, dtype=np.float64)
 
+        if not np.isfinite(a_vec).all() or not np.isfinite(g_vec).all():
+            return RecalibrationEvent(
+                triggered=False,
+                timestamp_ns=timestamp_ns,
+                reason="Non-finite input rejected",
+                metric_value=0.0,
+                threshold=self.gyro_step_threshold,
+            )
+
         if self._cooldown_counter > 0:
             self._cooldown_counter -= 1
 
@@ -114,13 +127,18 @@ class RecalibrationDetector:
                 )
         self._last_gyro = g_vec.copy()
 
-        # 2. Persistent gravity vector orientation shift check
+        # 2. Gravity vector orientation shift check
         a_norm = float(np.linalg.norm(a_vec))
         g_norm = 9.80665
-
-        # Evaluate when near 1g and angular velocity is low (not high-g cornering)
         g_rate = float(np.linalg.norm(g_vec))
+
+        # Vehicle must be in low dynamics (or explicitly stationary) to evaluate gravity direction
         is_steady = (abs(a_norm - g_norm) < 1.5) and (g_rate < 0.20 or is_stationary)
+
+        # Persistence threshold depends on stationary confirmation
+        required_persistence = (
+            self.stationary_persistence_samples if is_stationary else self.persistence_samples
+        )
 
         if is_steady and a_norm > 1e-3:
             current_g_unit = a_vec / a_norm
@@ -132,25 +150,26 @@ class RecalibrationDetector:
 
                 if angle_shift > self.shift_threshold_rad:
                     self._persistent_shift_counter += 1
-                    if self._persistent_shift_counter >= self.persistence_samples and self._cooldown_counter == 0:
+                    if self._persistent_shift_counter >= required_persistence and self._cooldown_counter == 0:
                         shift_deg = math.degrees(angle_shift)
                         thresh_deg = math.degrees(self.shift_threshold_rad)
                         self._cooldown_counter = self.cooldown_samples
-                        # Update baseline to new pose to avoid repeating
+                        # Update baseline to new pose to avoid repeated triggering
                         self._baseline_gravity_unit = current_g_unit.copy()
                         self._persistent_shift_counter = 0
+                        reason_prefix = "Stationary-confirmed" if is_stationary else "Persistent"
                         return RecalibrationEvent(
                             triggered=True,
                             timestamp_ns=timestamp_ns,
-                            reason=f"Persistent gravity direction shift ({shift_deg:.1f} deg > {thresh_deg:.1f} deg)",
+                            reason=f"{reason_prefix} gravity direction shift ({shift_deg:.1f} deg > {thresh_deg:.1f} deg)",
                             metric_value=shift_deg,
                             threshold=thresh_deg,
                         )
                 else:
                     self._persistent_shift_counter = max(0, self._persistent_shift_counter - 1)
         else:
-            # During violent motion, decay counter slowly
-            self._persistent_shift_counter = max(0, self._persistent_shift_counter - 1)
+            # During violent/high-dynamic motion, do not accumulate; decay rapidly
+            self._persistent_shift_counter = max(0, self._persistent_shift_counter - 2)
 
         return RecalibrationEvent(
             triggered=False,
@@ -168,7 +187,7 @@ class RecalibrationDetector:
         stationary_mask: Optional[np.ndarray] = None,
     ) -> List[RecalibrationEvent]:
         """Scan a complete time series and return all detected recalibration events."""
-        self.reset()
+        self.reset(keep_baseline=(self._baseline_gravity_unit is not None))
         events: List[RecalibrationEvent] = []
         n = accel_series.shape[0]
         for i in range(n):

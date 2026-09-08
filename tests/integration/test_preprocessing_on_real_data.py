@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
 import numpy as np
 import pytest
@@ -80,16 +81,48 @@ class TestPreprocessingRealData:
             assert debiased_mean_norm < raw_mean_norm + 1e-4
 
             # 7. Gravity-resolution on stationary segment: coordinate acceleration should hover near 0
-            # For stationary segment, R_v^n is approximately level (or aligned with gravity)
-            R_level = np.eye(3)
+            # For real stationary data, do NOT force R_v^n = I.
+            # Instead, estimate physical vehicle orientation relative to ENU via offline BootstrapAttitudeEstimator.
+            from navigation.preprocessing.bootstrap_attitude import BootstrapAttitudeEstimator
+
             f_stat_v = preprocessed.f_m_v[stat_slice]
-            a_coord_n = resolve_gravity(f_stat_v, R_level, b_a_v=preprocessed.calibration.accel_bias_prior)
+            omega_stat_v = preprocessed.omega_m_v[stat_slice]
+            stat_ts = trip.timestamps_ns[stat_slice]
+            n_stat = len(stat_ts)
+
+            # Initialize bootstrap attitude estimator using estimated stationary tilt
+            bootstrap_att = BootstrapAttitudeEstimator(kp_tilt=0.5)
+            f_stat_mean = np.mean(f_stat_v, axis=0)
+            norm_f = np.linalg.norm(f_stat_mean)
+            u_f = f_stat_mean / (norm_f if norm_f > 1e-4 else 1.0)
+            roll_init = math.atan2(-u_f[1], u_f[2])
+            pitch_init = math.atan2(u_f[0], math.sqrt(u_f[1] * u_f[1] + u_f[2] * u_f[2]))
+            yaw_init = math.radians(preprocessed.alignment.yaw_deg)
+            bootstrap_att.initialize_from_gravity(roll_init, pitch_init, yaw_init)
+
+            # Propagate attitude through stationary segment
+            R_series = np.zeros((n_stat, 3, 3))
+            for i in range(n_stat):
+                dt_s = float(stat_ts[i] - stat_ts[i - 1]) / 1e9 if i > 0 else 0.1
+                dt_s = max(0.01, min(0.5, dt_s))
+                bootstrap_att.update(f_stat_v[i], omega_stat_v[i], dt_s)
+                R_series[i] = bootstrap_att.get_rotation_matrix()
+
+            a_coord_n = resolve_gravity(
+                f_stat_v,
+                R_series,
+                b_a_v=preprocessed.calibration.accel_bias_prior,
+            )
 
             # Mean vertical coordinate acceleration during stationary period should be near zero (< 0.5 m/s^2)
             mean_vert_a = float(np.mean(a_coord_n[:, 2]))
             std_vert_a = float(np.std(a_coord_n[:, 2]))
+            coord_norm = float(np.mean(np.linalg.norm(a_coord_n, axis=1)))
+            accel_norm = float(np.mean(np.linalg.norm(f_stat_v, axis=1)))
+
             assert abs(mean_vert_a) < 0.50, f"Stationary vertical acceleration bias too high: {mean_vert_a:.3f} m/s^2"
             assert std_vert_a < 1.0, f"Stationary vertical acceleration noise excessive: {std_vert_a:.3f} m/s^2"
+            assert coord_norm < 1.0, f"Stationary coordinate acceleration norm too high: {coord_norm:.3f} m/s^2"
 
         # 8. Filter noise reduction on moving segment
         moving_idx = np.where(~stat_mask & val_mask)[0]
@@ -110,24 +143,39 @@ class TestPreprocessingRealData:
             pytest.skip("Vta14 cache not found")
 
         trip = SynchronizedTrip.load_npz(cache_file)
-        detector = RecalibrationDetector(gravity_shift_threshold_deg=15.0, angular_rate_step_threshold_rads=5.0)
+        detector = StationaryDetector()
+        _, stat_mask = detector.detect(trip.timestamps_ns, trip.accel_raw, trip.gyro_raw)
 
-        # 1. Scan nominal trip: should have zero or minimal false triggers on smooth driving
-        events = detector.scan_series(trip.accel_raw, trip.gyro_raw, trip.timestamps_ns)
-        # Verify no excessive false alarms
+        recal_detector = RecalibrationDetector(
+            gravity_shift_threshold_deg=20.0,
+            angular_rate_step_threshold_rads=5.0,
+            persistence_samples=15,
+            stationary_persistence_samples=5,
+        )
+
+        # 1. Scan nominal trip with stationary mask: should have zero or minimal false triggers
+        events = recal_detector.scan_series(
+            trip.accel_raw,
+            trip.gyro_raw,
+            trip.timestamps_ns,
+            stationary_mask=stat_mask,
+        )
         assert len(events) <= 1, f"Unexpected false recalibration triggers: {len(events)}"
 
         # 2. Inject a simulated physical phone displacement (phone knocked by 45 degrees at index 500)
         accel_corrupt = trip.accel_raw.copy()
         gyro_corrupt = trip.gyro_raw.copy()
-        # Rotate acceleration by 45 degrees about X axis from index 500 onwards
         cos45, sin45 = np.cos(np.pi / 4), np.sin(np.pi / 4)
         R_bump = np.array([[1, 0, 0], [0, cos45, -sin45], [0, sin45, cos45]])
         accel_corrupt[500:] = (R_bump @ accel_corrupt[500:].T).T
-        # Add high angular rate step at impact
         gyro_corrupt[500] = np.array([0.0, 7.5, 0.0])
 
-        events_corrupt = detector.scan_series(accel_corrupt, gyro_corrupt, trip.timestamps_ns)
+        events_corrupt = recal_detector.scan_series(
+            accel_corrupt,
+            gyro_corrupt,
+            trip.timestamps_ns,
+            stationary_mask=stat_mask,
+        )
         assert len(events_corrupt) >= 1, "Failed to detect injected sensor displacement event!"
-        assert any(e.timestamp_ns == trip.timestamps_ns[500] or "Gravity direction shift" in e.reason for e in events_corrupt)
+        assert any(e.timestamp_ns == trip.timestamps_ns[500] or "gravity direction shift" in e.reason.lower() for e in events_corrupt)
 

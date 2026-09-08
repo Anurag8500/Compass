@@ -160,10 +160,18 @@ def calibrate_stationary_window(
         # Roll: bank right-down
         roll = math.atan2(-u_g[1], u_g[2])
 
-    # Duration calculation
+    # Duration calculation and timestamp validation
     duration_s = 0.0
-    if timestamps_ns is not None and len(timestamps_ns) == n_samples:
-        ts_arr = np.asarray(timestamps_ns)
+    if timestamps_ns is not None:
+        ts_arr = np.asarray(timestamps_ns, dtype=np.int64)
+        if len(ts_arr) != n_samples:
+            raise ValueError(f"timestamps_ns length ({len(ts_arr)}) must match sample count ({n_samples})")
+        if not np.isfinite(ts_arr).all():
+            raise ValueError("timestamps_ns contains non-finite values")
+        if np.any(ts_arr < 0):
+            raise ValueError("timestamps_ns cannot contain negative values")
+        if n_samples > 1 and np.any(np.diff(ts_arr) < 0):
+            raise ValueError("timestamps_ns must be monotonic non-decreasing")
         duration_s = float(ts_arr[-1] - ts_arr[0]) / 1e9
 
     return CalibrationProfile(

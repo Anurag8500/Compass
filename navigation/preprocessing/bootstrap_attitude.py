@@ -179,8 +179,8 @@ class BootstrapAttitudeEstimator:
             R_v_n = quaternion_to_rotation_matrix(self.q)
             v_g = R_v_n[2, :]  # 3rd row of R_v_n is (R_v_n)^T @ [0, 0, 1]
 
-            # Error cross product in vehicle frame
-            tilt_error = np.cross(v_g, a_unit)
+            # Error cross product in vehicle frame (negative feedback rotates v_g onto a_unit)
+            tilt_error = np.cross(a_unit, v_g)
             err_norm = float(np.linalg.norm(tilt_error))
             if err_norm > 1e-8:
                 corr_angle = self.kp_tilt * err_norm * dt_s

@@ -142,6 +142,13 @@ class IMUFilter:
 
         self.b, self.a = compute_butterworth_4th_coeffs(self.cutoff_hz, self.sampling_rate_hz)
 
+    @property
+    def filtering_mode(self) -> str:
+        """Discoverable filtering mode: 'zero_phase' or 'causal'."""
+        if self.use_zero_phase and SCIPY_AVAILABLE:
+            return "zero_phase"
+        return "causal"
+
     def filter_series(self, data: np.ndarray) -> np.ndarray:
         """Apply median spike rejection followed by 4th-order Butterworth low-pass.
 
@@ -152,6 +159,12 @@ class IMUFilter:
             Filtered array of identical shape.
         """
         arr = np.asarray(data, dtype=np.float64)
+        if arr.ndim not in (1, 2):
+            raise ValueError(f"data must be 1D or 2D, got {arr.ndim}D")
+
+        if not np.isfinite(arr).all():
+            raise ValueError("Input data contains non-finite values (NaN/Inf)")
+
         if arr.shape[0] < 5:
             return arr.copy()
 
@@ -160,19 +173,31 @@ class IMUFilter:
 
         # 2. Butterworth low-pass stage
         n_samples = med_filtered.shape[0]
-        # Pad length requirement for filtfilt
-        padlen = min(15, n_samples - 1)
+        # Canonical pad length requirement for 4th-order scipy filtfilt (3 * max(len(a), len(b)) = 15)
+        canonical_padlen = 3 * max(len(self.a), len(self.b))
 
-        if SCIPY_AVAILABLE and self.use_zero_phase and n_samples > padlen:
-            try:
+        if self.use_zero_phase:
+            if not SCIPY_AVAILABLE:
+                warnings.warn(
+                    "Zero-phase filtering requested but scipy.signal is unavailable. Falling back to causal IIR.",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
+            elif n_samples <= canonical_padlen:
+                warnings.warn(
+                    f"Series length ({n_samples}) is too short for zero-phase filtfilt (requires > {canonical_padlen}). Falling back to causal IIR.",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
+            else:
+                # Execute zero-phase filtfilt without catching generic exceptions silently
+                padlen = canonical_padlen
                 if med_filtered.ndim == 1:
                     return sp_signal.filtfilt(self.b, self.a, med_filtered, padlen=padlen)
                 else:
                     return sp_signal.filtfilt(self.b, self.a, med_filtered, axis=0, padlen=padlen)
-            except Exception:
-                pass
 
-        # Causal Direct-Form II / IIR filtering fallback
+        # Causal Direct-Form II / IIR filtering
         if med_filtered.ndim == 1:
             return self._apply_iir_1d(med_filtered)
         else:

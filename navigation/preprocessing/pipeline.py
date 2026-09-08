@@ -128,6 +128,7 @@ class PreprocessingPipeline:
             timestamps_ns=ts,
             gyro_bias=calibration.gyro_bias,
             min_speed_mps=self.min_speed_for_yaw_mps,
+            moving_accel=accel_raw,
         )
 
         # 3. Transform to vehicle frame
@@ -141,7 +142,12 @@ class PreprocessingPipeline:
         omega_v_filt = self.filter.filter_series(omega_v_unfilt)
 
         # 5. Scan for recalibration events
-        events = self.recal_detector.scan_series(f_v_filt, omega_v_filt, ts)
+        events = self.recal_detector.scan_series(
+            f_v_filt,
+            omega_v_filt,
+            ts,
+            stationary_mask=stationary_mask,
+        )
 
         return PreprocessedTrip(
             trip_id=trip.trip_id,

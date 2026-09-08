@@ -61,22 +61,50 @@ def rotation_matrix_from_vectors(v_from: np.ndarray, v_to: np.ndarray) -> np.nda
     return np.eye(3) + K + (K @ K) * ((1.0 - dot) / (s * s))
 
 
+def rotation_matrix_to_euler_deg(R: np.ndarray) -> Tuple[float, float, float]:
+    """Extract Z-Y-X Euler angles (roll, pitch, yaw) in degrees from 3x3 rotation matrix R.
+
+    Convention: R = R_z(yaw) @ R_y(pitch) @ R_x(roll)
+    """
+    R_arr = np.asarray(R, dtype=np.float64)
+    sin_p = -float(R_arr[2, 0])
+    sin_p = max(-1.0, min(1.0, sin_p))
+    pitch_rad = math.asin(sin_p)
+
+    # Check for gimbal lock (|pitch| ≈ 90 deg)
+    if abs(R_arr[2, 0]) < 0.999999:
+        roll_rad = math.atan2(float(R_arr[2, 1]), float(R_arr[2, 2]))
+        yaw_rad = math.atan2(float(R_arr[1, 0]), float(R_arr[0, 0]))
+    else:
+        roll_rad = 0.0
+        yaw_rad = math.atan2(-float(R_arr[0, 1]), float(R_arr[1, 1]))
+
+    return math.degrees(roll_rad), math.degrees(pitch_rad), math.degrees(yaw_rad)
+
+
 @dataclass(frozen=True)
 class MountingAlignment:
     """Fixed mounting transformation from device body frame to vehicle frame.
+
+    Transforms vectors as:
+        v_v = R_b_v @ v_b
+        f_m^v = R_b_v (f_m^b - b_a_prior)
+        omega_m^v = R_b_v (omega_m^b - b_g)
 
     Attributes:
         R_b_v: 3x3 direction cosine matrix satisfying v_v = R_b_v @ v_b.
         roll_deg: Estimated mounting roll angle in degrees.
         pitch_deg: Estimated mounting pitch angle in degrees.
         yaw_deg: Estimated mounting yaw angle in degrees.
-        is_yaw_aligned: True if yaw has been resolved from vehicle motion & GNSS track.
+        is_yaw_aligned: True if yaw has been resolved from valid observations.
+        alignment_status: Diagnostic status string indicating calibration observability.
     """
     R_b_v: np.ndarray
     roll_deg: float
     pitch_deg: float
     yaw_deg: float
     is_yaw_aligned: bool = False
+    alignment_status: str = "NOMINAL"
 
     def transform_specific_force(
         self,
@@ -141,106 +169,178 @@ def estimate_mounting_alignment(
     timestamps_ns: Optional[np.ndarray] = None,
     gyro_bias: Optional[Tuple[float, float, float] | np.ndarray] = None,
     min_speed_mps: float = 3.0,
+    moving_accel: Optional[np.ndarray] = None,
+    reference_yaw_deg: Optional[float] = None,
+    min_accel_mps2: float = 0.40,
+    max_yaw_rate_rads: float = 0.05,
+    min_valid_epochs: int = 10,
+    max_circular_dispersion_deg: float = 15.0,
 ) -> MountingAlignment:
-    """Estimate fixed device-to-vehicle mounting rotation R_b^v from stationary gravity and GNSS course.
+    """Estimate fixed device-to-vehicle mounting rotation R_b^v.
+
+    TILT ESTIMATION (Observability: Gravitational reaction at rest):
+    The support reaction vector at rest is aligned onto vehicle +Z = [0, 0, 1].
+
+    YAW ESTIMATION (Observability: Straight-line vehicle acceleration):
+    Gyro integration gives orientation change, NOT absolute yaw relative to vehicle.
+    Mounting yaw is observable ONLY when:
+    1. A reference yaw is explicitly supplied (`reference_yaw_deg`), OR
+    2. Straight-line longitudinal acceleration epochs can be correlated:
+       During straight-line forward acceleration (v >= min_speed, dv/dt >= min_accel,
+       |omega_z| <= max_yaw_rate), the vehicle acceleration vector acts along vehicle +X.
+       The horizontal specific force in the tilt-leveled device frame correlates with this
+       forward direction, resolving mounting yaw with confidence gating.
+    If observability criteria are not met, yaw is NOT fabricated; the algorithm
+    explicitly returns is_yaw_aligned=False and yaw_deg=0.0.
 
     Args:
         stationary_accel: (N, 3) stationary specific force measurements at rest (m/s^2).
         moving_gnss_speed_mps: Optional (M,) GNSS ground speed during moving intervals (m/s).
-        moving_gnss_bearing_deg: Optional (M,) GNSS track bearing (0-360 deg, clockwise from True North).
+        moving_gnss_bearing_deg: Optional (M,) GNSS track bearing (0-360 deg).
         moving_gyro: Optional (M, 3) gyro measurements matching moving interval (rad/s).
-        timestamps_ns: Optional (M,) timestamps for gyro integration.
-        gyro_bias: Optional 3-axis gyro bias to subtract prior to heading comparison.
-        min_speed_mps: Minimum speed threshold to evaluate GNSS heading (default: 3.0 m/s).
+        timestamps_ns: Optional (M,) timestamps.
+        gyro_bias: Optional 3-axis gyro bias.
+        min_speed_mps: Minimum speed threshold to evaluate motion (default: 3.0 m/s).
+        moving_accel: Optional (M, 3) accelerometer measurements matching moving interval.
+        reference_yaw_deg: Optional explicitly known/measured mounting yaw angle (deg).
+        min_accel_mps2: Minimum longitudinal acceleration for forward correlation (m/s^2).
+        max_yaw_rate_rads: Maximum yaw rate threshold for straight-line gating (rad/s).
+        min_valid_epochs: Minimum number of qualifying epochs required to declare yaw resolved.
+        max_circular_dispersion_deg: Maximum allowable circular standard deviation of yaw candidates (deg).
 
     Returns:
-        MountingAlignment holding R_b^v and Euler angles.
+        MountingAlignment holding R_b^v, Euler angles, and resolution status.
     """
     f_stat = np.asarray(stationary_accel, dtype=np.float64)
     if f_stat.ndim != 2 or f_stat.shape[1] != 3 or f_stat.shape[0] == 0:
         raise ValueError(f"stationary_accel must be non-empty (N, 3), got {f_stat.shape}")
 
+    if not np.isfinite(f_stat).all():
+        raise ValueError("stationary_accel contains non-finite values (NaN/Inf)")
+
     # 1. Tilt alignment: Align measured support reaction force to vehicle vertical +Z = [0, 0, 1]
     f_mean = np.mean(f_stat, axis=0)
-    norm_f = np.linalg.norm(f_mean)
+    norm_f = float(np.linalg.norm(f_mean))
     if norm_f < 1e-4:
         R_tilt = np.eye(3, dtype=np.float64)
     else:
-        # Rotates measured gravity reaction vector in body frame onto vehicle [0, 0, 1]
         v_target_up = np.array([0.0, 0.0, 1.0], dtype=np.float64)
         R_tilt = rotation_matrix_from_vectors(f_mean, v_target_up)
 
-    # Compute tilt angles in degrees
-    # If phone is flat screen up: f_mean = [0, 0, 9.81], R_tilt = I, pitch=0, roll=0.
-    f_unit = f_mean / (norm_f if norm_f > 1e-4 else 1.0)
-    pitch_deg = math.degrees(math.atan2(f_unit[0], math.sqrt(f_unit[1] * f_unit[1] + f_unit[2] * f_unit[2])))
-    roll_deg = math.degrees(math.atan2(-f_unit[1], f_unit[2]))
-
-    # 2. Yaw alignment from GNSS track heading vs device sensed direction
+    # 2. Yaw alignment
     yaw_deg = 0.0
     is_yaw_aligned = False
+    status = "UNRESOLVED_INSUFFICIENT_OBSERVABILITY"
 
-    if (
+    # Option A: Explicit reference yaw provided
+    if reference_yaw_deg is not None and np.isfinite(reference_yaw_deg):
+        yaw_deg = float(reference_yaw_deg)
+        is_yaw_aligned = True
+        status = "RESOLVED_REFERENCE_AZIMUTH"
+
+    # Option B: Longitudinal acceleration correlation during straight-line vehicle motion
+    elif (
         moving_gnss_speed_mps is not None
-        and moving_gnss_bearing_deg is not None
+        and moving_accel is not None
         and moving_gyro is not None
         and timestamps_ns is not None
     ):
         speeds = np.asarray(moving_gnss_speed_mps, dtype=np.float64)
-        bearings = np.asarray(moving_gnss_bearing_deg, dtype=np.float64)
+        accels = np.asarray(moving_accel, dtype=np.float64)
         gyros = np.asarray(moving_gyro, dtype=np.float64)
         ts = np.asarray(timestamps_ns, dtype=np.int64)
 
-        # Find valid moving intervals above speed threshold with finite bearing
-        valid_motion_mask = (speeds >= min_speed_mps) & np.isfinite(bearings) & (bearings >= 0.0)
-
-        if np.sum(valid_motion_mask) >= 10:
-            # Tilt-correct the gyros into the leveled horizontal plane
-            b_g = np.asarray(gyro_bias, dtype=np.float64) if gyro_bias is not None else np.zeros(3)
-            gyros_debiased = gyros - b_g
-            gyros_level = (R_tilt @ gyros_debiased.T).T
-
-            # In leveled vehicle frame, z-axis is vertical yaw rate: omega_z
-            # Integrate heading relative to first moving sample
+        n_mov = len(speeds)
+        if n_mov == len(accels) == len(gyros) == len(ts) and n_mov >= min_valid_epochs:
             dt_s = np.diff(ts, prepend=ts[0]) / 1e9
-            dt_s[dt_s < 0] = 0.0
-            dt_s[dt_s > 1.0] = 0.1  # clamp gaps
+            dt_s[dt_s <= 0] = 0.1
+            dt_s[dt_s > 1.0] = 0.1
 
-            # Heading change from gyro integration (rad)
-            gyro_heading_rad = np.cumsum(gyros_level[:, 2] * dt_s)
-            gyro_heading_deg = np.degrees(gyro_heading_rad)
+            cum_time = np.cumsum(dt_s)
+            if cum_time[-1] > cum_time[0]:
+                gnss_accel = np.gradient(speeds, cum_time)
+            else:
+                gnss_accel = np.zeros_like(speeds)
 
-            # Circular difference between GNSS bearing and gyro integrated heading
-            # GNSS bearing is clockwise from True North (Navigation frame).
-            # Over reasonably straight segments, difference resolves mounting azimuth offset.
-            valid_idx = np.where(valid_motion_mask)[0]
-            if len(valid_idx) >= 10:
-                gnss_sub = bearings[valid_idx]
-                gyro_sub = gyro_heading_deg[valid_idx]
-                angle_diffs = (gnss_sub - gyro_sub + 180.0) % 360.0 - 180.0
-                # Median circular offset
-                sin_sum = np.sum(np.sin(np.radians(angle_diffs)))
-                cos_sum = np.sum(np.cos(np.radians(angle_diffs)))
-                yaw_deg = float(np.degrees(np.arctan2(sin_sum, cos_sum)))
-                is_yaw_aligned = True
+            # Level gyros and accels into intermediate horizontal plane
+            b_g = np.asarray(gyro_bias, dtype=np.float64) if gyro_bias is not None else np.zeros(3)
+            gyros_level = (R_tilt @ (gyros - b_g).T).T
+            accels_level = (R_tilt @ accels.T).T
 
-    # 3. Form full R_b^v: R_b^v = R_z(yaw) @ R_tilt
-    # Note: R_z(yaw) represents rotation about vehicle vertical axis
+            yaw_rate = np.abs(gyros_level[:, 2])
+            h_accel_norm = np.linalg.norm(accels_level[:, :2], axis=1)
+
+            qualifying_mask = (
+                np.isfinite(speeds)
+                & (speeds >= min_speed_mps)
+                & np.isfinite(gnss_accel)
+                & (gnss_accel >= min_accel_mps2)
+                & (yaw_rate <= max_yaw_rate_rads)
+                & (h_accel_norm >= 0.30)
+            )
+
+            # If GNSS bearing is available, verify heading is stable
+            if moving_gnss_bearing_deg is not None:
+                bearings = np.asarray(moving_gnss_bearing_deg, dtype=np.float64)
+                if len(bearings) == n_mov:
+                    bearing_diff = np.abs(np.diff(bearings, prepend=bearings[0]))
+                    bearing_diff = np.minimum(bearing_diff, 360.0 - bearing_diff)
+                    bearing_rate_deg_s = bearing_diff / dt_s
+                    qualifying_mask &= (bearing_rate_deg_s <= 3.0)
+
+            qualifying_idx = np.where(qualifying_mask)[0]
+
+            if len(qualifying_idx) >= min_valid_epochs:
+                f_lx = accels_level[qualifying_idx, 0]
+                f_ly = accels_level[qualifying_idx, 1]
+
+                candidate_yaws = np.arctan2(-f_ly, f_lx)
+
+                sin_sum = float(np.sum(np.sin(candidate_yaws)))
+                cos_sum = float(np.sum(np.cos(candidate_yaws)))
+                mean_yaw_rad = math.atan2(sin_sum, cos_sum)
+
+                R_bar = math.sqrt(sin_sum * sin_sum + cos_sum * cos_sum) / len(qualifying_idx)
+                if R_bar >= 0.999999:
+                    circular_std_deg = 0.0
+                elif R_bar > 1e-4:
+                    circular_std_deg = math.degrees(math.sqrt(-2.0 * math.log(R_bar)))
+                else:
+                    circular_std_deg = 180.0
+
+                if circular_std_deg <= max_circular_dispersion_deg:
+                    yaw_deg = math.degrees(mean_yaw_rad)
+                    is_yaw_aligned = True
+                    status = f"RESOLVED_ACCELERATION_CORRELATION (N={len(qualifying_idx)}, std={circular_std_deg:.1f}deg)"
+                else:
+                    status = f"UNRESOLVED_HIGH_CIRCULAR_DISPERSION (std={circular_std_deg:.1f}deg > {max_circular_dispersion_deg}deg)"
+            else:
+                status = f"UNRESOLVED_INSUFFICIENT_ACCELERATION_EPOCHS (found {len(qualifying_idx)} < {min_valid_epochs})"
+
+    # 3. Form authoritative R_b^v: R_b^v = R_z(yaw) @ R_tilt
+    # Standard active rotation matrix about Z_v:
+    # R_z(yaw) = [[cos, -sin, 0], [sin, cos, 0], [0, 0, 1]]
     yaw_rad = math.radians(yaw_deg)
     cos_y = math.cos(yaw_rad)
     sin_y = math.sin(yaw_rad)
     R_yaw = np.array([
-        [cos_y, sin_y, 0.0],
-        [-sin_y, cos_y, 0.0],
+        [cos_y, -sin_y, 0.0],
+        [sin_y, cos_y, 0.0],
         [0.0, 0.0, 1.0],
     ], dtype=np.float64)
 
     R_b_v = R_yaw @ R_tilt
 
+    # Extract diagnostic Euler angles directly from authoritative R_b^v
+    roll_deg, pitch_deg, reported_yaw_deg = rotation_matrix_to_euler_deg(R_b_v)
+
+    final_yaw_deg = reported_yaw_deg if is_yaw_aligned else 0.0
+
     return MountingAlignment(
         R_b_v=R_b_v,
         roll_deg=roll_deg,
         pitch_deg=pitch_deg,
-        yaw_deg=yaw_deg,
+        yaw_deg=final_yaw_deg,
         is_yaw_aligned=is_yaw_aligned,
+        alignment_status=status,
     )
