@@ -9,7 +9,7 @@
 
 ## 1. Objective
 
-This report establishes the empirical dead-reckoning performance baseline for **Ablation Stage 1** in the C.O.M.P.A.S.S. architecture (SIH 2026 Problem Statement 26168 — ISRO). 
+This report establishes the authoritative empirical dead-reckoning performance baseline for **Ablation Stage 1** in the C.O.M.P.A.S.S. architecture (SIH 2026 Problem Statement 26168 — ISRO). 
 
 The objective of Phase 4 is to execute pure classical open-loop strapdown INS double integration on a real driving dataset with high-precision reference telemetry (Racelogic VBOX ground truth), measuring and documenting the unconstrained drift rate of consumer smartphone inertial sensors without any aiding or corrections.
 
@@ -27,11 +27,39 @@ This baseline serves as the unassisted reference (**Level 1** on the fusion abla
   - Speed range: $10.1\,\text{m/s}$ to $14.8\,\text{m/s}$.
   - Ground truth distance traversed: **$763.2\,\text{meters}$**.
   - Track heading: gentle curve shifting from $285.2^\circ$ to $248.3^\circ$ relative to true North.
-- **Ground Truth Source**: Complete Racelogic VBOX differential GNSS + vehicle CAN bus telemetry (`v_ref_lat`, `v_ref_lon`, `v_ref_alt_m`, `v_ref_speed_mps`, `v_ref_heading_deg`). No phone-side GPS altitude is mixed into the reference.
+- **Ground Truth Source**: Complete Racelogic VBOX differential GNSS + vehicle CAN bus telemetry (`v_ref_lat`, `v_ref_lon`, `v_ref_alt_m_audited`, `v_ref_speed_mps`, `v_ref_heading_deg`). No phone-side GPS altitude is mixed into the reference.
 
 ---
 
-## 3. Initialization Conditions & Oracle Disclosure
+## 3. Authoritative VBOX Altitude Audit (Issues 7, 8 & 9)
+
+A comprehensive numerical audit was conducted on the VBOX altitude reference to resolve column label ambiguity and physical units:
+
+### 3.1 Traceability Analysis
+1. **Raw CSV Source**: In `V-S1.csv` (`data/raw/io_vnbd/.../V-S1.csv`), the altitude column header is labeled `' Height (km)'`.
+2. **Raw Value Distribution**: Across all 51,746 samples of Trip S1, numerical values in this column range from `92.05` to `143.89`, with mean `123.25` and median `124.43`. In the UK Midlands where IO-VNBD was collected (Coventry/Warwick), terrain elevation is $\sim 100\,\text{m}$ to $150\,\text{m}$ above sea level. This demonstrates that the raw column values were recorded directly in **meters**, despite the erroneous `(km)` header string.
+3. **Phase 2 Cache Transformation**: The Phase 2 ingestion parser (`data/pipeline/parse.py`, line 304) parsed this column as `df[h_col] * 1000.0` based on the literal header label, storing values in the range $[92,050.0, 143,890.0]$ into the cached `v_ref_alt_m` field.
+4. **Immutability & Resolution**: To preserve the byte-for-byte SHA-256 immutability of the frozen Phase 2 cache (`7a267e112af4193dcadb8800bd9cf4ed8abf7249a1ad53883bbd2cfd06200fa7`), the cache files are not mutated. In Phase 4 (`scripts/run_ablation_stage1.py`), `trip.v_ref_alt_m` is scaled by $1/1000.0$ to recover true physical meters.
+
+### 3.2 Evaluation Window Numerical Statistics (Samples 19500 to 20100)
+- **First Raw VBOX Altitude ($t=0\,\text{s}$)**: **$127.39\,\text{m}$**
+- **Last Raw VBOX Altitude ($t=60\,\text{s}$)**: **$131.68\,\text{m}$**
+- **Min Altitude in Window**: **$127.39\,\text{m}$**
+- **Max Altitude in Window**: **$131.68\,\text{m}$**
+- **Median Altitude in Window**: **$128.87\,\text{m}$**
+- **Standard Deviation in Window**: **$1.16\,\text{m}$**
+- **VBOX Altitude Change over 60 s**: **$+4.29\,\text{m}$** (realistic $0.56\%$ road grade over $763.2\,\text{m}$)
+- **Source CSV Column**: `' Height (km)'`
+- **Cache Field**: `v_ref_alt_m`
+- **Unit Conversion**: $\text{v\_ref\_alt\_true\_m} = \text{v\_ref\_alt\_m} / 1000.0$
+
+### 3.3 Diagnostic Comparison with Smartphone GNSS Altitude
+- **Smartphone GNSS Altitude (`s_gnss_alt`)**: First $= 172.82\,\text{m}$, Last $= 180.64\,\text{m}$, $\Delta = +7.82\,\text{m}$.
+- **Consistency**: Both sensors confirm a gentle vertical climb ($\approx 4.3\,\text{m}$ to $7.8\,\text{m}$) along the road segment. The absolute datum offset of $\sim 45.4\,\text{m}$ reflects typical differences between WGS84 ellipsoid height and local geoid models without degrading relative trajectory accuracy.
+
+---
+
+## 4. Initialization Conditions & Oracle Disclosure
 
 ### Explicit Oracle Initialization Disclosure (Issues 10 & 11)
 > [!IMPORTANT]
@@ -42,7 +70,7 @@ The strapdown INS was initialized at the first sample of the evaluation window (
 
 | Parameter | Initial Condition | Source / Rationale |
 |---|---|---|
-| **Session Reference Origin** | $\text{lat}_0 = 52.4165342^\circ$, $\text{lon}_0 = -1.5785448^\circ$, $\text{alt}_0 = 127390.00\,\text{m}$ | Fixed session-level local tangent plane origin from VBOX ground truth at sample 19500 |
+| **Session Reference Origin** | $\text{lat}_0 = 52.4165342^\circ$, $\text{lon}_0 = -1.5785448^\circ$, $\text{alt}_0 = 127.39\,\text{m}$ | Fixed session-level local tangent plane origin from audited VBOX ground truth at sample 19500 |
 | **Initial Position ($p_0^n$)** | $[0.0, 0.0, 0.0]\,\text{m}$ in local ENU | Center of the local Cartesian coordinate system |
 | **Initial Velocity ($v_0^n$)** | $[-11.399, +3.099, 0.000]\,\text{m/s}$ | Derived consistently from initial VBOX speed ($11.813\,\text{m/s}$) and track heading ($285.21^\circ$): $v_E = v_{\text{speed}} \sin(\psi), v_N = v_{\text{speed}} \cos(\psi)$ |
 | **Initial Attitude ($q_0$)** | $[0.132334, 0.0, 0.0, 0.991205]^T$ | Level pose aligned to initial ground truth track heading ($285.21^\circ$) |
@@ -52,7 +80,7 @@ The strapdown INS was initialized at the first sample of the evaluation window (
 
 ---
 
-## 4. Upstream Phase 3 Preprocessing Dependency
+## 5. Upstream Phase 3 Preprocessing Dependency
 
 Phase 4 accepts vehicle-frame measurements directly from the validated Phase 3 classical preprocessing pipeline (`PreprocessingPipeline`):
 1. **Stationary Gyro Bias Removal**: Initial static rest window (samples 15 to 503) removed raw stationary gyro offsets.
@@ -62,9 +90,9 @@ Phase 4 accepts vehicle-frame measurements directly from the validated Phase 3 c
 
 ---
 
-## 5. Mathematical Conventions & Architecture
+## 6. Mathematical Conventions & Architecture
 
-### 5.1 Quaternion Convention
+### 6.1 Quaternion Convention
 - **Format**: Hamilton convention, scalar-first:
   $$\mathbf{q} = [w, x, y, z]^T = [q_w, q_x, q_y, q_z]^T, \quad \|\mathbf{q}\| = 1.0$$
 - **Frame Representation**: Represents the rotation from vehicle frame ($v$) to local East-North-Up navigation frame ($n$):
@@ -76,7 +104,7 @@ Phase 4 accepts vehicle-frame measurements directly from the validated Phase 3 c
   2(xz - wy) & 2(yz + wx) & 1 - 2(x^2 + y^2)
   \end{bmatrix}$$
 
-### 5.2 Local ENU Navigation Frame
+### 6.2 Local ENU Navigation Frame
 - Local Cartesian East-North-Up (ENU) tangent plane:
   - $X_n$: East [meters]
   - $Y_n$: North [meters]
@@ -84,7 +112,7 @@ Phase 4 accepts vehicle-frame measurements directly from the validated Phase 3 c
 - **Session Reference Origin**: Equirectangular projection about fixed $(\text{lat}_0, \text{lon}_0, \text{alt}_0)$ with spherical Earth radius $R_{\text{earth}} = 6,371,000\,\text{m}$.
 - **Immutability Invariant**: The origin is fixed upon session start (sample 19500) and is never reset, shifted, or recentered mid-session.
 
-### 5.3 Gravity Convention
+### 6.3 Gravity Convention
 - Physical downward gravitational acceleration in ENU navigation coordinates:
   $$\mathbf{g}^n = \begin{bmatrix} 0 \\ 0 \\ -9.80665 \end{bmatrix}\,\text{m/s}^2$$
 - At rest on a level surface, the proof mass measures an upward support reaction force $\mathbf{f}_m^v = [0, 0, +9.80665]^T\,\text{m/s}^2$.
@@ -92,7 +120,7 @@ Phase 4 accepts vehicle-frame measurements directly from the validated Phase 3 c
   $$\mathbf{a}_{\text{true}}^n = R_v^n (\mathbf{f}_m^v - \mathbf{b}_a^v) + \mathbf{g}^n$$
   For a stationary level vehicle: $\mathbf{a}_{\text{true}}^n = \mathbf{I} [0, 0, +g]^T + [0, 0, -g]^T = [0, 0, 0]^T\,\text{m/s}^2$.
 
-### 5.4 Discrete Propagation Equations
+### 6.4 Discrete Propagation Equations
 For each sample timestep $\Delta t = (t_{k+1} - t_k) \times 10^{-9}\,\text{seconds}$:
 1. **Attitude Propagation**:
    $$\mathbf{q}[k+1] = \text{normalize}\left(\mathbf{q}[k] \otimes \Delta\mathbf{q}(\boldsymbol{\omega}_m^v[k] \cdot \Delta t)\right)$$
@@ -104,7 +132,7 @@ For each sample timestep $\Delta t = (t_{k+1} - t_k) \times 10^{-9}\,\text{secon
 4. **Position Propagation**:
    $$\mathbf{p}[k+1] = \mathbf{p}[k] + \mathbf{v}[k] \cdot \Delta t + \frac{1}{2} \mathbf{a}_{\text{true}}^n[k] \cdot \Delta t^2$$
 
-### 5.5 Robust Validation & Invalid-Sample Handling
+### 6.5 Robust Validation & Invalid-Sample Handling
 - **Timestep Validation**: $\text{math.isfinite}(\Delta t)$ is enforced, rejecting $\le 0$, $> 1.0\,\text{s}$, $\text{NaN}$, $+\infty$, and $-\infty$ with descriptive `ValueError`.
 - **Timestamp Consistency**: Step timestamps must be strictly monotonic ($t_{k+1} > t_k$) and numerically coherent with $\Delta t$ within $1.0\,\mu\text{s}$.
 - **Invalid-Sample Invariant**: In trajectory propagation, both sample $k$ and sample $k+1$ must be validated. Corrupted or invalid samples are never used as IMU measurement inputs. Across gaps, state is held and timestamps synchronize cleanly.
@@ -112,7 +140,7 @@ For each sample timestep $\Delta t = (t_{k+1} - t_k) \times 10^{-9}\,\text{secon
 
 ---
 
-## 6. Open-Loop Nature of Experiment
+## 7. Open-Loop Nature of Experiment
 
 This experiment is strictly open-loop:
 - **Zero GNSS Kalman Updates**: GNSS fixes are withheld entirely from the propagator and used exclusively as post-hoc ground truth.
@@ -125,41 +153,42 @@ This experiment is strictly open-loop:
 
 ---
 
-## 7. Empirical Drift Results
+## 8. Empirical Drift Results
 
 ### Key Checkpoint Metrics
 Over the 60.00-second evaluation window, open-loop position error evolved as follows:
 
-| Elapsed Time | Horizontal Drift ($e_{\text{2D}}$) | 3D Drift ($e_{\text{3D}}$) | Ground Truth Distance Traveled | Drift-to-Distance Ratio |
-|---|---|---|---|---|
-| **$5.0\,\text{s}$** | **$4.83\,\text{m}$** | $557.98\,\text{m}$ | $62.0\,\text{m}$ | $7.8\%$ |
-| **$10.0\,\text{s}$** | **$20.52\,\text{m}$** | $1,656.64\,\text{m}$ | $121.6\,\text{m}$ | $16.9\%$ |
-| **$15.0\,\text{s}$** | **$100.64\,\text{m}$** | $1,396.76\,\text{m}$ | $184.5\,\text{m}$ | $54.6\%$ |
-| **$20.0\,\text{s}$** | **$251.21\,\text{m}$** | $906.72\,\text{m}$ | $250.5\,\text{m}$ | $100.3\%$ |
-| **$30.0\,\text{s}$** | **$788.97\,\text{m}$** | $1,310.04\,\text{m}$ | $376.1\,\text{m}$ | $209.8\%$ |
-| **$45.0\,\text{s}$** | **$1,927.34\,\text{m}$** | $3,386.76\,\text{m}$ | $565.3\,\text{m}$ | $341.0\%$ |
-| **$60.0\,\text{s}$** | **$3,249.32\,\text{m}$** | **$5,809.57\,\text{m}$** | **$763.2\,\text{m}$** | **$425.7\%$** |
+| Elapsed Time | Horizontal Drift ($e_{\text{2D}}$) | 3D Drift ($e_{\text{3D}}$) | Vertical Drift ($e_{\text{Up}}$) | Ground Truth Distance Traveled | Drift-to-Distance Ratio |
+|---|---|---|---|---|---|
+| **$5.0\,\text{s}$** | **$4.83\,\text{m}$** | $4.95\,\text{m}$ | $+1.08\,\text{m}$ | $62.0\,\text{m}$ | $7.8\%$ |
+| **$10.0\,\text{s}$** | **$20.52\,\text{m}$** | $20.60\,\text{m}$ | $+1.83\,\text{m}$ | $121.6\,\text{m}$ | $16.9\%$ |
+| **$15.0\,\text{s}$** | **$100.64\,\text{m}$** | $100.74\,\text{m}$ | $-4.42\,\text{m}$ | $184.5\,\text{m}$ | $54.6\%$ |
+| **$20.0\,\text{s}$** | **$251.21\,\text{m}$** | $252.18\,\text{m}$ | $-22.08\,\text{m}$ | $250.5\,\text{m}$ | $100.3\%$ |
+| **$30.0\,\text{s}$** | **$788.97\,\text{m}$** | $793.73\,\text{m}$ | $-86.89\,\text{m}$ | $376.1\,\text{m}$ | $209.8\%$ |
+| **$45.0\,\text{s}$** | **$1,927.34\,\text{m}$** | $1,943.15\,\text{m}$ | $-247.41\,\text{m}$ | $565.3\,\text{m}$ | $341.0\%$ |
+| **$60.0\,\text{s}$** | **$3,249.32\,\text{m}$** | **$3,292.29\,\text{m}$** | **$-530.20\,\text{m}$** | **$763.2\,\text{m}$** | **$425.7\%$** |
 
 ### Summary Statistics
 - **Evaluation Duration**: $60.00\,\text{s}$ (601 samples integrated, 0 skipped).
 - **Horizontal Position Error RMSE**: **$1,487.53\,\text{m}$**.
 - **Maximum Horizontal Error**: **$3,249.32\,\text{m}$**.
-- **Final 3D Position Error**: **$5,809.57\,\text{m}$**.
-- **Final Vertical Position Error**: **$-4,815.91\,\text{m}$**.
+- **Final Vertical Position Error**: **$-530.20\,\text{m}$**.
+- **Maximum Vertical Error**: **$530.20\,\text{m}$**.
+- **Final 3D Position Error**: **$3,292.29\,\text{m}$**.
 
 ---
 
-## 8. Drift-vs-Time Visualization
+## 9. Drift-vs-Time Visualization
 
 ![Ablation Stage 1 Open-Loop Drift](docs/images/ablation_stage1_drift.png)
 
-*Figure 1: Ablation Stage 1 open-loop strapdown INS performance on IO-VNBD Trip S1. Upper panel: Horizontal (2D) and Vertical (Up) position error versus elapsed time. Lower panel: Propagated open-loop trajectory versus Racelogic VBOX ground truth in local East-North coordinates.*
+*Figure 1: Ablation Stage 1 open-loop strapdown INS performance on IO-VNBD Trip S1. Upper panel: Horizontal (2D) and Vertical (|Up|) position error versus elapsed time. Lower panel: Propagated open-loop trajectory versus Racelogic VBOX ground truth in local East-North coordinates.*
 
 ---
 
-## 9. Physical Sanity Analysis & Error Source Attribution
+## 10. Physical Sanity Analysis & Error Source Attribution
 
-### 9.1 Qualitative Quadratic-to-Cubic Growth
+### 10.1 Qualitative Quadratic-to-Cubic Growth
 The observed position error growth is qualitatively consistent with known inertial navigation dynamics:
 - Pure acceleration bias $b_a$ leads to quadratic position error accumulation: $e_a(t) \approx \frac{1}{2} b_a t^2$.
 - Uncompensated gyroscope bias $b_g$ leads to attitude tilt error: $\delta\theta(t) \approx b_g t$.
@@ -167,12 +196,12 @@ The observed position error growth is qualitatively consistent with known inerti
 - Double integration of gravity leakage produces cubic position drift:
   $$p_{\text{drift}}(t) \approx \frac{1}{6} g b_g t^3$$
 
-### 9.2 Order-of-Magnitude Consistency
+### 10.2 Order-of-Magnitude Consistency
 Evaluating the cubic leakage relationship for a dynamic consumer gyroscope residual bias on the order of $b_g \approx 0.003\,\text{rad/s}$ ($0.17^\circ/\text{s}$):
 $$p_{\text{cubic}}(60\,\text{s}) \approx \frac{1}{6} \times 9.81 \times 0.003 \times (60)^3 \approx 1,059\,\text{m}$$
-Coupled with residual horizontal accelerometer bias and unmodeled vehicle turning dynamics, the observed **$3,249.32\,\text{m}$** horizontal error reflects expected unassisted divergence. This confirms the critical necessity of closed-loop attitude bounds (Phase 5 ESKF + Phase 7/8 ML models).
+Coupled with residual horizontal accelerometer bias and unmodeled vehicle turning dynamics, the observed **$3,249.32\,\text{m}$** horizontal error reflects expected unassisted divergence. In the vertical channel, downward tilt and specific force scale discrepancies yield **$-530.20\,\text{m}$**, which is physically consistent with double-integrating a small fraction of gravity leakage ($\sim 0.3\,\text{m/s}^2$) over 60 s ($\frac{1}{2} \times 0.3 \times 3600 \approx 540\,\text{m}$). This confirms the critical necessity of closed-loop attitude bounds (Phase 5 ESKF + Phase 7/8 ML models).
 
-### 9.3 Exploratory Standstill Diagnostic
+### 10.3 Exploratory Standstill Diagnostic
 As an exploratory diagnostic to isolate standstill behavior, the open-loop INS was executed over the initial stationary window (samples 20 to 450, 43.0 s at rest) with identity initial attitude $\mathbf{q}_0 = [1, 0, 0, 0]^T$ and zero initial velocity $\mathbf{v}_0 = [0, 0, 0]^T$:
 - Measured Horizontal Drift: **$607.27\,\text{m}$** ($14.1\,\text{m/s}$ average drift rate).
 - Measured Vertical Drift: **$30.93\,\text{m}$**.
@@ -180,7 +209,7 @@ As an exploratory diagnostic to isolate standstill behavior, the open-loop INS w
 
 ---
 
-## 10. Limitations & Disclosures
+## 11. Limitations & Disclosures
 
 1. **Unassisted Consumer IMU Physics**:
    - Consumer smartphone IMUs (InvenSense/Bosch MEMS) exhibit high noise density, thermal drift, and significant vibration-induced errors. Pure open-loop double integration without attitude corrections inevitably diverges within 15–30 seconds.
@@ -191,7 +220,7 @@ As an exploratory diagnostic to isolate standstill behavior, the open-loop INS w
 
 ---
 
-## 11. Test Suite & Verification Summary
+## 12. Test Suite & Verification Summary
 
 ### Pytest Execution
 ```
@@ -211,12 +240,13 @@ As an exploratory diagnostic to isolate standstill behavior, the open-loop INS w
 
 ---
 
-## 12. Conclusion & Readiness
+## 13. Conclusion & Readiness
 
 The Phase 4 classical strapdown INS mechanization is deterministic, numerically stable, and rigorously verified against closed-form analytical solutions and boundary conditions. The raw unassisted dead-reckoning baseline for Ablation Stage 1 has been empirically measured and recorded:
 - **$4.83\,\text{m}$ at $5\,\text{s}$**
 - **$20.52\,\text{m}$ at $10\,\text{s}$**
 - **$788.97\,\text{m}$ at $30\,\text{s}$**
 - **$3,249.32\,\text{m}$ at $60\,\text{s}$**
+- **$3,292.29\,\text{m}$ 3D Error at $60\,\text{s}$**
 
 No Phase 5 functionality (ESKF, Kalman updates, covariance propagation, or measurement models) exists in this codebase. Phase 4 is complete, fully verified, and ready to serve as the propagation backbone for Phase 5.

@@ -1,7 +1,16 @@
 {
   "trip_id": "S1",
   "benchmark_mode": "open_loop_strapdown_ins_with_oracle_initialization",
-  "ground_truth_source": "Racelogic VBOX (v_ref_lat, v_ref_lon, v_ref_alt_m, v_ref_speed_mps, v_ref_heading_deg)",
+  "ground_truth_source": "Racelogic VBOX (v_ref_lat, v_ref_lon, v_ref_alt_m_audited, v_ref_speed_mps, v_ref_heading_deg)",
+  "vbox_altitude_audit": {
+    "source_csv_column": " Height (km)",
+    "cache_field": "v_ref_alt_m",
+    "physical_unit": "meters",
+    "audit_finding": "Raw values in V-S1.csv are in meters (92m-144m). Phase 2 multiplied by 1000 based on header label; divided by 1000 here to recover true physical meters without mutating frozen cache.",
+    "start_altitude_m": 127.39,
+    "end_altitude_m": 131.68,
+    "altitude_change_60s_m": 4.29
+  },
   "evaluation_window": {
     "start_sample_idx": 19500,
     "end_sample_idx": 20100,
@@ -11,7 +20,7 @@
   "initial_conditions": {
     "ref_lat": 52.4165342,
     "ref_lon": -1.5785448,
-    "ref_alt_m": 127390.0,
+    "ref_alt_m": 127.39,
     "initial_speed_mps": 11.813,
     "initial_velocity_enu": [
       -11.399,
@@ -38,9 +47,11 @@
   },
   "drift_metrics": {
     "final_horizontal_error_m": 3249.32,
-    "final_3d_error_m": 5809.57,
+    "final_vertical_error_m": -530.2,
+    "final_3d_error_m": 3292.29,
     "horizontal_rmse_m": 1487.53,
     "max_horizontal_error_m": 3249.32,
+    "max_vertical_error_m": 530.2,
     "checkpoints": {
       "drift_5s_m": 4.83,
       "drift_10s_m": 20.52,

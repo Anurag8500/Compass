@@ -83,17 +83,24 @@ def run_ablation_stage1(
     valid_win = preprocessed.is_validated[win_slice]
 
     # 4. Initialize Rigid Session Origin & Local ENU Frame
-    # Use consistent Racelogic VBOX ground-truth coordinates at the evaluation start sample
+    # NOTE (Issues 7, 8, 9 & 10): Authoritative VBOX Altitude Audit:
+    # In raw IO-VNBD V-files, the header reads ' Height (km)' but numerical values are in
+    # meters (92m - 144m, matching Coventry/UK terrain elevation). Phase 2 parse_v_file
+    # scaled this column by 1000.0, storing [92050, 143890] into cached v_ref_alt_m.
+    # To maintain byte-for-byte immutability of the frozen Phase 2 cache while recovering
+    # physically accurate elevations, we divide cached v_ref_alt_m by 1000.0.
+    v_alt_true_m = trip.v_ref_alt_m[win_slice] / 1000.0
+
     ref_lat = float(trip.v_ref_lat[start_sample_idx])
     ref_lon = float(trip.v_ref_lon[start_sample_idx])
-    ref_alt = float(trip.v_ref_alt_m[start_sample_idx])
+    ref_alt = float(v_alt_true_m[0])
     geo_ref = GeoReference(lat_ref=ref_lat, lon_ref=ref_lon, alt_ref=ref_alt)
 
     # Convert Ground Truth reference trajectory to ENU using consistent VBOX fields
     gt_east, gt_north, gt_up = geo_ref.geodetic_to_enu(
         trip.v_ref_lat[win_slice],
         trip.v_ref_lon[win_slice],
-        trip.v_ref_alt_m[win_slice],
+        v_alt_true_m,
     )
 
     # 5. Initialization Policy (Oracle Initial Condition for Open-Loop Benchmark)
@@ -162,6 +169,9 @@ def run_ablation_stage1(
     rmse_horiz = float(np.sqrt(np.mean(err_horiz ** 2)))
     max_horiz_err = float(np.max(err_horiz))
 
+    final_vert_err = float(err_u[-1])
+    max_vert_err = float(np.max(np.abs(err_u)))
+
     print("\n" + "=" * 60)
     print("ABLATION STAGE 1: REAL-DATA OPEN-LOOP RESULTS")
     print("=" * 60)
@@ -169,9 +179,11 @@ def run_ablation_stage1(
     print(f"Duration:                     {actual_duration:.2f} s")
     print(f"Samples Integrated:           {traj.steps_integrated}")
     print(f"Final Horizontal Error:       {final_horiz_err:.2f} m")
+    print(f"Final Vertical Error:         {final_vert_err:.2f} m")
     print(f"Final 3D Error:               {final_3d_err:.2f} m")
     print(f"Horizontal RMSE:              {rmse_horiz:.2f} m")
     print(f"Max Horizontal Error:         {max_horiz_err:.2f} m")
+    print(f"Max Vertical Error:           {max_vert_err:.2f} m")
     for cp_key, cp_val in checkpoints.items():
         print(f"  - Checkpoint {cp_key}: {cp_val} m")
     print("=" * 60 + "\n")
@@ -183,7 +195,7 @@ def run_ablation_stage1(
 
         # Subplot 1: Drift vs Time
         axes[0].plot(elapsed_time, err_horiz, label="Horizontal Drift (2D)", color="#d9534f", linewidth=2)
-        axes[0].plot(elapsed_time, np.abs(err_u), label="Vertical Drift (Up)", color="#337ab7", linewidth=1.5, linestyle="--")
+        axes[0].plot(elapsed_time, np.abs(err_u), label="Vertical Drift (|Up|)", color="#337ab7", linewidth=1.5, linestyle="--")
         axes[0].set_ylabel("Position Error (m)", fontsize=12)
         axes[0].set_title(
             f"Ablation Stage 1: Classical Open-Loop Strapdown INS Drift\n"
@@ -213,7 +225,16 @@ def run_ablation_stage1(
     results: Dict[str, Any] = {
         "trip_id": trip.trip_id,
         "benchmark_mode": "open_loop_strapdown_ins_with_oracle_initialization",
-        "ground_truth_source": "Racelogic VBOX (v_ref_lat, v_ref_lon, v_ref_alt_m, v_ref_speed_mps, v_ref_heading_deg)",
+        "ground_truth_source": "Racelogic VBOX (v_ref_lat, v_ref_lon, v_ref_alt_m_audited, v_ref_speed_mps, v_ref_heading_deg)",
+        "vbox_altitude_audit": {
+            "source_csv_column": " Height (km)",
+            "cache_field": "v_ref_alt_m",
+            "physical_unit": "meters",
+            "audit_finding": "Raw values in V-S1.csv are in meters (92m-144m). Phase 2 multiplied by 1000 based on header label; divided by 1000 here to recover true physical meters without mutating frozen cache.",
+            "start_altitude_m": round(ref_alt, 2),
+            "end_altitude_m": round(float(v_alt_true_m[-1]), 2),
+            "altitude_change_60s_m": round(float(v_alt_true_m[-1] - v_alt_true_m[0]), 2),
+        },
         "evaluation_window": {
             "start_sample_idx": start_sample_idx,
             "end_sample_idx": end_sample_idx,
@@ -233,9 +254,11 @@ def run_ablation_stage1(
         },
         "drift_metrics": {
             "final_horizontal_error_m": round(final_horiz_err, 2),
+            "final_vertical_error_m": round(final_vert_err, 2),
             "final_3d_error_m": round(final_3d_err, 2),
             "horizontal_rmse_m": round(rmse_horiz, 2),
             "max_horizontal_error_m": round(max_horiz_err, 2),
+            "max_vertical_error_m": round(max_vert_err, 2),
             "checkpoints": checkpoints,
         },
         "steps_integrated": traj.steps_integrated,
