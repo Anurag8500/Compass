@@ -13,10 +13,23 @@ Coordinate Frames:
     Z_v: Upward vertical direction (level at rest yields f_z^v ≈ +9.81 m/s^2).
 - Navigation Frame (n): Local East-North-Up (ENU) tangent plane.
 
-Alignment Strategy:
+Alignment Strategy & Observability Principles:
 1. Roll and pitch (tilt): Estimated from specific force gravity reaction during stationary calibration.
-2. Yaw (azimuth): Estimated by comparing gyro-integrated heading against GNSS track heading
-   during straight-line vehicle motion above configurable minimum speed threshold (e.g. >= 3.0 m/s).
+   The rest support reaction vector is rotated onto vehicle vertical +Z_v = [0, 0, 1]^T.
+2. Yaw (azimuth): Gyro integration provides orientation CHANGE only; it does not provide
+   absolute mounting yaw by itself. Mounting yaw is resolved only when there is a valid
+   observable azimuth constraint:
+       a. An explicitly supplied/reference mounting yaw (`reference_yaw_deg`), OR
+       b. Qualifying straight-line longitudinal acceleration correlation:
+          During straight-line forward acceleration (v >= min_speed, dv/dt >= min_accel,
+          |omega_z| <= max_yaw_rate), vehicle acceleration acts along +X_v. Leveled horizontal
+          specific force correlates with this forward direction to resolve mounting yaw.
+3. Unresolved Yaw Semantics: If available motion data do not provide sufficient observability
+   (e.g., cruising, low speed, turning, or high circular dispersion across acceleration epochs),
+   mounting yaw remains strictly UNRESOLVED (is_yaw_aligned=False, yaw_deg=0.0).
+   The implementation NEVER fabricates an arbitrary or unobserved mounting yaw.
+   In this state, +Z_v is guaranteed vertical/gravity-aligned, but horizontal axes (X_v, Y_v)
+   remain provisional; downstream navigation fusion (Phase 5 ESKF) must resolve azimuth.
 """
 
 from __future__ import annotations
@@ -91,13 +104,29 @@ class MountingAlignment:
         f_m^v = R_b_v (f_m^b - b_a_prior)
         omega_m^v = R_b_v (omega_m^b - b_g)
 
+    CRITICAL YAW OBSERVABILITY & FRAME SEMANTICS:
+    - When is_yaw_aligned=True:
+        R_b^v resolves both vertical tilt and horizontal mounting azimuth.
+        X_v = vehicle forward, Y_v = vehicle left/lateral, Z_v = vehicle up.
+    - When is_yaw_aligned=False:
+        R_b^v is strictly tilt/gravity-aligned. The +Z_v axis is definitively vertical
+        (aligned with local gravity reaction at rest), but the horizontal mounting azimuth
+        remains provisional/unresolved.
+        In this case, X_v and Y_v must NOT be treated as definitively vehicle-forward/lateral;
+        downstream navigation aiding (ESKF GNSS heading, Non-Holonomic Constraints)
+        must resolve the remaining horizontal azimuth degree of freedom.
+
     Attributes:
         R_b_v: 3x3 direction cosine matrix satisfying v_v = R_b_v @ v_b.
         roll_deg: Estimated mounting roll angle in degrees.
         pitch_deg: Estimated mounting pitch angle in degrees.
-        yaw_deg: Estimated mounting yaw angle in degrees.
+        yaw_deg: Estimated mounting yaw angle in degrees (0.0 if unresolved).
         is_yaw_aligned: True if yaw has been resolved from valid observations.
-        alignment_status: Diagnostic status string indicating calibration observability.
+        alignment_status: Diagnostic status string indicating calibration observability:
+            - RESOLVED_REFERENCE_AZIMUTH: explicitly supplied mounting yaw.
+            - RESOLVED_ACCELERATION_CORRELATION: derived from straight-line forward acceleration.
+            - UNRESOLVED_INSUFFICIENT_OBSERVABILITY: insufficient straight-line acceleration epochs.
+            - UNRESOLVED_HIGH_CIRCULAR_DISPERSION: acceleration correlation lacked angular consistency.
     """
     R_b_v: np.ndarray
     roll_deg: float
@@ -190,8 +219,19 @@ def estimate_mounting_alignment(
        |omega_z| <= max_yaw_rate), the vehicle acceleration vector acts along vehicle +X.
        The horizontal specific force in the tilt-leveled device frame correlates with this
        forward direction, resolving mounting yaw with confidence gating.
+    CRITICAL YAW OBSERVABILITY & FRAME SEMANTICS:
+    - When is_yaw_aligned=True:
+        R_b^v resolves both vertical tilt and horizontal mounting azimuth.
+        X_v = vehicle forward, Y_v = vehicle left/lateral, Z_v = vehicle up.
+    - When is_yaw_aligned=False:
+        R_b^v provides only gravity/tilt alignment. The +Z_v axis is definitively vertical
+        (aligned with local gravity reaction at rest), but horizontal azimuth remains
+        provisional/unresolved. In this state, X_v and Y_v must NOT be treated as
+        definitively vehicle-forward/lateral; downstream navigation fusion (Phase 5 ESKF)
+        is responsible for resolving the remaining horizontal heading degree of freedom.
     If observability criteria are not met, yaw is NOT fabricated; the algorithm
-    explicitly returns is_yaw_aligned=False and yaw_deg=0.0.
+    explicitly returns is_yaw_aligned=False and yaw_deg=0.0 (where 0.0 is a sentinel
+    reporting value and NOT a measured mounting azimuth).
 
     Args:
         stationary_accel: (N, 3) stationary specific force measurements at rest (m/s^2).
@@ -315,7 +355,7 @@ def estimate_mounting_alignment(
                 else:
                     status = f"UNRESOLVED_HIGH_CIRCULAR_DISPERSION (std={circular_std_deg:.1f}deg > {max_circular_dispersion_deg}deg)"
             else:
-                status = f"UNRESOLVED_INSUFFICIENT_ACCELERATION_EPOCHS (found {len(qualifying_idx)} < {min_valid_epochs})"
+                status = f"UNRESOLVED_INSUFFICIENT_OBSERVABILITY (found {len(qualifying_idx)} < {min_valid_epochs} epochs)"
 
     # 3. Form authoritative R_b^v: R_b^v = R_z(yaw) @ R_tilt
     # Standard active rotation matrix about Z_v:

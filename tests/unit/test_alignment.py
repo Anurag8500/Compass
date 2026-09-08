@@ -254,3 +254,33 @@ class TestMountingAlignment:
 
         assert aligned.timestamp_ns == 1_000_000_000
         assert aligned.is_usable_for_integration is True
+
+    def test_unresolved_yaw_guarantees_vertical_tilt_alignment_only(self) -> None:
+        """Verify that when yaw is unresolved, R_b^v guarantees +Z_v vertical alignment,
+        while horizontal azimuth remains explicitly provisional and unaligned to vehicle forward."""
+        # Phone mounted with 20 deg roll, -15 deg pitch, and unknown arbitrary yaw relative to vehicle
+        r, p = math.radians(20.0), math.radians(-15.0)
+        Rx = np.array([[1, 0, 0], [0, math.cos(r), -math.sin(r)], [0, math.sin(r), math.cos(r)]])
+        Ry = np.array([[math.cos(p), 0, math.sin(p)], [0, 1, 0], [-math.sin(p), 0, math.cos(p)]])
+        R_tilt_true = Ry @ Rx
+
+        # Body accelerometer at rest measures support reaction: f_b = R_tilt_true^T @ [0, 0, 9.80665]
+        f_b_stat = R_tilt_true.T @ np.array([0.0, 0.0, 9.80665])
+        accel_stat = np.tile(f_b_stat, (40, 1))
+
+        # No moving data available: yaw cannot be observed
+        alignment = estimate_mounting_alignment(stationary_accel=accel_stat)
+
+        assert alignment.is_yaw_aligned is False
+        assert alignment.yaw_deg == 0.0
+        assert alignment.alignment_status.startswith("UNRESOLVED")
+
+        # Crucial property: +Z_v IS strictly aligned with gravity reaction
+        f_v = alignment.transform_specific_force(f_b_stat)
+        assert f_v[0] == pytest.approx(0.0, abs=1e-5)
+        assert f_v[1] == pytest.approx(0.0, abs=1e-5)
+        assert f_v[2] == pytest.approx(9.80665, abs=1e-5)
+
+        # But horizontal axes are provisional (identity yaw applied)
+        assert alignment.R_b_v[2, 2] != 1.0  # R_b^v is not identity (it corrected roll/pitch tilt)
+        assert np.linalg.det(alignment.R_b_v) == pytest.approx(1.0, abs=1e-12)

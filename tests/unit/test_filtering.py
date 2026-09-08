@@ -98,13 +98,15 @@ class TestIMUFilter:
         assert np.mean(out[:, 2]) == pytest.approx(9.81, abs=0.1)
 
     def test_short_sequence_behavior_and_warning(self) -> None:
-        """Verify behavior for short sequences (< 5 samples and < padlen)."""
+        """Verify behavior and last_filtering_mode for short sequences (< 5 samples and < padlen)."""
         filt = IMUFilter(sampling_rate_hz=10.0, cutoff_hz=3.0, use_zero_phase=True)
+        assert filt.last_filtering_mode is None
 
-        # Extremely short (< 5) returns copy
+        # Extremely short (< 5) returns copy and sets passthrough mode
         short = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
         out_short = filt.filter_series(short)
         assert np.array_equal(out_short, short)
+        assert filt.last_filtering_mode == "passthrough"
 
         # Length 8: shorter than default padlen (15), should emit warning and fallback to causal
         medium_short = np.tile([0.0, 0.0, 9.8], (8, 1))
@@ -112,14 +114,29 @@ class TestIMUFilter:
             out_med = filt.filter_series(medium_short)
         assert out_med.shape == (8, 3)
         assert np.isfinite(out_med).all()
+        assert filt.last_filtering_mode == "causal"
 
-    def test_filtering_mode_discovery(self) -> None:
-        """Verify discoverable filtering_mode property reflects active configuration."""
+        # Normal long sequence: sets zero_phase mode
+        long_data = np.tile([0.0, 0.0, 9.8], (50, 1))
+        filt.filter_series(long_data)
+        assert filt.last_filtering_mode == "zero_phase"
+
+    def test_filtering_mode_discovery_and_runtime_tracking(self) -> None:
+        """Verify configured filtering_mode and dynamic last_filtering_mode tracking."""
         filt_zp = IMUFilter(sampling_rate_hz=10.0, cutoff_hz=3.0, use_zero_phase=True)
         assert filt_zp.filtering_mode == "zero_phase"
+        assert filt_zp.last_filtering_mode is None
+
+        data = np.tile([1.0, 0.0, 9.8], (30, 1))
+        filt_zp.filter_series(data)
+        assert filt_zp.last_filtering_mode == "zero_phase"
 
         filt_causal = IMUFilter(sampling_rate_hz=10.0, cutoff_hz=3.0, use_zero_phase=False)
         assert filt_causal.filtering_mode == "causal"
+        assert filt_causal.last_filtering_mode is None
+
+        filt_causal.filter_series(data)
+        assert filt_causal.last_filtering_mode == "causal"
 
     def test_non_finite_input_raises_value_error(self) -> None:
         """Filter must reject input arrays containing NaN or Inf."""

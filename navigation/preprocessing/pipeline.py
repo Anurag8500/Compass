@@ -31,6 +31,24 @@ from navigation.preprocessing.recalibration_trigger import RecalibrationDetector
 class PreprocessedTrip:
     """Complete preprocessed vehicle-frame output of Phase 3.
 
+    CRITICAL YAW OBSERVABILITY & DOWNSTREAM USAGE:
+    - If alignment.is_yaw_aligned is True:
+        R_b^v resolves both vertical tilt and horizontal mounting azimuth.
+        The output frame is interpreted as:
+            X_v = vehicle forward
+            Y_v = vehicle left/lateral
+            Z_v = vehicle up
+    - If alignment.is_yaw_aligned is False:
+        R_b^v provides only gravity/tilt alignment.
+        Therefore:
+        - +Z_v is gravity/vertical aligned
+        - horizontal azimuth remains provisional/unresolved
+        - X_v and Y_v MUST NOT be described as definitively vehicle-forward/lateral
+        - downstream navigation fusion (Phase 5 ESKF) is responsible for resolving
+          the remaining horizontal heading degree of freedom.
+        - 0.0 degrees reported for yaw is strictly a sentinel/reporting value,
+          NOT a measured mounting azimuth.
+
     Attributes:
         trip_id: Unique trip identifier.
         timestamps_ns: (N,) int64 working timestamp grid.
@@ -43,6 +61,7 @@ class PreprocessedTrip:
         recalibration_events: List of detected sensor shift/discontinuity events.
         is_validated: (N,) bool integration mask from Phase 2.
         quality_flags: (N,) uint32 quality flag mask.
+        filtering_mode: Actual filtering mode applied ('zero_phase', 'causal', 'passthrough').
     """
     trip_id: str
     timestamps_ns: np.ndarray
@@ -55,10 +74,24 @@ class PreprocessedTrip:
     recalibration_events: List[RecalibrationEvent]
     is_validated: np.ndarray
     quality_flags: np.ndarray
+    filtering_mode: str = "zero_phase"
 
 
 class PreprocessingPipeline:
-    """Encapsulates the Phase 3 classical preprocessing chain."""
+    """Encapsulates the Phase 3 classical preprocessing chain.
+
+    Pipeline sequence:
+    1. Stationary calibration (b_g, initial roll/pitch tilt).
+    2. Mounting alignment (R_b^v: tilt alignment + conditional yaw correlation).
+    3. Vehicle-frame transformation:
+           f_m^v = R_b^v (f_m^b - b_a_prior)
+           omega_m^v = R_b^v (omega_m^b - b_g)
+    4. Dual-stage filtering (median spike suppression + 4th-order Butterworth).
+    5. Recalibration discontinuity monitoring.
+
+    CRITICAL BOUNDARY: Does NOT perform strapdown INS integration, ESKF estimation,
+    ML inference, NHC constraints, map-matching, or permanent gravity subtraction.
+    """
 
     def __init__(
         self,
@@ -149,6 +182,8 @@ class PreprocessingPipeline:
             stationary_mask=stationary_mask,
         )
 
+        actual_filt_mode = self.filter.last_filtering_mode or self.filter.filtering_mode
+
         return PreprocessedTrip(
             trip_id=trip.trip_id,
             timestamps_ns=ts.copy(),
@@ -161,4 +196,5 @@ class PreprocessingPipeline:
             recalibration_events=events,
             is_validated=trip.is_validated.copy(),
             quality_flags=trip.quality_flags.copy(),
+            filtering_mode=actual_filt_mode,
         )

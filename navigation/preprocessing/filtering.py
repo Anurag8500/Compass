@@ -141,10 +141,11 @@ class IMUFilter:
         self.use_zero_phase = use_zero_phase
 
         self.b, self.a = compute_butterworth_4th_coeffs(self.cutoff_hz, self.sampling_rate_hz)
+        self.last_filtering_mode: Optional[str] = None
 
     @property
     def filtering_mode(self) -> str:
-        """Discoverable filtering mode: 'zero_phase' or 'causal'."""
+        """Configured nominal filtering mode: 'zero_phase' or 'causal'."""
         if self.use_zero_phase and SCIPY_AVAILABLE:
             return "zero_phase"
         return "causal"
@@ -166,6 +167,7 @@ class IMUFilter:
             raise ValueError("Input data contains non-finite values (NaN/Inf)")
 
         if arr.shape[0] < 5:
+            self.last_filtering_mode = "passthrough"
             return arr.copy()
 
         # 1. Median filter stage (spike suppression)
@@ -192,12 +194,14 @@ class IMUFilter:
             else:
                 # Execute zero-phase filtfilt without catching generic exceptions silently
                 padlen = canonical_padlen
+                self.last_filtering_mode = "zero_phase"
                 if med_filtered.ndim == 1:
                     return sp_signal.filtfilt(self.b, self.a, med_filtered, padlen=padlen)
                 else:
                     return sp_signal.filtfilt(self.b, self.a, med_filtered, axis=0, padlen=padlen)
 
         # Causal Direct-Form II / IIR filtering
+        self.last_filtering_mode = "causal"
         if med_filtered.ndim == 1:
             return self._apply_iir_1d(med_filtered)
         else:
