@@ -62,6 +62,9 @@
       "drift_60s_m": 3249.32
     }
   },
-  "steps_integrated": 601,
+  "sample_count": 601,
+  "propagation_steps": 600,
+  "skipped_steps": 0,
+  "steps_integrated": 600,
   "steps_skipped": 0
 }

@@ -169,7 +169,7 @@ Over the 60.00-second evaluation window, open-loop position error evolved as fol
 | **$60.0\,\text{s}$** | **$3,249.32\,\text{m}$** | **$3,292.29\,\text{m}$** | **$-530.20\,\text{m}$** | **$763.2\,\text{m}$** | **$425.7\%$** |
 
 ### Summary Statistics
-- **Evaluation Duration**: $60.00\,\text{s}$ (601 samples integrated, 0 skipped).
+- **Evaluation Duration**: $60.00\,\text{s}$ (601 trajectory samples recorded; 600 propagation intervals integrated; 0 intervals skipped).
 - **Horizontal Position Error RMSE**: **$1,487.53\,\text{m}$**.
 - **Maximum Horizontal Error**: **$3,249.32\,\text{m}$**.
 - **Final Vertical Position Error**: **$-530.20\,\text{m}$**.
@@ -225,14 +225,14 @@ As an exploratory diagnostic to isolate standstill behavior, the open-loop INS w
 ### Pytest Execution
 ```
 .venv\Scripts\python.exe -m pytest -v
-============================= 172 passed in 4.34s =============================
+============================= 173 passed in 4.47s =============================
 ```
 - **Phase 1 Schemas**: 50 passed
 - **Phase 2 Pipeline**: 53 passed
 - **Phase 3 Preprocessing**: 47 passed
 - **Phase 4 Local Geodetic Frame (`test_frame_conversion.py`)**: 7 passed
-- **Phase 4 Strapdown INS Propagation (`test_ins_propagation.py`)**: 15 passed
-- **Total Tests**: **172 passed**, **0 failures**, **0 errors**.
+- **Phase 4 Strapdown INS Propagation (`test_ins_propagation.py`)**: 16 passed
+- **Total Tests**: **173 passed**, **0 failures**, **0 errors**.
 
 ### Dataset & Cache Immutability Audit
 - **Raw CSVs**: 288 files in `data/raw/io_vnbd` | Collective SHA-256: `04aa4da188a6b0417d202f83f959ef3238dedf2a6ccfa075ff7b0751fe072a99` (**UNMODIFIED**)

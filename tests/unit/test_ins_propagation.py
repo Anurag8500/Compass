@@ -390,11 +390,61 @@ class TestStrapdownINSPropagation:
         ins = StrapdownINS(initial_timestamp_ns=0)
         traj = ins.propagate_trajectory(timestamps, f_m_v, omega_m_v, is_validated=is_validated)
 
-        # Both step 4->5 (target is invalid) and 5->6 (source is invalid) must be skipped
+        # Both step 4->5 (target is invalid) and 5->6 (source is invalid) must be skipped.
+        # Out of 10 total intervals across 11 samples, 2 skipped -> 8 integrated.
         assert traj.steps_skipped == 2
-        assert traj.steps_integrated == 9
+        assert traj.steps_integrated == 8
+        assert traj.propagation_steps == 8
+        assert traj.skipped_steps == 2
+        assert traj.sample_count == 11
 
         # Crucial: Catastrophic spike was NEVER integrated!
         assert np.allclose(traj.velocities_enu, 0.0, atol=1e-10)
         assert np.allclose(traj.positions_enu, 0.0, atol=1e-10)
         assert np.allclose(traj.quaternions, [1.0, 0.0, 0.0, 0.0], atol=1e-10)
+
+    def test_n_propagation_step_count_semantics(self) -> None:
+        """Verify propagation step count semantics: N samples yield N - 1 intervals.
+
+        The initial state is recorded at index 0, but is NOT counted as a propagation step.
+        For N samples with 0 skips:
+            sample_count = N
+            propagation_steps = N - 1
+            skipped_steps = 0
+            steps_integrated + steps_skipped == N - 1
+        """
+        # Test Case 1: 50 fully valid samples -> exactly 49 propagation steps
+        n_50 = 50
+        ts_50 = np.arange(n_50, dtype=np.int64) * 100_000_000
+        f_50 = np.tile([0.0, 0.0, STANDARD_GRAVITY], (n_50, 1))
+        w_50 = np.zeros((n_50, 3))
+
+        ins_50 = StrapdownINS(initial_timestamp_ns=0)
+        traj_50 = ins_50.propagate_trajectory(ts_50, f_50, w_50)
+
+        assert traj_50.sample_count == 50
+        assert len(traj_50.positions_enu) == 50
+        assert len(traj_50.velocities_enu) == 50
+        assert len(traj_50.quaternions) == 50
+        assert traj_50.steps_integrated == 49
+        assert traj_50.propagation_steps == 49
+        assert traj_50.steps_skipped == 0
+        assert traj_50.skipped_steps == 0
+        assert traj_50.propagation_steps + traj_50.skipped_steps == n_50 - 1
+
+        # Test Case 2: 601 fully valid samples (Ablation Stage 1 size) -> exactly 600 propagation steps
+        n_601 = 601
+        ts_601 = np.arange(n_601, dtype=np.int64) * 100_000_000
+        f_601 = np.tile([0.0, 0.0, STANDARD_GRAVITY], (n_601, 1))
+        w_601 = np.zeros((n_601, 3))
+
+        ins_601 = StrapdownINS(initial_timestamp_ns=0)
+        traj_601 = ins_601.propagate_trajectory(ts_601, f_601, w_601)
+
+        assert traj_601.sample_count == 601
+        assert len(traj_601.positions_enu) == 601
+        assert traj_601.steps_integrated == 600
+        assert traj_601.propagation_steps == 600
+        assert traj_601.steps_skipped == 0
+        assert traj_601.skipped_steps == 0
+        assert traj_601.propagation_steps + traj_601.skipped_steps == n_601 - 1

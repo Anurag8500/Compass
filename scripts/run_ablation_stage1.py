@@ -177,7 +177,9 @@ def run_ablation_stage1(
     print("=" * 60)
     print(f"Trip ID:                      {trip.trip_id}")
     print(f"Duration:                     {actual_duration:.2f} s")
-    print(f"Samples Integrated:           {traj.steps_integrated}")
+    print(f"Samples Recorded:             {traj.sample_count}")
+    print(f"Propagation Steps:            {traj.propagation_steps}")
+    print(f"Skipped Intervals:            {traj.skipped_steps}")
     print(f"Final Horizontal Error:       {final_horiz_err:.2f} m")
     print(f"Final Vertical Error:         {final_vert_err:.2f} m")
     print(f"Final 3D Error:               {final_3d_err:.2f} m")
@@ -261,6 +263,9 @@ def run_ablation_stage1(
             "max_vertical_error_m": round(max_vert_err, 2),
             "checkpoints": checkpoints,
         },
+        "sample_count": traj.sample_count,
+        "propagation_steps": traj.propagation_steps,
+        "skipped_steps": traj.skipped_steps,
         "steps_integrated": traj.steps_integrated,
         "steps_skipped": traj.steps_skipped,
     }

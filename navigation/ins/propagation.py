@@ -88,15 +88,41 @@ class INSState:
 
 @dataclass(frozen=True)
 class INSTrajectory:
-    """Full time-history of propagated INS states over a batch trajectory."""
-    timestamps_ns: np.ndarray       # (M,) int64
-    positions_enu: np.ndarray       # (M, 3) float64
-    velocities_enu: np.ndarray      # (M, 3) float64
-    quaternions: np.ndarray         # (M, 4) float64
-    accelerations_enu: np.ndarray   # (M, 3) float64
+    """Full time-history of propagated INS states over a batch trajectory.
+
+    Attributes:
+        timestamps_ns: (N,) int64 timestamps in nanoseconds.
+        positions_enu: (N, 3) float64 positions [East, North, Up] in meters.
+        velocities_enu: (N, 3) float64 velocities in m/s.
+        quaternions: (N, 4) float64 attitude quaternions mapping vehicle to ENU.
+        accelerations_enu: (N, 3) float64 coordinate accelerations in m/s^2.
+        final_state: Final state estimate (INSState).
+        steps_integrated: Number of successful propagation intervals (N - 1 - skipped).
+        steps_skipped: Number of skipped propagation intervals.
+    """
+    timestamps_ns: np.ndarray       # (N,) int64
+    positions_enu: np.ndarray       # (N, 3) float64
+    velocities_enu: np.ndarray      # (N, 3) float64
+    quaternions: np.ndarray         # (N, 4) float64
+    accelerations_enu: np.ndarray   # (N, 3) float64
     final_state: INSState
     steps_integrated: int
     steps_skipped: int
+
+    @property
+    def sample_count(self) -> int:
+        """Total number of recorded trajectory states (N samples)."""
+        return len(self.timestamps_ns)
+
+    @property
+    def propagation_steps(self) -> int:
+        """Total number of successful propagation intervals between consecutive samples."""
+        return self.steps_integrated
+
+    @property
+    def skipped_steps(self) -> int:
+        """Total number of skipped propagation intervals."""
+        return self.steps_skipped
 
 
 class StrapdownINS:
@@ -306,7 +332,9 @@ class StrapdownINS:
         q_hist[0] = self._state.q
         accel_hist[0] = self._state.coordinate_accel_enu
 
-        integrated_count = 1
+        # Propagation steps counter: initial state is recorded at k=0, not integrated.
+        # For N samples, there are N - 1 possible intervals between consecutive samples.
+        integrated_count = 0
         skipped_count = 0
 
         for k in range(n_samples - 1):
