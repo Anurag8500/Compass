@@ -22,7 +22,7 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["navigation*", "ml*"]
+include = ["navigation*", "ml*", "data*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

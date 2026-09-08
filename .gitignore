@@ -16,6 +16,11 @@ dist/
 data/raw/
 data/raw/*
 
+# Derived processed dataset cache (reproducible from raw + pipeline, never committed)
+data/cache/
+data/cache/*
+*.npz
+
 # ML models and binary artifacts
 models/*.onnx
 models/*.tflite
