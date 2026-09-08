@@ -1,21 +1,24 @@
 """S/V sensor and vehicle reference stream synchronization for COMPASS.
 
 Aligns smartphone (S-) IMU/GPS records with vehicle CAN / Racelogic VBOX (V-)
-ground-truth telemetry onto a unified, monotonic timestamp base using genuine
+ground-truth telemetry onto a unified timestamp base using genuine
 timestamp-based interpolation.
 
-Interpolation Policies:
-- Continuous Spatial / Dynamic Telemetry (lat, lon, alt, speed, wheel speeds, CAN accel, yaw rate):
-  Linear interpolation over valid overlap time intervals (gap <= 1.0s).
-- Angular Quantities (heading / track azimuth):
-  Circular interpolation via atan2(sin, cos) to eliminate 0/360 wrap-around boundary artifacts.
-- Discrete / Categorical Signals (gear, handbrake):
-  Nearest-neighbor / zero-order hold (preserves integer state without fractional values).
-- Maximum Interpolation Gap Policy:
-  If source measurements exhibit a gap > 1.0s (1,000,000,000 ns), interpolation across that gap
-  is rejected (marked NaN / unavailable) to prevent fabricating trajectory dynamics.
-- Extrapolation Policy:
-  No extrapolation is permitted outside the valid source timestamp interval [t_v_min, t_v_max].
+Timing Architecture:
+- Smartphone (S) stream:
+  Raw device timestamps recorded in milliseconds since logger startup ('TIME SINCE START (ms)').
+  Preserved unmodified in SynchronizedTrip.raw_timestamps_ns.
+  In RELATIVE_ELAPSED mode, a monotonic working target grid is constructed by unwrapping
+  session counter resets (diff < 0). Duplicate timestamps (diff == 0) are NOT advanced;
+  they remain at their recorded time and are flagged by QualityTagger for omission.
+- Vehicle (V) ground truth stream:
+  VBOX timestamps recorded in seconds since UTC start of day ('Time Since Start of Day (seconds)').
+  Validated, strictly deduplicated (keeping first occurrence) BEFORE timeline construction.
+  Clock regressions in ground truth (diff < 0) are strictly rejected as invalid data.
+- Relative Elapsed Alignment:
+  Aligns relative elapsed time from stream origin (t - t[0]).
+  Removes clock-origin discrepancy across independently initialized sensor clocks.
+  Does NOT eliminate clock rate drift; drift is explicitly measured and evaluated against policy.
 """
 
 from __future__ import annotations
@@ -282,6 +285,21 @@ class SynchronizedTrip:
 
         diag_kwargs = {}
         if self.diagnostics is not None:
+            diag_kwargs["diag_clock_origin_offset_s"] = self.diagnostics.clock_origin_offset_s
+            diag_kwargs["diag_relative_elapsed_offset_s"] = self.diagnostics.relative_elapsed_offset_s
+            diag_kwargs["diag_clock_drift_s"] = self.diagnostics.clock_drift_s
+            diag_kwargs["diag_overlap_duration_s"] = self.diagnostics.overlap_duration_s
+            diag_kwargs["diag_source_sample_count"] = self.diagnostics.source_sample_count
+            diag_kwargs["diag_target_sample_count"] = self.diagnostics.target_sample_count
+            diag_kwargs["diag_valid_interpolated_count"] = self.diagnostics.valid_interpolated_count
+            diag_kwargs["diag_out_of_bounds_count"] = self.diagnostics.out_of_bounds_count
+            diag_kwargs["diag_gap_violation_count"] = self.diagnostics.gap_violation_count
+            diag_kwargs["diag_valid_coverage_ratio"] = self.diagnostics.valid_coverage_ratio
+            diag_kwargs["diag_sync_mode"] = self.diagnostics.sync_mode
+            diag_kwargs["diag_status"] = self.diagnostics.status
+            diag_kwargs["diag_sync_passed"] = self.diagnostics.sync_passed
+
+            # Legacy compatibility aliases
             diag_kwargs["sync_mode"] = self.diagnostics.sync_mode
             diag_kwargs["sync_status"] = self.diagnostics.status
             diag_kwargs["sync_passed"] = self.diagnostics.sync_passed
@@ -332,21 +350,21 @@ class SynchronizedTrip:
             row_count = len(data["timestamps_ns"])
             raw_ts = data["raw_timestamps_ns"] if "raw_timestamps_ns" in data else data["timestamps_ns"]
             diag = None
-            if "sync_mode" in data and "clock_drift_s" in data:
+            if "diag_sync_mode" in data or "sync_mode" in data:
                 diag = SyncDiagnostics(
-                    clock_origin_offset_s=float(data["sync_offset_s"]),
-                    relative_elapsed_offset_s=0.0,
-                    clock_drift_s=float(data["clock_drift_s"]),
-                    overlap_duration_s=float(data["overlap_duration_s"]),
-                    source_sample_count=int(data.get("valid_interpolated_count", row_count)),
-                    target_sample_count=row_count,
-                    valid_interpolated_count=int(data.get("valid_interpolated_count", row_count)),
-                    out_of_bounds_count=int(data.get("out_of_bounds_count", 0)),
-                    gap_violation_count=int(data.get("gap_violation_count", 0)),
-                    valid_coverage_ratio=float(data.get("valid_coverage_ratio", 1.0)),
-                    sync_mode=str(data["sync_mode"]),
-                    status=str(data.get("sync_status", "PASSED")),
-                    sync_passed=bool(data.get("sync_passed", True)),
+                    clock_origin_offset_s=float(data["diag_clock_origin_offset_s"]) if "diag_clock_origin_offset_s" in data else float(data["sync_offset_s"]),
+                    relative_elapsed_offset_s=float(data["diag_relative_elapsed_offset_s"]) if "diag_relative_elapsed_offset_s" in data else 0.0,
+                    clock_drift_s=float(data["diag_clock_drift_s"]) if "diag_clock_drift_s" in data else float(data["clock_drift_s"]),
+                    overlap_duration_s=float(data["diag_overlap_duration_s"]) if "diag_overlap_duration_s" in data else float(data["overlap_duration_s"]),
+                    source_sample_count=int(data["diag_source_sample_count"]) if "diag_source_sample_count" in data else int(data.get("valid_interpolated_count", row_count)),
+                    target_sample_count=int(data["diag_target_sample_count"]) if "diag_target_sample_count" in data else row_count,
+                    valid_interpolated_count=int(data["diag_valid_interpolated_count"]) if "diag_valid_interpolated_count" in data else int(data.get("valid_interpolated_count", row_count)),
+                    out_of_bounds_count=int(data["diag_out_of_bounds_count"]) if "diag_out_of_bounds_count" in data else int(data.get("out_of_bounds_count", 0)),
+                    gap_violation_count=int(data["diag_gap_violation_count"]) if "diag_gap_violation_count" in data else int(data.get("gap_violation_count", 0)),
+                    valid_coverage_ratio=float(data["diag_valid_coverage_ratio"]) if "diag_valid_coverage_ratio" in data else float(data.get("valid_coverage_ratio", 1.0)),
+                    sync_mode=str(data["diag_sync_mode"]) if "diag_sync_mode" in data else str(data["sync_mode"]),
+                    status=str(data["diag_status"]) if "diag_status" in data else str(data.get("sync_status", "PASSED")),
+                    sync_passed=bool(data["diag_sync_passed"]) if "diag_sync_passed" in data else bool(data.get("sync_passed", True)),
                 )
 
             return cls(
@@ -383,21 +401,30 @@ class SynchronizedTrip:
 
 
 def _unwrap_monotonic_elapsed_ns(timestamps_ns: np.ndarray, nominal_step_ns: int = 100_000_000) -> np.ndarray:
-    """Compute strictly monotonically advancing relative elapsed time in nanoseconds, unwrapping session timer resets."""
+    """Compute relative elapsed time in nanoseconds, unwrapping session timer resets (diff < 0).
+
+    Timing Semantics:
+    - Only unwrap genuine backward counter resets where raw_curr < prev_raw (diff < 0).
+    - Does NOT advance or fabricate offsets for duplicate timestamps (diff == 0).
+      Duplicate records remain at their recorded elapsed time, and are flagged by
+      QualityTagger (FLAG_DUPLICATE_TIMESTAMP) for exclusion from the validated stream.
+    """
     n = len(timestamps_ns)
     if n == 0:
         return np.zeros(0, dtype=np.int64)
     elapsed = np.zeros(n, dtype=np.int64)
     offset = 0
     t0 = timestamps_ns[0]
-    for i in range(n):
-        if i > 0:
-            raw_curr = timestamps_ns[i]
-            prev_unwrapped = timestamps_ns[i - 1] + offset
+    for i in range(1, n):
+        raw_curr = timestamps_ns[i]
+        prev_raw = timestamps_ns[i - 1]
+        if raw_curr < prev_raw:
+            # Genuine backward counter reset (e.g. logger restarted from 0)
+            prev_unwrapped = prev_raw + offset
             curr_unwrapped = raw_curr + offset
-            if curr_unwrapped <= prev_unwrapped:
-                offset += (prev_unwrapped - curr_unwrapped) + nominal_step_ns
+            offset += (prev_unwrapped - curr_unwrapped) + nominal_step_ns
         elapsed[i] = (timestamps_ns[i] + offset) - t0
+    elapsed[0] = 0
     return elapsed
 
 
@@ -415,15 +442,12 @@ def synchronize_s_v(
     """Synchronize a paired S-trip and V-trip onto the S target timestamp grid.
 
     Timing Architecture:
-    - IO-VNBD dataset utilizes RELATIVE_ELAPSED mode: S-files record elapsed time since logger
-      activation (~0-5s start), whereas V-files record seconds since UTC start of day (~30000-50000s).
-      Aligning relative elapsed times (t - t[0]) provides an exact, zero-drift alignment across
-      independently initialized sensor clocks.
-    - An explicit SyncPolicy / SyncMode governs alignment mode rather than magic origin heuristics.
     - S-trip raw timestamps are preserved unmodified in SynchronizedTrip.raw_timestamps_ns.
     - Synchronized working time grid is strictly monotonic and stored in SynchronizedTrip.timestamps_ns.
-    - Source timestamps are strictly validated: non-finite values are rejected, and duplicates
-      are cleanly deduplicated before interpolation.
+    - Source V timestamps are strictly validated and deduplicated BEFORE any timeline construction.
+    - Genuine backward timestamps in source V raise SyncValidationError.
+    - Relative elapsed alignment aligns relative elapsed time since stream origin (t - t[0]),
+      removing clock-origin differences without eliminating clock rate drift.
     """
     if tagger is None:
         tagger = QualityTagger()
@@ -456,26 +480,31 @@ def synchronize_s_v(
     if n_v < 2:
         raise SyncValidationError(f"Cannot synchronize trip {trip_id}: V-file has {n_v} rows (minimum 2 required).")
 
-    # Source timestamp validation
+    # 2. Target (S) stream timestamp validity checks
+    if not np.isfinite(t_s_ns).all():
+        raise SyncValidationError(f"Target stream (S) contains non-finite timestamps in trip {trip_id}")
+    if (t_s_ns < 0).any():
+        bad_s_count = int(np.sum(t_s_ns < 0))
+        raise SyncValidationError(
+            f"Target stream (S) contains {bad_s_count} negative/sentinel timestamp(s) (< 0) in trip {trip_id}."
+        )
+
+    # 3. Source (V) stream timestamp validity checks BEFORE any manipulation
     if not np.isfinite(t_v_ns).all():
         raise SyncValidationError(f"Source stream (V) contains non-finite timestamps in trip {trip_id}")
+    if (t_v_ns < 0).any():
+        bad_count = int(np.sum(t_v_ns < 0))
+        raise SyncValidationError(
+            f"Source stream (V) contains {bad_count} negative/sentinel timestamp(s) (< 0) in trip {trip_id}. "
+            "Invalid source timestamps cannot participate in synchronization or interpolation."
+        )
 
-    clock_origin_offset_s = float(t_v_ns[0] - t_s_ns[0]) / 1e9
-
-    # Build target and source grids according to explicit policy
-    if policy.mode == SyncMode.RELATIVE_ELAPSED:
-        t_target = _unwrap_monotonic_elapsed_ns(t_s_ns)
-        t_source = _unwrap_monotonic_elapsed_ns(t_v_ns)
-    else:
-        t_target = t_s_ns
-        t_source = t_v_ns
-
-    # 3. Ensure source timestamps are strictly increasing for interpolation.
+    # 4. Source (V) deduplication BEFORE any timeline construction or unwrapping
     # Deterministic duplicate handling: keep first occurrence of any duplicate timestamp.
-    v_diffs = np.diff(t_source)
-    if len(v_diffs) > 0 and (v_diffs <= 0).any():
-        unique_mask = np.concatenate([[True], v_diffs > 0])
-        t_source_clean = t_source[unique_mask]
+    v_diffs = np.diff(t_v_ns)
+    if len(v_diffs) > 0 and (v_diffs == 0).any():
+        unique_mask = np.concatenate([[True], v_diffs != 0])
+        t_v_clean = t_v_ns[unique_mask]
         v_lat_clean = v_trip.lat[unique_mask]
         v_lon_clean = v_trip.lon[unique_mask]
         v_alt_clean = v_trip.alt_m[unique_mask]
@@ -487,7 +516,7 @@ def synchronize_s_v(
         v_gear_clean = v_trip.gear[unique_mask]
         v_hbrk_clean = v_trip.handbrake[unique_mask]
     else:
-        t_source_clean = t_source
+        t_v_clean = t_v_ns
         v_lat_clean = v_trip.lat
         v_lon_clean = v_trip.lon
         v_alt_clean = v_trip.alt_m
@@ -499,8 +528,26 @@ def synchronize_s_v(
         v_gear_clean = v_trip.gear
         v_hbrk_clean = v_trip.handbrake
 
-    if len(t_source_clean) < 2:
+    # 5. Source (V) non-monotonic / backward timestamp detection
+    clean_v_diffs = np.diff(t_v_clean)
+    if len(clean_v_diffs) > 0 and (clean_v_diffs < 0).any():
+        raise SyncValidationError(
+            f"Source stream (V) contains non-monotonic/backward timestamps (diff < 0) after deduplication in trip {trip_id}. "
+            "Ground truth VBOX clock regressions violate the source timeline contract."
+        )
+
+    if len(t_v_clean) < 2:
         raise SyncValidationError(f"Source stream has fewer than 2 valid samples after cleaning in trip {trip_id}")
+
+    clock_origin_offset_s = float(t_v_clean[0] - t_s_ns[0]) / 1e9
+
+    # 6. Build target and source grids according to explicit policy
+    if policy.mode == SyncMode.RELATIVE_ELAPSED:
+        t_target = _unwrap_monotonic_elapsed_ns(t_s_ns)
+        t_source_clean = t_v_clean - t_v_clean[0]
+    else:
+        t_target = t_s_ns
+        t_source_clean = t_v_clean
 
     # 4. Interpolate continuous telemetry
     effective_gap = policy.max_gap_ns

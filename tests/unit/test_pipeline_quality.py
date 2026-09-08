@@ -22,7 +22,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from data.pipeline.manifest import DatasetManifestBuilder, ManifestRow, derive_driver_map_from_categorised
+from data.pipeline.manifest import (
+    DatasetDiscoveryAudit,
+    DatasetManifestBuilder,
+    ManifestRow,
+    audit_dataset_discovery,
+    compute_downstream_readiness,
+    derive_driver_map_from_categorised,
+)
 from data.pipeline.outage_index import OutageIndex, OutageWindow
 from data.pipeline.parse import ParsedSTrip, ParsedVTrip, parse_s_file, parse_v_file
 from data.pipeline.quality_tagger import (
@@ -94,12 +101,26 @@ class TestQualityTagger:
         gyro = np.zeros((3, 3))
 
         report = self.tagger.evaluate_arrays(t, accel, gyro)
-        assert report.invalid_timestamp_count == 2
+        # Negative timestamp is invalid; 0 is valid session origin
+        assert report.invalid_timestamp_count == 1
         assert report.quality_flags[0] & FLAG_INVALID_TIMESTAMP
-        assert report.quality_flags[1] & FLAG_INVALID_TIMESTAMP
+        assert not (report.quality_flags[1] & FLAG_INVALID_TIMESTAMP)
         assert not report.is_validated[0]
-        assert not report.is_validated[1]
+        assert report.is_validated[1]
         assert report.is_validated[2]
+
+    def test_overlapping_flags(self) -> None:
+        """One sample triggering multiple quality flags (e.g. extreme motion + dropout)."""
+        t = np.array([100_000_000, 500_000_000], dtype=np.int64)  # delta_t = 400ms > 300ms -> dropout
+        accel = np.array([[0.0, 0.0, 9.81], [50.0, 0.0, 0.0]])    # sample 1: ||f|| = 50 > 39.24 -> extreme motion
+        gyro = np.array([[0.0, 0.0, 0.0], [0.0, 15.0, 0.0]])     # sample 1: ||omega|| = 15 > 10 -> extreme motion
+
+        report = self.tagger.evaluate_arrays(t, accel, gyro)
+        assert report.quality_flags[1] & FLAG_EXTREME_MOTION
+        assert report.quality_flags[1] & FLAG_SENSOR_DROPOUT
+        assert report.extreme_motion_count == 1
+        assert report.dropout_count == 1
+        assert report.is_validated[1]
 
     def test_non_monotonic_timestamp_detection(self) -> None:
         t = np.array([100_000_000, 300_000_000, 200_000_000, 400_000_000], dtype=np.int64)
@@ -204,13 +225,14 @@ class TestStationaryDetector:
         )
 
     def test_stationary_requires_both_accel_and_gyro(self) -> None:
+        rng = np.random.default_rng(12345)
         n = 50
         t = np.arange(n) * 100_000_000
 
         # Case 1: Both calm -> stationary
         accel_calm = np.zeros((n, 3))
-        accel_calm[:, 2] = 9.81 + np.random.normal(0, 0.01, n)
-        gyro_calm = np.random.normal(0, 0.001, (n, 3))
+        accel_calm[:, 2] = 9.81 + rng.normal(0, 0.01, n)
+        gyro_calm = rng.normal(0, 0.001, (n, 3))
 
         segs, mask = self.detector.detect(t, accel_calm, gyro_calm)
         assert len(segs) >= 1
@@ -218,14 +240,14 @@ class TestStationaryDetector:
 
         # Case 2: Accel noisy, gyro calm -> NOT stationary
         accel_noisy = np.zeros((n, 3))
-        accel_noisy[:, 2] = 9.81 + np.random.normal(0, 1.0, n)  # High variance
+        accel_noisy[:, 2] = 9.81 + rng.normal(0, 1.0, n)  # High variance
 
         segs_a, mask_a = self.detector.detect(t, accel_noisy, gyro_calm)
         assert len(segs_a) == 0
         assert not mask_a.any()
 
         # Case 3: Accel calm, gyro noisy (e.g. steering or rotating vehicle) -> NOT stationary
-        gyro_noisy = np.random.normal(0, 0.5, (n, 3))  # High variance
+        gyro_noisy = rng.normal(0, 0.5, (n, 3))  # High variance
         segs_g, mask_g = self.detector.detect(t, accel_calm, gyro_noisy)
         assert len(segs_g) == 0
         assert not mask_g.any()
@@ -311,11 +333,11 @@ class TestParserSynthetic:
 
         tagger = QualityTagger()
         report = tagger.evaluate_arrays(parsed_s.timestamps_ns, parsed_s.accel_raw, parsed_s.gyro_raw)
-        # -100ms and 0ms should both be tagged as FLAG_INVALID_TIMESTAMP
+        # -100ms should be tagged as FLAG_INVALID_TIMESTAMP; 0ms is the valid session origin
         assert report.quality_flags[0] & FLAG_INVALID_TIMESTAMP
-        assert report.quality_flags[1] & FLAG_INVALID_TIMESTAMP
+        assert not (report.quality_flags[1] & FLAG_INVALID_TIMESTAMP)
         assert not report.is_validated[0]
-        assert not report.is_validated[1]
+        assert report.is_validated[1]
         assert report.is_validated[2]
 
     def test_ambiguous_timestamp_column_raises(self, tmp_path: Path) -> None:
@@ -639,7 +661,7 @@ class TestSyncHardening:
             synchronize_s_v(s_trip, v_trip, trip_id="T_Drift", branch="Test", policy=strict_policy)
 
     def test_sync_invalid_source_timestamps_rejected(self) -> None:
-        """Non-finite source timestamps must raise SyncValidationError."""
+        """Non-positive or non-finite source timestamps must raise SyncValidationError."""
         t_s = np.array([100_000_000, 200_000_000], dtype=np.int64)
         t_v = np.array([100_000_000, -1], dtype=np.int64)
 
@@ -658,8 +680,31 @@ class TestSyncHardening:
             steering_angle_deg=np.full(2, np.nan), handbrake=np.full(2, -1, dtype=np.int32), gear=np.full(2, -1, dtype=np.int32),
         )
 
-        with pytest.raises(SyncValidationError):
+        with pytest.raises(SyncValidationError, match="negative/sentinel timestamp"):
             synchronize_s_v(s_trip, v_trip, trip_id="T_BadV", branch="Test", policy=SyncPolicy(enforce_strict_validation=True))
+
+    def test_sync_invalid_target_timestamps_rejected(self) -> None:
+        """Negative or non-finite target timestamps must raise SyncValidationError."""
+        t_s = np.array([-1, -2], dtype=np.int64)
+        t_v = np.array([100_000_000, 200_000_000], dtype=np.int64)
+
+        s_trip = ParsedSTrip(
+            file_path=Path("s.csv"), row_count=2, timestamps_ns=t_s,
+            accel_raw=np.zeros((2, 3)), gyro_raw=np.zeros((2, 3)),
+            gnss_lat=np.full(2, np.nan), gnss_lon=np.full(2, np.nan), gnss_alt=np.full(2, np.nan),
+            gnss_speed_mps=np.full(2, np.nan), gnss_bearing_deg=np.full(2, np.nan),
+            gnss_accuracy_m=np.full(2, np.nan), gnss_sat_count=np.full(2, -1, dtype=np.int32), has_gnss=False,
+        )
+        v_trip = ParsedVTrip(
+            file_path=Path("v.csv"), row_count=2, timestamps_ns=t_v,
+            lat=np.array([10.0, 10.0]), lon=np.array([20.0, 20.0]), alt_m=np.full(2, np.nan),
+            speed_mps=np.array([5.0, 5.0]), heading_deg=np.array([0.0, 0.0]), yaw_rate_rads=np.zeros(2),
+            wheel_speeds_rads=np.full((2, 4), np.nan), can_accel_g=np.full((2, 2), np.nan),
+            steering_angle_deg=np.full(2, np.nan), handbrake=np.full(2, -1, dtype=np.int32), gear=np.full(2, -1, dtype=np.int32),
+        )
+
+        with pytest.raises(SyncValidationError, match="negative/sentinel timestamp"):
+            synchronize_s_v(s_trip, v_trip, trip_id="T_BadS", branch="Test", policy=SyncPolicy(enforce_strict_validation=True))
 
     def test_sync_duplicate_source_timestamps_handled_deterministically(self) -> None:
         """Duplicate source timestamps in V are deduplicated, keeping the first occurrence."""
@@ -721,6 +766,97 @@ class TestSyncHardening:
         loaded = SynchronizedTrip.load_npz(cache_file)
         assert np.array_equal(loaded.raw_timestamps_ns, t_s)
         assert np.array_equal(loaded.timestamps_ns, synced.timestamps_ns)
+
+    def test_sync_v_duplicate_timestamps_deduplicated_before_unwrapping(self) -> None:
+        """V duplicate timestamps must be deduplicated before timeline construction, keeping first occurrence."""
+        t_s = np.array([0, 100_000_000, 200_000_000], dtype=np.int64)
+        # V has duplicate at 100ms with conflicting speeds
+        t_v = np.array([0, 100_000_000, 100_000_000, 200_000_000], dtype=np.int64)
+        v_speed = np.array([10.0, 25.0, 999.0, 40.0])
+
+        s_trip = ParsedSTrip(
+            file_path=Path("s.csv"), row_count=3, timestamps_ns=t_s,
+            accel_raw=np.zeros((3, 3)), gyro_raw=np.zeros((3, 3)),
+            gnss_lat=np.full(3, np.nan), gnss_lon=np.full(3, np.nan), gnss_alt=np.full(3, np.nan),
+            gnss_speed_mps=np.full(3, np.nan), gnss_bearing_deg=np.full(3, np.nan),
+            gnss_accuracy_m=np.full(3, np.nan), gnss_sat_count=np.full(3, -1, dtype=np.int32), has_gnss=False,
+        )
+        v_trip = ParsedVTrip(
+            file_path=Path("v.csv"), row_count=4, timestamps_ns=t_v,
+            lat=np.array([1.0, 2.0, 2.0, 3.0]), lon=np.array([1.0, 2.0, 2.0, 3.0]), alt_m=np.full(4, np.nan),
+            speed_mps=v_speed, heading_deg=np.zeros(4), yaw_rate_rads=np.zeros(4),
+            wheel_speeds_rads=np.full((4, 4), np.nan), can_accel_g=np.full((4, 2), np.nan),
+            steering_angle_deg=np.full(4, np.nan), handbrake=np.full(4, -1, dtype=np.int32), gear=np.full(4, -1, dtype=np.int32),
+        )
+
+        synced, _ = synchronize_s_v(s_trip, v_trip, trip_id="T_DupV", branch="Test")
+        # Target sample 1 is at 100ms. Must interpolate to exactly 25.0, NOT 999.0 and NOT shifted forward
+        assert synced.v_ref_speed_mps[1] == pytest.approx(25.0)
+
+    def test_sync_v_backward_timestamps_rejected(self) -> None:
+        """Genuine backward timestamps in V must raise SyncValidationError."""
+        t_s = np.array([0, 100_000_000, 200_000_000], dtype=np.int64)
+        t_v = np.array([0, 200_000_000, 100_000_000, 300_000_000], dtype=np.int64)  # Jumps back 200ms -> 100ms
+
+        s_trip = ParsedSTrip(
+            file_path=Path("s.csv"), row_count=3, timestamps_ns=t_s,
+            accel_raw=np.zeros((3, 3)), gyro_raw=np.zeros((3, 3)),
+            gnss_lat=np.full(3, np.nan), gnss_lon=np.full(3, np.nan), gnss_alt=np.full(3, np.nan),
+            gnss_speed_mps=np.full(3, np.nan), gnss_bearing_deg=np.full(3, np.nan),
+            gnss_accuracy_m=np.full(3, np.nan), gnss_sat_count=np.full(3, -1, dtype=np.int32), has_gnss=False,
+        )
+        v_trip = ParsedVTrip(
+            file_path=Path("v.csv"), row_count=4, timestamps_ns=t_v,
+            lat=np.zeros(4), lon=np.zeros(4), alt_m=np.full(4, np.nan),
+            speed_mps=np.array([1.0, 2.0, 3.0, 4.0]), heading_deg=np.zeros(4), yaw_rate_rads=np.zeros(4),
+            wheel_speeds_rads=np.full((4, 4), np.nan), can_accel_g=np.full((4, 2), np.nan),
+            steering_angle_deg=np.full(4, np.nan), handbrake=np.full(4, -1, dtype=np.int32), gear=np.full(4, -1, dtype=np.int32),
+        )
+
+        with pytest.raises(SyncValidationError, match="non-monotonic/backward"):
+            synchronize_s_v(s_trip, v_trip, trip_id="T_V_Back", branch="Test")
+
+    def test_cache_diagnostics_roundtrip_exact(self, tmp_path: Path) -> None:
+        """All SyncDiagnostics fields must survive save_npz -> load_npz identically."""
+        t_s = np.array([0, 100_000_000, 200_000_000], dtype=np.int64)
+        t_v = np.array([10_000_000_000, 10_100_000_000, 10_200_000_000], dtype=np.int64)
+
+        s_trip = ParsedSTrip(
+            file_path=Path("s.csv"), row_count=3, timestamps_ns=t_s,
+            accel_raw=np.zeros((3, 3)), gyro_raw=np.zeros((3, 3)),
+            gnss_lat=np.full(3, np.nan), gnss_lon=np.full(3, np.nan), gnss_alt=np.full(3, np.nan),
+            gnss_speed_mps=np.full(3, np.nan), gnss_bearing_deg=np.full(3, np.nan),
+            gnss_accuracy_m=np.full(3, np.nan), gnss_sat_count=np.full(3, -1, dtype=np.int32), has_gnss=False,
+        )
+        v_trip = ParsedVTrip(
+            file_path=Path("v.csv"), row_count=3, timestamps_ns=t_v,
+            lat=np.zeros(3), lon=np.zeros(3), alt_m=np.full(3, np.nan),
+            speed_mps=np.array([5.0, 5.0, 5.0]), heading_deg=np.zeros(3), yaw_rate_rads=np.zeros(3),
+            wheel_speeds_rads=np.full((3, 4), np.nan), can_accel_g=np.full((3, 2), np.nan),
+            steering_angle_deg=np.full(3, np.nan), handbrake=np.full(3, -1, dtype=np.int32), gear=np.full(3, -1, dtype=np.int32),
+        )
+
+        synced, _ = synchronize_s_v(s_trip, v_trip, trip_id="T_Cache", branch="Test")
+        assert synced.diagnostics is not None
+
+        cache_file = tmp_path / "test_diag.npz"
+        synced.save_npz(cache_file)
+        loaded = SynchronizedTrip.load_npz(cache_file)
+
+        assert loaded.diagnostics is not None
+        assert loaded.diagnostics.clock_origin_offset_s == synced.diagnostics.clock_origin_offset_s
+        assert loaded.diagnostics.relative_elapsed_offset_s == synced.diagnostics.relative_elapsed_offset_s
+        assert loaded.diagnostics.clock_drift_s == pytest.approx(synced.diagnostics.clock_drift_s)
+        assert loaded.diagnostics.overlap_duration_s == pytest.approx(synced.diagnostics.overlap_duration_s)
+        assert loaded.diagnostics.source_sample_count == synced.diagnostics.source_sample_count
+        assert loaded.diagnostics.target_sample_count == synced.diagnostics.target_sample_count
+        assert loaded.diagnostics.valid_interpolated_count == synced.diagnostics.valid_interpolated_count
+        assert loaded.diagnostics.out_of_bounds_count == synced.diagnostics.out_of_bounds_count
+        assert loaded.diagnostics.gap_violation_count == synced.diagnostics.gap_violation_count
+        assert loaded.diagnostics.valid_coverage_ratio == pytest.approx(synced.diagnostics.valid_coverage_ratio)
+        assert loaded.diagnostics.sync_mode == synced.diagnostics.sync_mode
+        assert loaded.diagnostics.status == synced.diagnostics.status
+        assert loaded.diagnostics.sync_passed == synced.diagnostics.sync_passed
 
 
 class TestStationaryDetectorHardening:
@@ -815,4 +951,43 @@ class TestManifestHardening:
         assert "sync_clock_drift_s" in d
         assert "sync_overlap_duration_s" in d
         assert "sync_valid_coverage_ratio" in d
+        assert "sync_passed" in d
+        assert "downstream_ready" in d
+        assert d["sync_passed"] is True
+        assert d["downstream_ready"] is True
+
+    def test_dataset_discovery_audit(self, tmp_path: Path) -> None:
+        """Programmatic discovery audit must identify matched pairs, unmatched files, and malformed names."""
+        data_dir = tmp_path / "test_raw"
+        cat_dir = data_dir / "Categorised IOVNB Dataset" / "M (Driver B)"
+        cat_dir.mkdir(parents=True)
+        (cat_dir / "S-M.csv").write_text("dummy", encoding="utf-8")
+        (cat_dir / "V-M.csv").write_text("dummy", encoding="utf-8")
+
+        # S without V
+        s_only_dir = data_dir / "Categorised IOVNB Dataset" / "S_Solo"
+        s_only_dir.mkdir(parents=True)
+        (s_only_dir / "S-Solo.csv").write_text("dummy", encoding="utf-8")
+
+        # V without S
+        v_only_dir = data_dir / "Uncategorised IOVNB Dataset"
+        v_only_dir.mkdir(parents=True)
+        (v_only_dir / "V-Ghost.csv").write_text("dummy", encoding="utf-8")
+
+        # Malformed CSV
+        (data_dir / "random_notes.csv").write_text("dummy", encoding="utf-8")
+
+        audit = audit_dataset_discovery(data_dir)
+        assert audit.matched_pairs_count == 1
+        assert audit.unmatched_s_count == 1
+        assert audit.unmatched_v_count == 1
+        assert len(audit.malformed_csv_files) == 1
+        assert not audit.is_fully_paired
+
+    def test_downstream_readiness_semantics(self) -> None:
+        """Downstream readiness requires sync_passed, validated_rows >= 100, and non-empty inputs."""
+        assert compute_downstream_readiness(sync_passed=True, validated_rows=500, raw_s_rows=500, raw_v_rows=500) is True
+        assert compute_downstream_readiness(sync_passed=False, validated_rows=500, raw_s_rows=500, raw_v_rows=500) is False
+        assert compute_downstream_readiness(sync_passed=True, validated_rows=50, raw_s_rows=500, raw_v_rows=500) is False
+        assert compute_downstream_readiness(sync_passed=True, validated_rows=500, raw_s_rows=0, raw_v_rows=500) is False
 

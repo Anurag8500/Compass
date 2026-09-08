@@ -17,7 +17,7 @@ import hashlib
 from pathlib import Path
 import sys
 import time
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 import numpy as np
 import pandas as pd
 
@@ -26,7 +26,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from data.pipeline.manifest import DatasetManifestBuilder
+from data.pipeline.manifest import DatasetDiscoveryAudit, DatasetManifestBuilder, audit_dataset_discovery
 
 
 def compute_file_sha256(path: Path) -> str:
@@ -52,25 +52,36 @@ def record_all_raw_fingerprints(raw_dir: Path) -> Dict[str, Tuple[str, int, floa
 def verify_all_raw_fingerprints(raw_dir: Path, before_fingerprints: Dict[str, Tuple[str, int, float]]) -> None:
     """Verify that every raw CSV file remains 100% byte-for-byte identical."""
     csv_files = sorted(raw_dir.rglob("*.csv"))
-    assert len(csv_files) == len(before_fingerprints), (
-        f"Raw file count changed: {len(csv_files)} vs {len(before_fingerprints)}"
-    )
+    if len(csv_files) != len(before_fingerprints):
+        raise RuntimeError(f"Raw file count changed: {len(csv_files)} vs {len(before_fingerprints)}")
 
     for f in csv_files:
         key = f.as_posix()
-        assert key in before_fingerprints, f"Unexpected new raw file: {key}"
+        if key not in before_fingerprints:
+            raise RuntimeError(f"Unexpected new raw file: {key}")
         before_sha, before_size, before_mtime = before_fingerprints[key]
 
         current_sha = compute_file_sha256(f)
         stat = f.stat()
 
-        assert current_sha == before_sha, f"Raw file {f.name} SHA-256 changed! Before: {before_sha}, After: {current_sha}"
-        assert stat.st_size == before_size, f"Raw file {f.name} size changed! Before: {before_size}, After: {stat.st_size}"
-        assert stat.st_mtime == before_mtime, f"Raw file {f.name} mtime changed! Before: {before_mtime}, After: {stat.st_mtime}"
+        if current_sha != before_sha:
+            raise RuntimeError(f"Raw file {f.name} SHA-256 changed! Before: {before_sha}, After: {current_sha}")
+        if stat.st_size != before_size:
+            raise RuntimeError(f"Raw file {f.name} size changed! Before: {before_size}, After: {stat.st_size}")
+        if stat.st_mtime != before_mtime:
+            raise RuntimeError(f"Raw file {f.name} mtime changed! Before: {before_mtime}, After: {stat.st_mtime}")
 
 
-def generate_data_quality_report(manifest_df: pd.DataFrame, report_path: Path) -> None:
+def generate_data_quality_report(
+    manifest_df: pd.DataFrame,
+    report_path: Path,
+    audit: Optional[DatasetDiscoveryAudit] = None,
+    raw_dir: Optional[Path] = None,
+) -> None:
     """Generate docs/data_quality_report.md dynamically from manifest dataframe with verified measurements."""
+    if audit is None and raw_dir is not None:
+        audit = audit_dataset_discovery(raw_dir)
+
     total_pairs = len(manifest_df)
     unique_physical_trips = int(manifest_df["trip_id"].str.lower().nunique())
     unique_drivers = sorted(manifest_df["driver_id"].unique())
@@ -80,7 +91,13 @@ def generate_data_quality_report(manifest_df: pd.DataFrame, report_path: Path) -
     total_validated_rows = int(manifest_df["validated_rows"].sum())
     total_omitted_rows = int(manifest_df["omitted_rows"].sum())
     total_duration_hours = float(manifest_df["duration_s"].sum()) / 3600.0
-    median_rate_hz = float(manifest_df["measured_rate_hz"].median())
+
+    # Rate statistics (dynamic distribution, range, IQR)
+    rates = manifest_df["measured_rate_hz"].dropna()
+    median_rate_hz = float(rates.median()) if len(rates) > 0 else 10.0
+    min_rate_hz = float(rates.min()) if len(rates) > 0 else 10.0
+    max_rate_hz = float(rates.max()) if len(rates) > 0 else 10.0
+    iqr_rate_hz = float(rates.quantile(0.75) - rates.quantile(0.25)) if len(rates) > 0 else 0.0
 
     # Bitmask counts directly from manifest
     total_flag_ok = int(manifest_df["flag_ok_count"].sum())
@@ -98,12 +115,45 @@ def generate_data_quality_report(manifest_df: pd.DataFrame, report_path: Path) -
     unique_stat_trips = int(manifest_df[manifest_df["has_stationary_segment"]]["trip_id"].str.lower().nunique())
     total_stat_segs = int(manifest_df["stationary_segment_count"].sum())
     total_stat_hours = float(manifest_df["total_stationary_duration_s"].sum()) / 3600.0
+    num_branches = manifest_df["branch"].nunique() if "branch" in manifest_df.columns else 1
+    stat_intervals_per_branch = total_stat_segs // num_branches if num_branches > 0 else total_stat_segs
 
     # Synchronization diagnostics summary
     mean_overlap_s = float(manifest_df["sync_overlap_duration_s"].mean()) if "sync_overlap_duration_s" in manifest_df.columns else 0.0
     mean_coverage_pct = float(manifest_df["sync_valid_coverage_ratio"].mean()) * 100.0 if "sync_valid_coverage_ratio" in manifest_df.columns else 100.0
     mean_drift_s = float(manifest_df["sync_clock_drift_s"].mean()) if "sync_clock_drift_s" in manifest_df.columns else 0.0
+    # Synchronization policy breakdown
     passed_sync = int((manifest_df["sync_status"] == "PASSED").sum()) if "sync_status" in manifest_df.columns else total_pairs
+    failed_sync = total_pairs - passed_sync
+    downstream_ready_count = int(manifest_df["downstream_ready"].sum()) if "downstream_ready" in manifest_df.columns else passed_sync
+
+    # Dynamic failure summary
+    failed_trips_df = manifest_df[manifest_df["sync_status"] != "PASSED"]
+    if len(failed_trips_df) > 0:
+        flagged_summary_lines = []
+        for _, r in failed_trips_df.iterrows():
+            flagged_summary_lines.append(f"  * `{r['trip_id']}` ({r['branch']}): {r['sync_status']} (drift = {r['sync_clock_drift_s']:.2f}s)")
+        flagged_summary_text = "\n".join(flagged_summary_lines)
+        flagged_names_short = ", ".join(sorted(failed_trips_df["trip_id"].unique()))
+    else:
+        flagged_summary_text = "  * None (all trips satisfied synchronization policy)"
+        flagged_names_short = "None"
+
+    # Data-driven omission breakdown explanation
+    omission_reasons = []
+    non_mono_trips_count = int(manifest_df[manifest_df["non_monotonic_count"] > 0]["trip_id"].str.lower().nunique()) if "non_monotonic_count" in manifest_df.columns else 0
+    dup_trips_count = int(manifest_df[manifest_df["duplicate_count"] > 0]["trip_id"].str.lower().nunique()) if "duplicate_count" in manifest_df.columns else 0
+
+    if total_nan > 0:
+        omission_reasons.append(f"{total_nan:,} non-finite/NaN IMU or timestamp samples")
+    if total_invalid_t > 0:
+        omission_reasons.append(f"{total_invalid_t:,} negative/invalid timestamp samples")
+    if total_non_mono > 0:
+        omission_reasons.append(f"{total_non_mono:,} non-monotonic session restart samples across {non_mono_trips_count} unique trip(s)")
+    if total_dup > 0:
+        omission_reasons.append(f"{total_dup:,} duplicate timestamp samples across {dup_trips_count} unique trip(s)")
+
+    omission_reason_str = ", ".join(omission_reasons) if omission_reasons else "None (all samples were computable)"
 
     # Outage summary
     has_real_outages_ds = bool(manifest_df["has_real_outages_in_dataset"].any())
@@ -130,6 +180,16 @@ def generate_data_quality_report(manifest_df: pd.DataFrame, report_path: Path) -
         stat_files=("has_stationary_segment", "sum"),
     ).reset_index()
 
+    # Programmatic pairing audit string
+    if audit is not None:
+        pairing_audit_str = (
+            f"Programmatic discovery audit: {audit.matched_pairs_count} matched pairs, "
+            f"{audit.unmatched_s_count} unmatched S-files, {audit.unmatched_v_count} unmatched V-files "
+            f"across {audit.total_csv_files_found} discovered CSV files."
+        )
+    else:
+        pairing_audit_str = f"Evaluated across {total_pairs} matched dataset pairs."
+
     content = f"""# COMPASS IO-VNBD Data Quality Report (Phase 2)
 **Execution Date**: {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}  
 **Pipeline Version**: Phase 2 (v1.0 - Hardened, Audit-Verified)  
@@ -139,19 +199,22 @@ def generate_data_quality_report(manifest_df: pd.DataFrame, report_path: Path) -
 
 ## 1. Executive Summary & Inventory
 
-The COMPASS Phase 2 offline data pipeline processed the complete IO-VNBD synchronized dataset archive. All {total_pairs} matched S/V pairs (representing {unique_physical_trips} unique physical driving trips across {', '.join(unique_drivers)} in both Categorised and Uncategorised branches) were successfully parsed, quality-tagged, synchronized via genuine timestamp-based interpolation, and serialized to cached binary arrays (`.npz`).
+The COMPASS Phase 2 offline data pipeline ingested, audited, and processed the IO-VNBD synchronized dataset archive. All {total_pairs} matched S/V pairs (representing {unique_physical_trips} unique physical driving trips across {', '.join(unique_drivers)}) were parsed and quality-tagged. Genuine timestamp-based interpolation was performed for all pairs. Under the configured synchronization acceptance policy, {passed_sync} pairs passed all criteria and {failed_sync} pairs were flagged as policy failures.
 
 | Metric | Value | Architectural Interpretation |
 |---|---|---|
-| **Total Matched Pairs** | **{total_pairs} pairs** ({unique_physical_trips} unique trips $\\times$ 2 branches) | 100% paired; 0 unmatched S or V files |
-| **Physical Unique Trips** | **{unique_physical_trips} unique drives** | Duplicated across Categorised and Uncategorised directories |
+| **Total Matched Pairs** | **{total_pairs} pairs** ({unique_physical_trips} unique trips) | {pairing_audit_str} |
+| **Physical Unique Trips** | **{unique_physical_trips} unique drives** | Evaluated across folder branches |
+| **Sync Policy Passing Pairs** | **{passed_sync} pairs** ({passed_sync / total_pairs * 100:.1f}%) | Met all overlap, coverage, and drift criteria |
+| **Sync Policy Flagged Pairs** | **{failed_sync} pairs** ({failed_sync / total_pairs * 100:.1f}%) | Flagged for clock drift policy threshold ({flagged_names_short}) |
+| **Downstream-Ready Pairs** | **{downstream_ready_count} pairs** ({downstream_ready_count / total_pairs * 100:.1f}%) | Validated and fully accepted for Phase 3 filter integration |
 | **Total Raw S Rows** | **{total_raw_s_rows:,} rows** | Raw smartphone IMU + GPS telemetry |
 | **Total Raw V Rows** | **{total_raw_v_rows:,} rows** | Raw Racelogic VBOX ground-truth telemetry |
 | **Total Synchronized Rows** | **{total_synced_rows:,} rows** | Unified time-aligned records on target S working grid |
-| **Total Validated Rows** | **{total_validated_rows:,} rows** | Structurally valid for numerical filter integration |
-| **Total Omitted Rows** | **{total_omitted_rows:,} rows** ({omission_pct:.4f}%) | Omitted non-computable records (NaN, resets) |
+| **Total Validated Rows** | **{total_validated_rows:,} rows** | Structurally computable rows kept for filter integration |
+| **Total Omitted Rows** | **{total_omitted_rows:,} rows** ({omission_pct:.4f}%) | Corrupt/non-computable rows omitted from validated stream |
 | **Total Driving Duration** | **{total_duration_hours:.2f} hours** | Real-world Indian road driving telemetry |
-| **Measured Sampling Rate** | **{median_rate_hz:.2f} Hz median** across all files | Measured sensor rate matches the project's canonical 10 Hz feature-input rate |
+| **Measured Sampling Rate** | **{median_rate_hz:.2f} Hz median** (range [{min_rate_hz:.2f}, {max_rate_hz:.2f}] Hz, IQR {iqr_rate_hz:.2f} Hz) | Empirical sensor rate distribution across files |
 
 ---
 
@@ -174,15 +237,15 @@ Every raw sensor record is strictly preserved without modification. Samples eval
 |---|---|---|---|
 | `FLAG_OK` | `0x00` | {total_flag_ok:,} | Clean nominal sample; passed directly to filter integration. |
 | `FLAG_NAN_OR_NONFINITE` | `0x01` | {total_nan:,} | Structurally non-computable; **omitted from validated stream**. |
-| `FLAG_INVALID_TIMESTAMP` | `0x02` | {total_invalid_t:,} | Non-positive timestamps; omitted from validated stream. |
-| `FLAG_NON_MONOTONIC_TIMESTAMP` | `0x04` | {total_non_mono:,} | Occurred at session restart points ({total_non_mono // 2} unique trips); **omitted from validated stream**. |
-| `FLAG_DUPLICATE_TIMESTAMP` | `0x08` | {total_dup:,} | Duplicate timestamps; omitted from validated stream. |
+| `FLAG_INVALID_TIMESTAMP` | `0x02` | {total_invalid_t:,} | Negative timestamps; omitted from validated stream. |
+| `FLAG_NON_MONOTONIC_TIMESTAMP` | `0x04` | {total_non_mono:,} | Session counter restarts across {non_mono_trips_count} unique trip(s); **omitted from validated stream**. |
+| `FLAG_DUPLICATE_TIMESTAMP` | `0x08` | {total_dup:,} | Duplicate timestamps across {dup_trips_count} unique trip(s); omitted from validated stream. |
 | `FLAG_EXTREME_MOTION` | `0x10` | {total_extreme_motion_rows:,} ({total_ext_accel} accel events, {total_ext_gyro} gyro events) | **KEPT IN VALIDATED STREAM**. Physical dynamics (potholes, bumps, sharp turns). Innovation gate inflates measurement variance without discarding real motion. |
 | `FLAG_SENSOR_DROPOUT` | `0x20` | {total_dropouts:,} | **KEPT IN VALIDATED STREAM**. Timing gap event (> 300 ms); strapdown INS propagates over the larger $\\Delta t$. |
 
 ### Omission Policy Verification
-- **Total Rows Omitted from Validated Stream**: {total_omitted_rows:,} out of {total_synced_rows:,} ({omission_pct:.4f}% drop rate).
-- **Justification**: {100.0 - omission_pct:.2f}% of all rows are fully computable. Only non-monotonic timestamp counter reset events and isolated phone GPS NaN entries were excluded from filter integration. Zero physical motion events were discarded.
+- **Total Rows Omitted from Validated Stream**: {total_omitted_rows:,} out of {total_synced_rows:,} ({omission_pct:.4f}% omission rate).
+- **Data-Driven Cause Analysis**: Omissions are strictly limited to non-computable records: {omission_reason_str}. Zero physical extreme-motion events and zero timing dropouts were discarded.
 
 ---
 
@@ -192,8 +255,8 @@ Extreme motion is detected using vector Euclidean magnitudes:
 $$\\|\\mathbf{{f}}\\| = \\sqrt{{a_x^2 + a_y^2 + a_z^2}} > 39.24\\text{{ m/s}}^2 \\quad (>4g)$$
 $$\\|\\boldsymbol{{\\omega}}\\| = \\sqrt{{\\omega_x^2 + \\omega_y^2 + \\omega_z^2}} > 10.0\\text{{ rad/s}} \\quad (\\approx 573^\\circ/\\text{{s}})$$
 
-- **Total Extreme Accel Events**: {total_ext_accel} ({total_ext_accel // 2} unique trip events $\\times$ 2 branches).
-- **Total Extreme Gyro Events**: {total_ext_gyro} ({total_ext_gyro // 2} unique trip events $\\times$ 2 branches).
+- **Total Extreme Accel Events**: {total_ext_accel} events.
+- **Total Extreme Gyro Events**: {total_ext_gyro} events.
 - **Trips Exhibiting Extreme Dynamics**:
 {ext_trips_text}
 - **Significance**: These trips capture real roadway shock vibrations and aggressive vehicle turns. Because COMPASS does not clip or drop these samples, the downstream ESKF's innovation gating mechanism can dynamically adjust measurement covariance without losing tracking.
@@ -206,8 +269,8 @@ Stationary periods are detected using the dual-signal requirement:
 $$\\text{{var}}(\\|\\mathbf{{f}}\\|) < 0.05\\text{{ m}}^2/\\text{{s}}^4 \\quad \\text{{AND}} \\quad \\text{{var}}(\\|\\boldsymbol{{\\omega}}\\|) < 0.005\\text{{ rad}}^2/\\text{{s}}^2 \\quad \\text{{over }} \\ge 50\\text{{ samples}}$$
 
 - **Timing Semantics**: The detection criterion requires $\\ge 50$ consecutive stationary samples. For 50 samples at nominal 10 Hz, the timestamp span from sample 0 to sample 49 covers 4.90 s, spanning 50 discrete measurement epochs.
-- **Files with Stationary Periods**: {files_with_stat} / {total_pairs} ({unique_stat_trips} unique trips in each branch).
-- **Total Stationary Segments**: {total_stat_segs} segments ({total_stat_segs // 2} unique trip intervals).
+- **Files with Stationary Periods**: {files_with_stat} / {total_pairs} ({unique_stat_trips} unique trips).
+- **Total Stationary Segments**: {total_stat_segs} segments ({stat_intervals_per_branch} unique intervals per branch).
 - **Total Rest Duration**: {total_stat_hours:.2f} hours across all trips.
 - **Application**: Validates the Phase 3 startup calibration requirement. Gyroscope bias $\\mathbf{{b}}_g$ and initial roll/pitch alignment from the gravity reaction vector can be estimated at rest across {unique_stat_trips} trips.
 
@@ -219,7 +282,9 @@ $$\\text{{var}}(\\|\\mathbf{{f}}\\|) < 0.05\\text{{ m}}^2/\\text{{s}}^4 \\quad \
   * S-file timestamps (`TIME SINCE START (ms)`) converted safely to signed `int64` nanoseconds (`int(t_ms * 1_000_000)`).
   * V-file timestamps (`Time Since Start of Day (seconds)`) converted safely to signed `int64` nanoseconds (`int(round(t_sec * 1_000_000_000))`).
 - **Alignment Coordination**:
-  * Mode: `relative_elapsed` (explicit `SyncMode.RELATIVE_ELAPSED` policy). S-files record elapsed time since app start (~0-5s), whereas V-files record elapsed time since UTC start of day (~30000-50000s). Aligning relative elapsed time from stream origin eliminates clock origin offsets.
+  * Mode: `relative_elapsed` (explicit `SyncMode.RELATIVE_ELAPSED` policy).
+  * Aligns relative elapsed time from stream origin (t - t[0]), removing clock origin offsets.
+  * Clock rate drift is explicitly measured and evaluated against acceptance thresholds.
   * S timestamps form the master working target grid; V ground truth reference telemetry is interpolated onto those target timestamps.
 - **Interpolation Rules**:
   * Continuous position/velocity (lat, lon, alt, speed, wheel speeds, CAN accel, yaw rate): linear interpolation.
@@ -228,17 +293,20 @@ $$\\text{{var}}(\\|\\mathbf{{f}}\\|) < 0.05\\text{{ m}}^2/\\text{{s}}^4 \\quad \
   * Maximum Gap Policy: source gaps $> 1.0\\text{{ s}}$ are rejected without fabrication (marked NaN).
   * Extrapolation Policy: zero extrapolation outside valid source timestamp intervals.
 - **Policy Audit Status**:
+  * Total Pairs Processed: {total_pairs} pairs.
   * Policy Passing Rate: {passed_sync} / {total_pairs} pairs ({passed_sync / total_pairs * 100:.1f}%).
+  * Policy Flagged Rate: {failed_sync} / {total_pairs} pairs ({failed_sync / total_pairs * 100:.1f}%).
   * Mean Overlap Duration: {mean_overlap_s:.2f} seconds.
   * Mean Interpolation Coverage: {mean_coverage_pct:.2f}%.
   * Mean Full-Trip Clock Drift: {mean_drift_s:.2f} seconds.
+- **Policy Failure Audit**:
+{flagged_summary_text}
 
 ---
 
 ## 7. GPS Outage Availability
 
-- **Dataset Real Outages**: {has_real_outages_ds} (0 real outage index files exist in the IO-VNBD synchronized archive; `has_real_outages_in_dataset=False`).
-- **Per-Trip Real Outages**: {real_outage_trips} trips report real outages (`has_real_outages_for_trip=False` across all {total_pairs} trips).
+- **Dataset Real Outages**: {has_real_outages_ds} ({real_outage_trips} real outage index files exist in this archive).
 - **Synthetic Outage Evaluation**:
   * Benchmark outage windows (e.g. 50 m / 1 min blackout; 1 km @ 60 km/h blackout) are generated via `OutageIndex.generate_synthetic_outage()` and tagged strictly with `is_synthetic=True` for Phase 4+ evaluation.
 
@@ -248,7 +316,7 @@ $$\\text{{var}}(\\|\\mathbf{{f}}\\|) < 0.05\\text{{ m}}^2/\\text{{s}}^4 \\quad \
 
 - **Format**: Compressed NumPy binary archives (`.npz`).
 - **Location**: `data/cache/iovnbd/` (gitignored per project policy).
-- **Arrays Cached per Trip**:
+- **Arrays & Metadata Cached per Trip**:
   * `timestamps_ns`: 1D int64 strictly monotonic unwrapped working time axis on target S grid.
   * `raw_timestamps_ns`: 1D int64 unmodified original device timestamps from raw S-file.
   * `accel_raw`: Nx3 float64 specific force (device body frame, m/s²).
@@ -257,6 +325,7 @@ $$\\text{{var}}(\\|\\mathbf{{f}}\\|) < 0.05\\text{{ m}}^2/\\text{{s}}^4 \\quad \
   * `is_validated`: 1D bool integration mask.
   * `s_gnss_*`: Lat, Lon, Alt, Speed, Bearing, Accuracy, Sat Count.
   * `v_ref_*`: Ground-truth VBOX Lat, Lon, Alt, Speed, Heading, Yaw Rate, Wheel Speeds, CAN Accel, Gear, Handbrake.
+  * `diag_*`: Exact synchronization diagnostics preserved identically across save and load.
 - **Access Performance**: NumPy compressed binary arrays (`.npz`) eliminate repeated CSV parsing overhead for downstream training and ESKF replay.
 
 ---
@@ -264,8 +333,8 @@ $$\\text{{var}}(\\|\\mathbf{{f}}\\|) < 0.05\\text{{ m}}^2/\\text{{s}}^4 \\quad \
 ## 9. Immutability Verification
 
 - **Raw Data Directory**: `data/raw/io_vnbd`
-- **Verification Method**: SHA-256 digests, file sizes, and modification times evaluated for all 288 raw CSV files before and after full pipeline execution.
-- **Result**: **100% UNCHANGED**. All 288 raw CSV files verified byte-for-byte identical.
+- **Verification Method**: SHA-256 digests, file sizes, and modification times evaluated for all raw CSV files before and after full pipeline execution.
+- **Result**: **100% UNCHANGED**. All discovered raw CSV files verified byte-for-byte identical.
 """
     report_path.parent.mkdir(parents=True, exist_ok=True)
     with open(report_path, "w", encoding="utf-8") as f:
@@ -293,7 +362,7 @@ def main() -> int:
     print("=" * 60)
 
     # 1. Complete Raw Data Immutability Pre-Check
-    print("[1/5] Recording raw dataset immutability fingerprints (all 288 CSVs)...")
+    print("[1/5] Recording raw dataset immutability fingerprints...")
     before_fingerprints = record_all_raw_fingerprints(raw_dir)
     raw_count_before = len(before_fingerprints)
     if raw_count_before == 0:
@@ -302,7 +371,7 @@ def main() -> int:
     print(f"  Recorded SHA-256 fingerprints for all {raw_count_before} raw CSV files.")
 
     # 2. Build Full Manifest and Cached Arrays
-    print("\n[2/5] Executing full pipeline over 144 S/V pairs...")
+    print("\n[2/5] Executing full pipeline over discovered S/V pairs...")
     t0 = time.time()
     builder = DatasetManifestBuilder(
         project_root=project_root,
@@ -317,10 +386,10 @@ def main() -> int:
 
     # 3. Generate Data Quality Report
     print("\n[3/5] Generating data quality report...")
-    generate_data_quality_report(df_manifest, report_path)
+    generate_data_quality_report(df_manifest, report_path, audit=builder.last_audit, raw_dir=raw_dir)
 
     # 4. Verify Raw Data Immutability Across Every File
-    print("\n[4/5] Verifying raw dataset immutability across all 288 CSV files...")
+    print("\n[4/5] Verifying raw dataset immutability across all raw CSV files...")
     verify_all_raw_fingerprints(raw_dir, before_fingerprints)
     print(f"  [SUCCESS] All {raw_count_before} raw CSV files are 100% byte-for-byte immutable and unchanged.")
 
@@ -344,15 +413,15 @@ def main() -> int:
             # 1. Manifest DataFrame Equality (ignoring absolute temp path in cached_npz_path, verifying basename match)
             cols_to_compare = [c for c in df_manifest.columns if c != "cached_npz_path"]
             pd.testing.assert_frame_equal(df_manifest[cols_to_compare], df_rep[cols_to_compare])
-            assert (df_manifest["cached_npz_path"].apply(lambda p: Path(p).name) == df_rep["cached_npz_path"].apply(lambda p: Path(p).name)).all(), "cached_npz_path filenames do not match"
+            if not (df_manifest["cached_npz_path"].apply(lambda p: Path(p).name) == df_rep["cached_npz_path"].apply(lambda p: Path(p).name)).all():
+                raise RuntimeError("cached_npz_path filenames do not match between passes")
             print("  [Pass 1/3] Manifest DataFrame metadata is 100% identical.")
 
             # 2. Cache Files Count
             orig_caches = sorted(cache_dir.glob("*.npz"))
             rep_caches = sorted(repro_cache.glob("*.npz"))
             if len(orig_caches) != len(rep_caches):
-                print(f"ERROR: Cache file count mismatch: {len(orig_caches)} vs {len(rep_caches)}")
-                return 1
+                raise RuntimeError(f"Cache file count mismatch: {len(orig_caches)} vs {len(rep_caches)}")
             print(f"  [Pass 2/3] Cache file counts match ({len(orig_caches)} .npz files).")
 
             # 3. Exact Binary Array Equality per Cache File
@@ -378,7 +447,7 @@ def main() -> int:
                 return 1
 
             print(f"  [Pass 3/3] All {len(orig_caches)} cached binary archives (.npz) are 100% array-level identical.")
-            print("  [SUCCESS] 100% deterministic and reproducible across repeated runs.")
+            print("  [SUCCESS] Second-pass outputs were byte/value-equivalent for the verified manifest and cache fields.")
 
     print("\n" + "=" * 60)
     print("PHASE 2 PIPELINE EXECUTION: COMPLETE & VERIFIED")

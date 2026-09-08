@@ -164,8 +164,8 @@ class QualityTagger:
         nan_mask = ~(accel_finite & gyro_finite & t_finite)
         flags[nan_mask] |= FLAG_NAN_OR_NONFINITE
 
-        # 2. Invalid timestamp (non-positive)
-        invalid_t_mask = timestamps_ns <= 0
+        # 2. Invalid timestamp (negative elapsed timestamp or sentinel < 0; t == 0 is valid session origin)
+        invalid_t_mask = timestamps_ns < 0
         flags[invalid_t_mask] |= FLAG_INVALID_TIMESTAMP
 
         # 3 & 4. Timing progression (non-monotonic and duplicates)

@@ -117,8 +117,8 @@ class TestPipelineFullFileIntegration:
             )
             assert len(stationary_segs) >= 1
             assert is_stat_mask.any()
-            # Verify stationary duration semantics: sample_count >= 50 and duration_s is exact timestamp span
-            assert all(s.sample_count >= 20 for s in stationary_segs)
+            # Verify stationary duration semantics: sample_count >= detector.window_samples and duration_s is exact timestamp span
+            assert all(s.sample_count >= detector.window_samples for s in stationary_segs)
             assert all(s.duration_s >= 0.0 for s in stationary_segs)
 
             # 5. Cache Serialization & Reload Verification (.npz)

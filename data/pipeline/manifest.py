@@ -30,19 +30,54 @@ def extract_base_trip_id(filename: str) -> str:
     return clean_name.strip()
 
 
-def discover_dataset_pairs(data_dir: Path) -> List[Tuple[Path, Path, str, str]]:
-    """Discovers folder-aware matched S/V pairs across Categorised and Uncategorised branches.
+@dataclass
+class DatasetDiscoveryAudit:
+    """Detailed audit of dataset file pairing, unmatched files, and structural anomalies."""
+    matched_pairs: List[Tuple[Path, Path, str, str]]
+    unmatched_s_files: List[Path]
+    unmatched_v_files: List[Path]
+    malformed_csv_files: List[Path]
+    duplicate_pair_identifiers: List[str]
+    total_csv_files_found: int
 
-    Returns:
-        List of (s_path, v_path, trip_id, branch_name) sorted deterministically.
+    @property
+    def matched_pairs_count(self) -> int:
+        return len(self.matched_pairs)
+
+    @property
+    def unmatched_s_count(self) -> int:
+        return len(self.unmatched_s_files)
+
+    @property
+    def unmatched_v_count(self) -> int:
+        return len(self.unmatched_v_files)
+
+    @property
+    def is_fully_paired(self) -> bool:
+        return self.unmatched_s_count == 0 and self.unmatched_v_count == 0
+
+
+def audit_dataset_discovery(data_dir: Path | str) -> DatasetDiscoveryAudit:
+    """Programmatically audit raw CSV files to discover matched pairs, unmatched files, and naming anomalies.
+
+    Audit Rules:
+    - Scans for all *.csv files under data_dir.
+    - Matches S-*.csv with corresponding V-*.csv within same logical folder or trip scope.
+    - Detects S files without matching V partners.
+    - Detects V files without matching S partners.
+    - Detects non-conforming or malformed CSV files.
+    - Detects duplicate pair keys.
     """
-    data_dir = Path(data_dir)
-    csv_files = list(data_dir.rglob("*.csv"))
+    target_dir = Path(data_dir)
+    csv_files = sorted(target_dir.rglob("*.csv"))
 
     categorised_s: Dict[str, Path] = {}
     categorised_v: Dict[str, Path] = {}
     uncategorised_s: Dict[str, Path] = {}
     uncategorised_v: Dict[str, Path] = {}
+
+    malformed_files: List[Path] = []
+    duplicate_keys: List[str] = []
 
     for f in csv_files:
         name_lower = f.name.lower()
@@ -51,6 +86,7 @@ def discover_dataset_pairs(data_dir: Path) -> List[Tuple[Path, Path, str, str]]:
         is_v = name_lower.startswith("v-")
 
         if not (is_s or is_v):
+            malformed_files.append(f)
             continue
 
         trip_id = extract_base_trip_id(f.name)
@@ -60,32 +96,90 @@ def discover_dataset_pairs(data_dir: Path) -> List[Tuple[Path, Path, str, str]]:
             parent_key = f.parent.name.lower()
             key = f"{parent_key}/{trip_id_key}"
             if is_s:
+                if key in categorised_s:
+                    duplicate_keys.append(f"Categorised S: {key}")
                 categorised_s[key] = f
             else:
+                if key in categorised_v:
+                    duplicate_keys.append(f"Categorised V: {key}")
                 categorised_v[key] = f
         elif any("uncategorised" in p for p in parts):
             key = trip_id_key
             if is_s:
+                if key in uncategorised_s:
+                    duplicate_keys.append(f"Uncategorised S: {key}")
                 uncategorised_s[key] = f
             else:
+                if key in uncategorised_v:
+                    duplicate_keys.append(f"Uncategorised V: {key}")
                 uncategorised_v[key] = f
+        else:
+            malformed_files.append(f)
 
     matched: List[Tuple[Path, Path, str, str]] = []
+    unmatched_s: List[Path] = []
+    unmatched_v: List[Path] = []
 
+    # Match Categorised
     for key, s_path in categorised_s.items():
         if key in categorised_v:
             v_path = categorised_v[key]
             trip_id = extract_base_trip_id(s_path.name)
             matched.append((s_path, v_path, trip_id, "Categorised IOVNB Dataset"))
+        else:
+            unmatched_s.append(s_path)
+    for key, v_path in categorised_v.items():
+        if key not in categorised_s:
+            unmatched_v.append(v_path)
 
+    # Match Uncategorised
     for key, s_path in uncategorised_s.items():
         if key in uncategorised_v:
             v_path = uncategorised_v[key]
             trip_id = extract_base_trip_id(s_path.name)
             matched.append((s_path, v_path, trip_id, "Uncategorised IOVNB Dataset"))
+        else:
+            unmatched_s.append(s_path)
+    for key, v_path in uncategorised_v.items():
+        if key not in uncategorised_s:
+            unmatched_v.append(v_path)
 
     matched.sort(key=lambda x: (x[3], x[2]))
-    return matched
+
+    return DatasetDiscoveryAudit(
+        matched_pairs=matched,
+        unmatched_s_files=unmatched_s,
+        unmatched_v_files=unmatched_v,
+        malformed_csv_files=malformed_files,
+        duplicate_pair_identifiers=duplicate_keys,
+        total_csv_files_found=len(csv_files),
+    )
+
+
+def discover_dataset_pairs(data_dir: Path | str) -> List[Tuple[Path, Path, str, str]]:
+    """Discovers folder-aware matched S/V pairs across Categorised and Uncategorised branches.
+
+    Returns:
+        List of (s_path, v_path, trip_id, branch_name) sorted deterministically.
+    """
+    audit = audit_dataset_discovery(data_dir)
+    return audit.matched_pairs
+
+
+def compute_downstream_readiness(
+    sync_passed: bool,
+    validated_rows: int,
+    raw_s_rows: int,
+    raw_v_rows: int,
+) -> bool:
+    """Determine whether a synchronized trip is eligible for Phase 3 filter integration.
+
+    A trip is downstream-ready ONLY when:
+    1. Synchronization passed all configured policy constraints (overlap, coverage, drift).
+    2. Validated rows >= 100 (sufficient computable epochs for feature windowing and state estimation).
+    3. Both raw input streams are non-empty.
+    """
+    return bool(sync_passed and validated_rows >= 100 and raw_s_rows > 0 and raw_v_rows > 0)
 
 
 def derive_driver_map_from_categorised(data_dir: Path) -> Dict[str, str]:
@@ -142,6 +236,8 @@ class ManifestRow:
     invalid_timestamp_count: int = 0
     sync_mode: str = "relative_elapsed"
     sync_status: str = "PASSED"
+    sync_passed: bool = True
+    downstream_ready: bool = True
     sync_clock_origin_offset_s: float = 0.0
     sync_clock_drift_s: float = 0.0
     sync_overlap_duration_s: float = 0.0
@@ -171,6 +267,7 @@ class DatasetManifestBuilder:
         self.stationary_detector = StationaryDetector()
         self.outage_index = OutageIndex()
         self.trip_driver_map: Dict[str, str] = {}
+        self.last_audit: Optional[DatasetDiscoveryAudit] = None
 
     def _extract_driver_id(self, file_path: Path, trip_id: str = "") -> str:
         """Extract and normalize driver identifier from directory path or resolved Categorised mapping."""
@@ -318,6 +415,13 @@ class DatasetManifestBuilder:
             cached_npz_path=cache_rel,
             sync_mode=sync_mode,
             sync_status=sync_status,
+            sync_passed=bool(diag.sync_passed) if diag else True,
+            downstream_ready=compute_downstream_readiness(
+                bool(diag.sync_passed) if diag else True,
+                quality_rep.validated_rows,
+                s_trip.row_count,
+                v_trip.row_count,
+            ),
             sync_clock_origin_offset_s=sync_clock_origin_offset_s,
             sync_clock_drift_s=sync_clock_drift_s,
             sync_overlap_duration_s=sync_overlap_duration_s,
@@ -332,18 +436,19 @@ class DatasetManifestBuilder:
         raw_data_dir: Optional[Path | str] = None,
         save_cache: bool = True,
     ) -> pd.DataFrame:
-        """Walk full IO-VNBD dataset, process all 144 pairs, and save manifest CSV."""
+        """Walk full IO-VNBD dataset, audit discovery, process all pairs, and save manifest CSV."""
         data_dir = Path(raw_data_dir or (self.project_root / "data" / "raw" / "io_vnbd")).resolve()
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.manifest_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Discover all matched S/V pairs reliably
-        pairs = discover_dataset_pairs(data_dir)
+        # Audit dataset discovery programmatically
+        audit = audit_dataset_discovery(data_dir)
+        self.last_audit = audit
         self.trip_driver_map = derive_driver_map_from_categorised(data_dir)
 
         rows: List[ManifestRow] = []
 
-        for s_path, v_path, trip_id, branch in pairs:
+        for s_path, v_path, trip_id, branch in audit.matched_pairs:
             row = self.process_pair(
                 s_path=s_path,
                 v_path=v_path,
