@@ -733,34 +733,39 @@ class TestSyncHardening:
         assert synced.v_ref_speed_mps[1] == pytest.approx(20.0)
 
     def test_sync_preserves_raw_timestamps_and_unwraps_working_timestamps(self, tmp_path: Path) -> None:
-        """SynchronizedTrip must preserve raw timestamps while providing strictly monotonic working timestamps."""
-        # Raw S has counter reset: 3000ms -> 0ms -> 100ms
-        t_s = np.array([1_000_000_000, 2_000_000_000, 3_000_000_000, 0, 100_000_000], dtype=np.int64)
-        t_v = np.array([0, 1_000_000_000, 2_000_000_000, 3_000_000_000, 4_000_000_000], dtype=np.int64)
+        """SynchronizedTrip preserves raw timestamps; working axis is non-decreasing; validated downstream samples are strictly increasing."""
+        # Raw S has counter reset (3000ms -> 0ms) AND a duplicate timestamp (100ms -> 100ms)
+        t_s = np.array([1_000_000_000, 2_000_000_000, 3_000_000_000, 0, 100_000_000, 100_000_000, 200_000_000], dtype=np.int64)
+        t_v = np.array([0, 1_000_000_000, 2_000_000_000, 3_000_000_000, 4_000_000_000, 5_000_000_000, 6_000_000_000], dtype=np.int64)
 
         s_trip = ParsedSTrip(
-            file_path=Path("s.csv"), row_count=5, timestamps_ns=t_s,
-            accel_raw=np.zeros((5, 3)), gyro_raw=np.zeros((5, 3)),
-            gnss_lat=np.full(5, np.nan), gnss_lon=np.full(5, np.nan), gnss_alt=np.full(5, np.nan),
-            gnss_speed_mps=np.full(5, np.nan), gnss_bearing_deg=np.full(5, np.nan),
-            gnss_accuracy_m=np.full(5, np.nan), gnss_sat_count=np.full(5, -1, dtype=np.int32), has_gnss=False,
+            file_path=Path("s.csv"), row_count=7, timestamps_ns=t_s,
+            accel_raw=np.zeros((7, 3)), gyro_raw=np.zeros((7, 3)),
+            gnss_lat=np.full(7, np.nan), gnss_lon=np.full(7, np.nan), gnss_alt=np.full(7, np.nan),
+            gnss_speed_mps=np.full(7, np.nan), gnss_bearing_deg=np.full(7, np.nan),
+            gnss_accuracy_m=np.full(7, np.nan), gnss_sat_count=np.full(7, -1, dtype=np.int32), has_gnss=False,
         )
         v_trip = ParsedVTrip(
-            file_path=Path("v.csv"), row_count=5, timestamps_ns=t_v,
-            lat=np.zeros(5), lon=np.zeros(5), alt_m=np.full(5, np.nan),
-            speed_mps=np.array([1.0, 2.0, 3.0, 4.0, 5.0]), heading_deg=np.zeros(5), yaw_rate_rads=np.zeros(5),
-            wheel_speeds_rads=np.full((5, 4), np.nan), can_accel_g=np.full((5, 2), np.nan),
-            steering_angle_deg=np.full(5, np.nan), handbrake=np.full(5, -1, dtype=np.int32), gear=np.full(5, -1, dtype=np.int32),
+            file_path=Path("v.csv"), row_count=7, timestamps_ns=t_v,
+            lat=np.zeros(7), lon=np.zeros(7), alt_m=np.full(7, np.nan),
+            speed_mps=np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]), heading_deg=np.zeros(7), yaw_rate_rads=np.zeros(7),
+            wheel_speeds_rads=np.full((7, 4), np.nan), can_accel_g=np.full((7, 2), np.nan),
+            steering_angle_deg=np.full(7, np.nan), handbrake=np.full(7, -1, dtype=np.int32), gear=np.full(7, -1, dtype=np.int32),
         )
 
         synced, _ = synchronize_s_v(s_trip, v_trip, trip_id="T_Reset", branch="Test")
         # 1. Raw timestamps must be preserved unmodified
         assert np.array_equal(synced.raw_timestamps_ns, t_s)
-        # 2. Working timestamps must be strictly monotonic (all diffs > 0)
-        diffs = np.diff(synced.timestamps_ns)
-        assert (diffs > 0).all(), f"Working timestamps not strictly monotonic: diffs = {diffs}"
+        # 2. Raw working timestamps are non-decreasing across all rows (diffs >= 0)
+        raw_working_diffs = np.diff(synced.timestamps_ns)
+        assert (raw_working_diffs >= 0).all(), f"Working axis must be non-decreasing: diffs = {raw_working_diffs}"
+        # 3. Validated downstream samples (excluding duplicates/invalid rows) are strictly increasing (diffs > 0)
+        validated_ts = synced.timestamps_ns[synced.is_validated]
+        validated_diffs = np.diff(validated_ts)
+        assert len(validated_ts) > 0
+        assert (validated_diffs > 0).all(), f"Validated downstream timestamps must be strictly increasing: diffs = {validated_diffs}"
 
-        # 3. Cache round-trip must preserve both
+        # 4. Cache round-trip must preserve both raw and working timestamps
         cache_file = tmp_path / "synced_test.npz"
         synced.save_npz(cache_file)
         loaded = SynchronizedTrip.load_npz(cache_file)
@@ -792,6 +797,43 @@ class TestSyncHardening:
         synced, _ = synchronize_s_v(s_trip, v_trip, trip_id="T_DupV", branch="Test")
         # Target sample 1 is at 100ms. Must interpolate to exactly 25.0, NOT 999.0 and NOT shifted forward
         assert synced.v_ref_speed_mps[1] == pytest.approx(25.0)
+
+    def test_sync_v_duplicate_timestamps_regression_conflicting_values_not_shifted(self) -> None:
+        """Regression: duplicate V timestamps must not be unwrapped/shifted into subsequent time slots.
+        
+        If unwrapping was run before deduplication, the duplicate at 100ms would be shifted to 200ms
+        with speed 999.0, corrupting the midpoint at 150ms and the endpoint at 200ms.
+        Deduplicating BEFORE timeline construction keeps (100ms, 20.0), discards (100ms, 999.0),
+        and leaves (200ms, 30.0) correctly aligned so that midpoint 150ms interpolates to exactly 25.0.
+        """
+        t_s = np.array([0, 100_000_000, 150_000_000, 200_000_000], dtype=np.int64)
+        t_v = np.array([0, 100_000_000, 100_000_000, 200_000_000], dtype=np.int64)
+        v_speed = np.array([10.0, 20.0, 999.0, 30.0])
+
+        s_trip = ParsedSTrip(
+            file_path=Path("s.csv"), row_count=4, timestamps_ns=t_s,
+            accel_raw=np.zeros((4, 3)), gyro_raw=np.zeros((4, 3)),
+            gnss_lat=np.full(4, np.nan), gnss_lon=np.full(4, np.nan), gnss_alt=np.full(4, np.nan),
+            gnss_speed_mps=np.full(4, np.nan), gnss_bearing_deg=np.full(4, np.nan),
+            gnss_accuracy_m=np.full(4, np.nan), gnss_sat_count=np.full(4, -1, dtype=np.int32), has_gnss=False,
+        )
+        v_trip = ParsedVTrip(
+            file_path=Path("v.csv"), row_count=4, timestamps_ns=t_v,
+            lat=np.zeros(4), lon=np.zeros(4), alt_m=np.full(4, np.nan),
+            speed_mps=v_speed, heading_deg=np.zeros(4), yaw_rate_rads=np.zeros(4),
+            wheel_speeds_rads=np.full((4, 4), np.nan), can_accel_g=np.full((4, 2), np.nan),
+            steering_angle_deg=np.full(4, np.nan), handbrake=np.full(4, -1, dtype=np.int32), gear=np.full(4, -1, dtype=np.int32),
+        )
+
+        synced, _ = synchronize_s_v(s_trip, v_trip, trip_id="T_DupV_Regress", branch="Test")
+        # Target 0 (0ms) -> 10.0
+        assert synced.v_ref_speed_mps[0] == pytest.approx(10.0)
+        # Target 1 (100ms) -> 20.0 (first occurrence preserved, 999.0 rejected)
+        assert synced.v_ref_speed_mps[1] == pytest.approx(20.0)
+        # Target 2 (150ms) -> 25.0 (linear interpolation between 20.0 and 30.0; would be ~509.5 if unwrapped first)
+        assert synced.v_ref_speed_mps[2] == pytest.approx(25.0)
+        # Target 3 (200ms) -> 30.0 (would be 999.0 if duplicate was shifted forward into 200ms slot)
+        assert synced.v_ref_speed_mps[3] == pytest.approx(30.0)
 
     def test_sync_v_backward_timestamps_rejected(self) -> None:
         """Genuine backward timestamps in V must raise SyncValidationError."""

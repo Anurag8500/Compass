@@ -236,15 +236,15 @@ class SynchronizedTrip:
     Time Coordinates Semantics:
     - raw_timestamps_ns: Original, unmodified raw smartphone timestamps from the S-file.
       Preserved for full raw data traceability and non-destructive auditing.
-    - timestamps_ns: Canonical working target timestamp grid. Guaranteed to be strictly
-      monotonically increasing (in relative nanoseconds from stream start) with session counter
-      wraps unwrapped, providing an unequivocal, monotonic time axis for numerical
-      integration and downstream state estimation.
+    - timestamps_ns: Canonical working target timestamp grid (non-decreasing raw working axis
+      with session counter wraps unwrapped). After duplicate and invalid samples are excluded,
+      validated downstream samples (where is_validated is True) are strictly increasing,
+      providing an unequivocal time axis for numerical integration and state estimation.
     """
     trip_id: str
     branch: str
     row_count: int
-    timestamps_ns: np.ndarray               # 1D int64 strictly monotonic target working grid
+    timestamps_ns: np.ndarray               # 1D int64 non-decreasing target working grid (validated downstream is strictly increasing)
     raw_timestamps_ns: np.ndarray           # 1D int64 original device timestamps (immutable raw)
 
     # S-file motion (RAW DEVICE BODY FRAME)
@@ -443,7 +443,9 @@ def synchronize_s_v(
 
     Timing Architecture:
     - S-trip raw timestamps are preserved unmodified in SynchronizedTrip.raw_timestamps_ns.
-    - Synchronized working time grid is strictly monotonic and stored in SynchronizedTrip.timestamps_ns.
+    - Synchronized working time grid is stored in SynchronizedTrip.timestamps_ns as a non-decreasing
+      target working axis; validated downstream samples are strictly increasing after duplicate/invalid
+      samples are excluded.
     - Source V timestamps are strictly validated and deduplicated BEFORE any timeline construction.
     - Genuine backward timestamps in source V raise SyncValidationError.
     - Relative elapsed alignment aligns relative elapsed time since stream origin (t - t[0]),

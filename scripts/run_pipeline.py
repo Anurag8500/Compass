@@ -213,7 +213,7 @@ The COMPASS Phase 2 offline data pipeline ingested, audited, and processed the I
 | **Total Synchronized Rows** | **{total_synced_rows:,} rows** | Unified time-aligned records on target S working grid |
 | **Total Validated Rows** | **{total_validated_rows:,} rows** | Structurally computable rows kept for filter integration |
 | **Total Omitted Rows** | **{total_omitted_rows:,} rows** ({omission_pct:.4f}%) | Corrupt/non-computable rows omitted from validated stream |
-| **Total Driving Duration** | **{total_duration_hours:.2f} hours** | Real-world Indian road driving telemetry |
+| **Total Driving Duration** | **{total_duration_hours:.2f} hours** | Real-world driving telemetry from the IO-VNBD dataset. |
 | **Measured Sampling Rate** | **{median_rate_hz:.2f} Hz median** (range [{min_rate_hz:.2f}, {max_rate_hz:.2f}] Hz, IQR {iqr_rate_hz:.2f} Hz) | Empirical sensor rate distribution across files |
 
 ---
@@ -240,8 +240,8 @@ Every raw sensor record is strictly preserved without modification. Samples eval
 | `FLAG_INVALID_TIMESTAMP` | `0x02` | {total_invalid_t:,} | Negative timestamps; omitted from validated stream. |
 | `FLAG_NON_MONOTONIC_TIMESTAMP` | `0x04` | {total_non_mono:,} | Session counter restarts across {non_mono_trips_count} unique trip(s); **omitted from validated stream**. |
 | `FLAG_DUPLICATE_TIMESTAMP` | `0x08` | {total_dup:,} | Duplicate timestamps across {dup_trips_count} unique trip(s); omitted from validated stream. |
-| `FLAG_EXTREME_MOTION` | `0x10` | {total_extreme_motion_rows:,} ({total_ext_accel} accel events, {total_ext_gyro} gyro events) | **KEPT IN VALIDATED STREAM**. Physical dynamics (potholes, bumps, sharp turns). Innovation gate inflates measurement variance without discarding real motion. |
-| `FLAG_SENSOR_DROPOUT` | `0x20` | {total_dropouts:,} | **KEPT IN VALIDATED STREAM**. Timing gap event (> 300 ms); strapdown INS propagates over the larger $\\Delta t$. |
+| `FLAG_EXTREME_MOTION` | `0x10` | {total_extreme_motion_rows:,} ({total_ext_accel} accel events, {total_ext_gyro} gyro events) | **KEPT IN VALIDATED STREAM**. Preserves physical dynamics (potholes, bumps, sharp turns) so downstream Phase 3 ESKF estimators/innovation gates can adapt measurement noise variances rather than discarding real vehicle motion. |
+| `FLAG_SENSOR_DROPOUT` | `0x20` | {total_dropouts:,} | **KEPT IN VALIDATED STREAM**. Timing gap event (> 300 ms); preserved so downstream strapdown INS integration can propagate state across the recorded $\\Delta t$. |
 
 ### Omission Policy Verification
 - **Total Rows Omitted from Validated Stream**: {total_omitted_rows:,} out of {total_synced_rows:,} ({omission_pct:.4f}% omission rate).
@@ -317,7 +317,7 @@ $$\\text{{var}}(\\|\\mathbf{{f}}\\|) < 0.05\\text{{ m}}^2/\\text{{s}}^4 \\quad \
 - **Format**: Compressed NumPy binary archives (`.npz`).
 - **Location**: `data/cache/iovnbd/` (gitignored per project policy).
 - **Arrays & Metadata Cached per Trip**:
-  * `timestamps_ns`: 1D int64 strictly monotonic unwrapped working time axis on target S grid.
+  * `timestamps_ns`: 1D int64 non-decreasing unwrapped working time axis on target S grid (validated downstream samples are strictly increasing after excluding duplicates/invalid rows).
   * `raw_timestamps_ns`: 1D int64 unmodified original device timestamps from raw S-file.
   * `accel_raw`: Nx3 float64 specific force (device body frame, m/s²).
   * `gyro_raw`: Nx3 float64 angular velocity (device body frame, rad/s).
