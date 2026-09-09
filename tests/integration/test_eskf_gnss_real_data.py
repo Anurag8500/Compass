@@ -230,9 +230,13 @@ class TestESKFRealDataIntegration:
 
         phase4_baseline_final_err = 3249.32
         phase4_baseline_rmse = 1487.53
+        phase4_baseline_final_3d_err = 3292.29
+        phase4_baseline_3d_rmse = 1502.42
 
         improvement_pct = (1.0 - final_error_m / phase4_baseline_final_err) * 100.0
         improvement_rmse_pct = (1.0 - rmse_error_m / phase4_baseline_rmse) * 100.0
+        improvement_3d_final_pct = (1.0 - final_3d_err_m / phase4_baseline_final_3d_err) * 100.0
+        improvement_3d_rmse_pct = (1.0 - rmse_3d_m / phase4_baseline_3d_rmse) * 100.0
 
         print("\n--- Phase 5 Real Data Validation Results ---")
         print(f"Final Horizontal Error: {final_error_m:.2f} m (Phase 4 baseline: {phase4_baseline_final_err:.2f} m)")
@@ -240,10 +244,12 @@ class TestESKFRealDataIntegration:
         print(f"Max Horizontal Error: {max_error_m:.2f} m")
         print(f"Final Vertical Error: {final_vert_err_m:.2f} m")
         print(f"Vertical RMSE: {vert_rmse_m:.2f} m")
-        print(f"Final 3D Error: {final_3d_err_m:.2f} m")
-        print(f"3D RMSE: {rmse_3d_m:.2f} m")
-        print(f"Improvement over Phase 4 (Final): {improvement_pct:.2f}%")
-        print(f"Improvement over Phase 4 (RMSE): {improvement_rmse_pct:.2f}%")
+        print(f"Final 3D Error: {final_3d_err_m:.2f} m (Phase 4 baseline: {phase4_baseline_final_3d_err:.2f} m)")
+        print(f"3D RMSE: {rmse_3d_m:.2f} m (Phase 4 baseline: {phase4_baseline_3d_rmse:.2f} m)")
+        print(f"Improvement over Phase 4 (Final Horizontal): {improvement_pct:.2f}%")
+        print(f"Improvement over Phase 4 (Horizontal RMSE): {improvement_rmse_pct:.2f}%")
+        print(f"Improvement over Phase 4 (Final 3D): {improvement_3d_final_pct:.2f}%")
+        print(f"Improvement over Phase 4 (3D RMSE): {improvement_3d_rmse_pct:.2f}%")
         print(f"GNSS Position Accepted: {pos_accepted}, Rejected: {pos_rejected}")
         print(f"GNSS Horizontal Velocity Accepted: {vel_accepted}, Rejected: {vel_rejected}")
         print(f"ZUPT Updates Accepted: {zupt_accepted}, Rejected: {zupt_rejected}")
@@ -261,8 +267,17 @@ class TestESKFRealDataIntegration:
             f"Phase 5 RMSE ({rmse_error_m:.2f} m) did not improve upon "
             f"Phase 4 open-loop baseline ({phase4_baseline_rmse:.2f} m)"
         )
+        assert final_3d_err_m < phase4_baseline_final_3d_err, (
+            f"Phase 5 final 3D error ({final_3d_err_m:.2f} m) did not improve upon "
+            f"Phase 4 open-loop 3D baseline ({phase4_baseline_final_3d_err:.2f} m)"
+        )
+        assert rmse_3d_m < phase4_baseline_3d_rmse, (
+            f"Phase 5 3D RMSE ({rmse_3d_m:.2f} m) did not improve upon "
+            f"Phase 4 open-loop 3D baseline ({phase4_baseline_3d_rmse:.2f} m)"
+        )
         # Verify improvement is substantial (> 20%)
-        assert improvement_pct > 20.0, f"Expected >20% improvement, got {improvement_pct:.2f}%"
+        assert improvement_pct > 20.0, f"Expected >20% horizontal final improvement, got {improvement_pct:.2f}%"
+        assert improvement_3d_final_pct > 20.0, f"Expected >20% 3D final improvement, got {improvement_3d_final_pct:.2f}%"
 
     def test_eskf_zupt_standstill_suppression_on_real_data(self) -> None:
         """Classical Gated ZUPT suppresses stationary drift during vehicle rest."""

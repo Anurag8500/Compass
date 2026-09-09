@@ -16,10 +16,13 @@ In Phase 5, wrapping the discrete error-state filter around the exact same Phase
 - **Final Horizontal Error**: **$5.27\,\text{m}$** (compared to Phase 4 baseline: **$3,249.32\,\text{m}$**).
 - **Horizontal RMSE**: **$24.78\,\text{m}$** (compared to Phase 4 baseline: **$1,487.53\,\text{m}$**).
 - **Maximum Horizontal Error**: **$117.49\,\text{m}$** (compared to Phase 4 baseline: **$3,249.32\,\text{m}$**).
-- **Final Vertical Error**: **$63.01\,\text{m}$** (Vertical RMSE: **$70.54\,\text{m}$**).
-- **Final 3D Error**: **$63.23\,\text{m}$** (3D RMSE: **$74.77\,\text{m}$**).
+- **Final Vertical Error**: **$63.01\,\text{m}$** (compared to Phase 4 baseline: **$530.20\,\text{m}$**; Vertical RMSE: **$70.54\,\text{m}$** vs. Phase 4: **$211.01\,\text{m}$**).
+- **Final 3D Error**: **$63.23\,\text{m}$** (compared to Phase 4 baseline: **$3,292.29\,\text{m}$**).
+- **3D RMSE**: **$74.77\,\text{m}$** (compared to Phase 4 baseline: **$1,502.42\,\text{m}$**).
 - **Final Horizontal Error Reduction**: **$99.84\%$ improvement** over Phase 4 open-loop dead reckoning.
 - **Horizontal RMSE Reduction**: **$98.33\%$ improvement** over Phase 4 open-loop dead reckoning.
+- **Final 3D Error Reduction**: **$98.08\%$ improvement** over Phase 4 open-loop dead reckoning.
+- **3D RMSE Reduction**: **$95.02\%$ improvement** over Phase 4 open-loop dead reckoning.
 - **GNSS Position Fix Acceptance**: 7 of 7 fixes ($100\%$) accepted through the 99.9% Mahalanobis $\chi^2$ gate with zero false rejections.
 - **GNSS Horizontal Velocity Fix Acceptance**: 7 of 7 fixes ($100\%$) accepted through the 99.9% Mahalanobis $\chi^2$ gate with zero false rejections.
 - **Stationary Rest Suppression**: Classical Gated ZUPT suppresses stationary drift to **$< 0.5\,\text{m}$** over 100 samples with residual velocity **$< 0.05\,\text{m/s}$** on real IO-VNBD data without any machine-learning dependency.
@@ -210,7 +213,7 @@ When standstill is declared, a measurement $\mathbf{z}_{\text{zupt}} = [0, 0, 0]
 ### 11.1 Benchmark Test Configuration
 - **Dataset**: IO-VNBD Trip S1 (`Uncategorised_S1.npz`, 51,746 samples).
 - **Evaluation Window**: Sample 19500 to 20100 (60.00 seconds, 601 samples).
-- **Evaluation Type**: Controlled propagation/aiding benchmark with oracle initialization at $t_0$, matching the Phase 4 ablation protocol exactly.
+- **Evaluation Type**: Controlled oracle-initialized real-data benchmark (consistent with the controlled Phase 4 benchmark; not a cold-start autonomous benchmark).
 - **Initial Conditions**:
   - Starting position: $[0, 0, 0]^T$ at $\text{lat}=52.4165342^\circ, \text{lon}=-1.5785448^\circ, \text{alt}=127.39\,\text{m}$.
   - Initial velocity: $[-11.399, 3.099, 0.0]^T\,\text{m/s}$ (speed $11.813\,\text{m/s}$, heading $285.21^\circ$).
@@ -223,10 +226,10 @@ When standstill is declared, a measurement $\mathbf{z}_{\text{zupt}} = [0, 0, 0]
 | **Final Horizontal Error ($e_{\text{2D}}$)** | **$3,249.32\,\text{m}$** | **$5.27\,\text{m}$** | **$99.84\%$ reduction** |
 | **Horizontal Position RMSE** | **$1,487.53\,\text{m}$** | **$24.78\,\text{m}$** | **$98.33\%$ reduction** |
 | **Maximum Horizontal Error** | **$3,249.32\,\text{m}$** | **$117.49\,\text{m}$** | **$96.38\%$ reduction** |
-| **Final Vertical Error ($e_U$)** | $18.39\,\text{m}$ | **$63.01\,\text{m}$** | Preserves unconstrained vertical |
-| **Vertical Position RMSE** | $12.11\,\text{m}$ | **$70.54\,\text{m}$** | Pure horizontal aiding |
-| **Final 3D Error ($e_{\text{3D}}$)** | $3,249.37\,\text{m}$ | **$63.23\,\text{m}$** | **$98.05\%$ reduction** |
-| **3D Position RMSE** | $1,487.58\,\text{m}$ | **$74.77\,\text{m}$** | **$94.97\%$ reduction** |
+| **Final Vertical Error ($e_U$)** | $530.20\,\text{m}$ | **$63.01\,\text{m}$** | **$88.12\%$ reduction** |
+| **Vertical Position RMSE** | $211.01\,\text{m}$ | **$70.54\,\text{m}$** | **$66.57\%$ reduction** |
+| **Final 3D Error ($e_{\text{3D}}$)** | **$3,292.29\,\text{m}$** | **$63.23\,\text{m}$** | **$98.08\%$ reduction** |
+| **3D Position RMSE** | **$1,502.42\,\text{m}$** | **$74.77\,\text{m}$** | **$95.02\%$ reduction** |
 | **Drift Rate at $60\,\text{s}$** | $54.16\,\text{m/s}$ | **$0.088\,\text{m/s}$** | **$615\times$ suppression** |
 | **GNSS Position Fixes Accepted** | 0 (open loop) | **7 of 7 ($100\%$)** | 0 rejected |
 | **GNSS Horizontal Vel Fixes Accepted** | 0 (open loop) | **7 of 7 ($100\%$)** | 0 rejected |
@@ -282,5 +285,5 @@ Phase 5 achieves its primary engineering and scientific objectives:
 1. **Mathematical Correctness**: State representation, right-multiplicative error injection, discrete error-state covariance reset, second-order $F_d$, and discrete $Q_d$ are derived, verified, and validated against numerical finite differences within tolerance ($3.80 \times 10^{-6} < 10^{-4}$).
 2. **Numerical Stability**: Joseph-form covariance updates, solve-based Kalman gains, and single authoritative covariance reset maintain positive-semidefiniteness and symmetry across all steps.
 3. **Physical Honesty in Measurement Modeling**: GNSS course velocity is modeled as a 2D horizontal measurement ($v_E, v_N$), observing only horizontal states and strictly avoiding false vertical velocity constraints.
-4. **Empirical Superiority**: ESKF + GNSS (position and 2D horizontal velocity) produces a **$99.84\%$ final horizontal error reduction** ($5.27\,\text{m}$ vs. $3,249.32\,\text{m}$) and a **$98.33\%$ horizontal RMSE reduction** ($24.78\,\text{m}$ vs. $1,487.53\,\text{m}$) over the frozen Phase 4 open-loop baseline.
+4. **Empirical Superiority**: ESKF + GNSS (position and 2D horizontal velocity) produces a **$99.84\%$ final horizontal error reduction** ($5.27\,\text{m}$ vs. $3,249.32\,\text{m}$), a **$98.33\%$ horizontal RMSE reduction** ($24.78\,\text{m}$ vs. $1,487.53\,\text{m}$), a **$98.08\%$ final 3D error reduction** ($63.23\,\text{m}$ vs. $3,292.29\,\text{m}$), and a **$95.02\%$ 3D RMSE reduction** ($74.77\,\text{m}$ vs. $1,502.42\,\text{m}$) over the frozen Phase 4 open-loop baseline.
 5. **Readiness**: Phase 5 is fully tested, regression-verified, and frozen. The filter interface is completely prepared for Phase 6 (Machine Learning Models: VelocityNet and BiasNet).
