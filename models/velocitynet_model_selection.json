@@ -1,0 +1,61 @@
+{
+  "selection_date": "2026-09-10",
+  "evaluation_split": "Driver B (21,080 windows)",
+  "candidates_comparison": [
+    {
+      "candidate": "Candidate A (2L-GRU)",
+      "params": 41506,
+      "val_nll": 2.9891646254899604,
+      "val_rmse": 5.059725761413574,
+      "val_mae": 3.9065842628479004,
+      "val_bias": 0.429127961397171,
+      "val_corr": 0.6786330871171449,
+      "high_speed_rmse": 5.69661808013916,
+      "high_speed_bias": -2.165814161300659,
+      "low_speed_bias": 1.686872124671936,
+      "val_2sigma_cov": 97.21062618595825,
+      "latency_p50_ms": 0.8322500034410041,
+      "best_ema_alpha": 0.2,
+      "val_rmse_with_ema": 3.7382864952087402
+    },
+    {
+      "candidate": "Candidate B (1D-CNN)",
+      "params": 25474,
+      "val_nll": 2.917918725393755,
+      "val_rmse": 4.432682037353516,
+      "val_mae": 3.3865437507629395,
+      "val_bias": 0.2822714149951935,
+      "val_corr": 0.711035961819071,
+      "high_speed_rmse": 5.612564563751221,
+      "high_speed_bias": -3.0269527435302734,
+      "low_speed_bias": 1.584236741065979,
+      "val_2sigma_cov": 97.6518026565465,
+      "latency_p50_ms": 0.25905000074999407,
+      "best_ema_alpha": 0.2,
+      "val_rmse_with_ema": 3.5095748901367188
+    },
+    {
+      "candidate": "Candidate C (Conv1D-GRU)",
+      "params": 14402,
+      "val_nll": 2.8744964690995625,
+      "val_rmse": 4.599544048309326,
+      "val_mae": 3.539519786834717,
+      "val_bias": -0.42152875661849976,
+      "val_corr": 0.6833988449183593,
+      "high_speed_rmse": 6.131031036376953,
+      "high_speed_bias": -3.890321969985962,
+      "low_speed_bias": 1.5904724597930908,
+      "val_2sigma_cov": 97.46679316888046,
+      "latency_p50_ms": 1.2349999960861169,
+      "best_ema_alpha": 0.2,
+      "val_rmse_with_ema": 3.5976734161376953
+    }
+  ],
+  "selected_candidate": "Candidate B (1D-CNN)",
+  "selected_architecture": "CNN1DVelocityBaseline",
+  "parameters": 25474,
+  "selected_ema_alpha": 0.2,
+  "selection_rationale": "Candidate B (1D-CNN, 25,474 params) outperformed Candidate A (2L-GRU, 41,506 params) on Driver B validation: Val RMSE 4.433 m/s vs 5.060 m/s, Val NLL 2.918 vs 2.989, High-Speed RMSE 5.613 m/s vs 5.697 m/s. Causal EMA with alpha=0.2 was selected on Driver B, further reducing validation RMSE to 3.510 m/s. Architectural Note: 1D-CNN is designated as the empirically validated velocity model candidate for Phase 7 export; the GRU remains preserved as the historical baseline.",
+  "cnn_outperformed_gru_on_validation": true,
+  "governance_note": "GRU remains preserved as v1 baseline; selected model exported as v1.1 candidate."
+}

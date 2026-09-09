@@ -1,0 +1,172 @@
+{
+  "model_name": "Candidate B (1D-CNN)",
+  "version": "v1.1",
+  "parameters": 25474,
+  "architecture": "CNN1DVelocityBaseline",
+  "train_samples": 226928,
+  "val_samples": 21080,
+  "test_samples": 123464,
+  "best_epoch": 1,
+  "best_val_loss": 2.917918725393755,
+  "selected_ema_alpha": 0.2,
+  "val_metrics": {
+    "rmse": 4.432682037353516,
+    "mae": 3.3865437507629395,
+    "bias": 0.2822714149951935,
+    "correlation": 0.711035961819071
+  },
+  "test_metrics_raw": {
+    "rmse": 7.069969654083252,
+    "mae": 5.297320365905762,
+    "bias": 1.5196197032928467,
+    "correlation": 0.41441902176565815
+  },
+  "test_metrics_ema": {
+    "rmse": 6.484227180480957,
+    "mae": 4.890535831451416,
+    "bias": 1.5220205783843994,
+    "correlation": 0.46589603564978505
+  },
+  "uncertainty_coverage": {
+    "in_1sigma": 62.177638825892565,
+    "in_2sigma": 87.64093176958465,
+    "in_3sigma": 95.92998768871898,
+    "mean_sigma_mps": 5.3657708168029785
+  },
+  "baselines": {
+    "operational_static_train_mean": {
+      "rmse": 9.304566383361816,
+      "mae": 8.035984992980957,
+      "bias": 6.656191825866699,
+      "correlation": null,
+      "train_mean_speed_mps": 15.571139335632324,
+      "type": "operational_causal_baseline",
+      "description": "Causal baseline predicting the static training set mean forward speed"
+    },
+    "non_causal_lag1_ground_truth_oracle": {
+      "rmse": 0.40056946873664856,
+      "mae": 0.2494475245475769,
+      "bias": -0.00010013883729698136,
+      "correlation": 0.9981020032417952,
+      "type": "non_causal_oracle_diagnostic_reference",
+      "description": "Non-causal diagnostic reference using prior ground-truth speed (infeasible in GNSS outage; not an operational baseline; NOT BEATEN)"
+    }
+  },
+  "scenarios": {
+    "Overall Test Set": {
+      "count": 123464,
+      "percentage": 100.0,
+      "raw_rmse": 7.069969654083252,
+      "raw_mae": 5.297320365905762,
+      "raw_bias": 1.5196197032928467,
+      "raw_corr": 0.41441902176565815,
+      "ema_rmse": 6.484227180480957,
+      "ema_mae": 4.890535831451416,
+      "ema_bias": 1.5220205783843994,
+      "ema_corr": 0.46589603564978505,
+      "mean_sigma": 5.3657708168029785
+    },
+    "Low Speed (< 2 m/s)": {
+      "count": 22276,
+      "percentage": 18.042506317631048,
+      "raw_rmse": 7.450045585632324,
+      "raw_mae": 4.751412391662598,
+      "raw_bias": 4.701542377471924,
+      "raw_corr": 0.1401743202252541,
+      "ema_rmse": 6.946090221405029,
+      "ema_mae": 4.654323101043701,
+      "ema_bias": 4.624426364898682,
+      "ema_corr": 0.15469825089997352,
+      "mean_sigma": 3.9377589225769043
+    },
+    "Medium Speed (2-15 m/s)": {
+      "count": 83410,
+      "percentage": 67.55815460377114,
+      "raw_rmse": 6.138703346252441,
+      "raw_mae": 4.867332458496094,
+      "raw_bias": 2.4994289875030518,
+      "raw_corr": 0.3073692149518631,
+      "ema_rmse": 5.449404239654541,
+      "ema_mae": 4.370131969451904,
+      "ema_bias": 2.5114636421203613,
+      "ema_corr": 0.348665491943003,
+      "mean_sigma": 5.595665454864502
+    },
+    "High Speed (> 15 m/s)": {
+      "count": 17778,
+      "percentage": 14.399339078597809,
+      "raw_rmse": 10.03901481628418,
+      "raw_mae": 7.998744964599609,
+      "raw_bias": -7.064384460449219,
+      "raw_corr": 0.017438450015567573,
+      "ema_rmse": 9.602717399597168,
+      "ema_mae": 7.628119945526123,
+      "ema_bias": -7.007546424865723,
+      "ema_corr": 0.02223995206973443,
+      "mean_sigma": 6.076470851898193
+    },
+    "Straight Driving (|w_z| <= 0.05 rad/s)": {
+      "count": 96676,
+      "percentage": 78.30298710555303,
+      "raw_rmse": 6.914608001708984,
+      "raw_mae": 5.108860969543457,
+      "raw_bias": 0.8122766613960266,
+      "raw_corr": 0.436703532810911,
+      "ema_rmse": 6.427656173706055,
+      "ema_mae": 4.778609275817871,
+      "ema_bias": 0.9534130096435547,
+      "ema_corr": 0.47983446904787075,
+      "mean_sigma": 5.268817901611328
+    },
+    "Cornering / Turning (|w_z| > 0.05 rad/s)": {
+      "count": 26788,
+      "percentage": 21.697012894446964,
+      "raw_rmse": 7.604307174682617,
+      "raw_mae": 5.977456092834473,
+      "raw_bias": 4.072370529174805,
+      "raw_corr": 0.2979808083777946,
+      "ema_rmse": 6.684406280517578,
+      "ema_mae": 5.294473171234131,
+      "ema_bias": 3.574085235595703,
+      "ema_corr": 0.39745579982797336,
+      "mean_sigma": 5.715663433074951
+    },
+    "Dynamic Acceleration / Braking (|norm_f - 9.81| > 1.5)": {
+      "count": 1116,
+      "percentage": 0.9039072118188298,
+      "raw_rmse": 8.819621086120605,
+      "raw_mae": 6.5703206062316895,
+      "raw_bias": 4.8239641189575195,
+      "raw_corr": 0.10256083360164496,
+      "ema_rmse": 6.797878742218018,
+      "ema_mae": 5.47137451171875,
+      "ema_bias": 3.53832745552063,
+      "ema_corr": 0.30550934687760606,
+      "mean_sigma": 6.27099084854126
+    }
+  },
+  "latency_cpu_ms": {
+    "p50": 0.25905000074999407,
+    "p95": 0.2943749972473597
+  },
+  "export_parity": {
+    "num_test_samples": 500,
+    "onnx_parity": {
+      "speed_max_abs_err": 5.7220458984375e-06,
+      "speed_mean_abs_err": 7.812976718923892e-07,
+      "log_var_max_abs_err": 1.1920928955078125e-06,
+      "log_var_mean_abs_err": 2.3317336683703616e-07,
+      "tolerance": 0.0001,
+      "passed": true
+    },
+    "litert_parity": {
+      "speed_max_abs_err": 3.814697265625e-06,
+      "speed_mean_abs_err": 5.573928092417191e-07,
+      "log_var_max_abs_err": 9.5367431640625e-07,
+      "log_var_mean_abs_err": 1.4734267494986852e-07,
+      "tolerance": 0.001,
+      "passed": true
+    },
+    "all_passed": true
+  }
+}

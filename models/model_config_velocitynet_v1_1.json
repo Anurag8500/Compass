@@ -1,0 +1,74 @@
+{
+  "model_name": "VelocityNet",
+  "version": "v1.1",
+  "architecture": "CNN1DVelocityBaseline",
+  "selection_experiment_id": "Candidate B (1D-CNN)",
+  "governance_note": "Selected via empirical validation superiority on Driver B (12.4% lower Val RMSE, 73.7% lower latency). GRU 41,506-param model remains preserved as historical v1 baseline.",
+  "parameters": 25474,
+  "dataset_manifest_hash": "6fadb0c74a1890fd2c5ab6997a33f3c04724f4083e862642a35244ef9a265b2b",
+  "normalization_sha256": "0649fdd7e350c931f48c9b7c2d6e9eb74cd731e4ec8d797a713e41753d1ee219",
+  "input_contract": {
+    "tensor_shape": [1, 20, 9],
+    "batch_mode": "Fixed single-window deployment (B=1) for real-time edge streaming; training supports arbitrary batch sizes",
+    "sequence_length": 20,
+    "feature_dim": 9,
+    "sample_rate_hz": 10.0,
+    "window_duration_s": 2.0,
+    "stride_s": 0.5,
+    "coordinate_frame": "vehicle_FLU",
+    "gravity_preserved": true,
+    "feature_order": [
+      "f_x_v",
+      "f_y_v",
+      "f_z_v",
+      "omega_x_v",
+      "omega_y_v",
+      "omega_z_v",
+      "norm_f_v",
+      "norm_f_dot_v",
+      "norm_omega_v"
+    ]
+  },
+  "output_contract": {
+    "speed": {
+      "name": "forward_speed",
+      "unit": "m/s",
+      "type": "float32",
+      "coordinate_frame": "vehicle_forward",
+      "unconstrained_linear": true
+    },
+    "log_variance": {
+      "name": "log_variance",
+      "unit": "unitless (log m^2/s^2)",
+      "type": "float32",
+      "clamping": [-10.0, 10.0]
+    }
+  },
+  "post_processing": {
+    "causal_ema_filtering": {
+      "enabled": true,
+      "alpha": 0.2,
+      "description": "Downstream causal Exponential Moving Average with trip/file boundary state resets. Selected on Driver B validation."
+    }
+  },
+  "training_configuration": {
+    "optimizer": "Adam",
+    "learning_rate": 0.001,
+    "weight_decay": 1e-05,
+    "batch_size": 256,
+    "dropout": 0.2,
+    "scheduler": "CosineAnnealingLR",
+    "loss": "Heteroscedastic Gaussian NLL",
+    "train_driver": "Driver E (226,928 windows)",
+    "val_driver": "Driver B (21,080 windows)",
+    "test_driver": "Driver A (123,464 windows, single-pass held-out)"
+  },
+  "artifacts": {
+    "checkpoint": "velocitynet_v1_1_best.pt",
+    "checkpoint_sha256": "d4b9bfb0f985d4213c2468e8b9fcc66f8e690b0e358439f9cd322c4f541210af",
+    "onnx_model": "velocitynet_v1_1.onnx",
+    "onnx_sha256": "86b65c7e443970c2e27d0f1bdb6db66b42d41c9cc0053b91c837b158a707d47a",
+    "tflite_model": "velocitynet_v1_1.tflite",
+    "tflite_sha256": "f21abf87ac6d8a1c3b9180eb650fb9f4f2eeab8ef715ec405f8e607a95daa42a"
+  }
+}
