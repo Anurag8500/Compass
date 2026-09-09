@@ -17,7 +17,7 @@ import os
 from pathlib import Path
 import random
 import time
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import matplotlib
 matplotlib.use("Agg")
@@ -41,7 +41,7 @@ def set_seed(seed: int = 42) -> None:
         torch.cuda.manual_seed_all(seed)
 
 
-def compute_metrics(preds: np.ndarray, targets: np.ndarray) -> Dict[str, float]:
+def compute_metrics(preds: np.ndarray, targets: np.ndarray) -> Dict[str, Optional[float]]:
     """Compute standard speed regression metrics."""
     errors = preds - targets
     rmse = float(np.sqrt(np.mean(errors ** 2)))
@@ -52,9 +52,10 @@ def compute_metrics(preds: np.ndarray, targets: np.ndarray) -> Dict[str, float]:
     p_std = np.std(preds)
     t_std = np.std(targets)
     if p_std > 1e-8 and t_std > 1e-8:
-        corr = float(np.corrcoef(preds, targets)[0, 1])
+        raw_corr = float(np.corrcoef(preds, targets)[0, 1])
+        corr = None if (math.isnan(raw_corr) or math.isinf(raw_corr)) else raw_corr
     else:
-        corr = 0.0
+        corr = None
 
     return {
         "rmse": rmse,
@@ -171,7 +172,7 @@ def train_velocitynet(
     history_path = project_root / cfg.get("history_path", "models/velocitynet_v1_history.json")
 
     best_val_loss = float("inf")
-    patience = cfg.get("patience", 6)
+    patience = cfg.get("patience", 5)
     patience_counter = 0
 
     history: Dict[str, List[float]] = {
@@ -276,6 +277,9 @@ def train_velocitynet(
     model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()
 
+    if best_val_loss == float("inf"):
+        best_val_loss = float(checkpoint.get("val_loss", 0.0))
+
     # Re-evaluate validation with best model
     val_loss, val_metrics, val_preds, val_log_vars, val_targets = evaluate_dataset(
         model, val_dataset, batch_size=256, device=device
@@ -328,12 +332,21 @@ def train_velocitynet(
     print(f"2. VelocityNet (Production GRU):                           RMSE = {test_metrics['rmse']:.3f} m/s (Beats operational baseline by {base_static_mean['rmse'] - test_metrics['rmse']:.3f} m/s)")
     print(f"3. Non-Causal Lag-1 Ground-Truth Oracle (Diagnostic Only): RMSE = {base_lag1_oracle['rmse']:.3f} m/s (NOT an operational baseline; NOT beaten)")
 
-    # Scenario-wise analysis on Test Set
+    # Scenario-wise analysis on Test Set (using physical units)
     print("\n--- SCENARIO-WISE PERFORMANCE BREAKDOWN ---")
-    test_raw_feats = test_dataset.features  # (N, 20, 9)
-    # Channel 5 is omega_z (yaw rate), channel 6 is norm_f
-    yaw_rates = np.abs(test_raw_feats[:, -1, 5])
-    accel_norms = test_raw_feats[:, -1, 6]
+    if hasattr(test_dataset, "raw_features") and test_dataset.raw_features is not None:
+        phys_feats = test_dataset.raw_features
+    else:
+        norm_json = project_root / "data" / "ml_dataset_v1" / "normalization.json"
+        with open(norm_json, "r", encoding="utf-8") as f:
+            norm_meta = json.load(f)
+        means = np.array(norm_meta["means"], dtype=np.float32)
+        stds = np.array(norm_meta["stds"], dtype=np.float32)
+        phys_feats = (test_dataset.features * stds) + means
+
+    # Channel 5 is omega_z (yaw rate in rad/s), channel 6 is norm_f in m/s^2
+    yaw_rates = np.abs(phys_feats[:, -1, 5])
+    accel_norms = phys_feats[:, -1, 6]
 
     scenarios: Dict[str, np.ndarray] = {
         "Overall Test Set": np.ones(len(test_targets), dtype=bool),
@@ -404,21 +417,29 @@ def train_velocitynet(
     plt.savefig(fig_dir / "velocitynet_training_curves.png", dpi=150)
     plt.close()
 
-    # Plot 2: Representative test time series (Highway Segment from Driver A)
-    plt.figure(figsize=(12, 4))
-    seg_len = 300  # 150 seconds (stride 0.5s)
-    seg_idx = 500
-    t_sec = np.arange(seg_len) * 0.5
-    true_seg = test_targets[seg_idx : seg_idx + seg_len]
-    pred_seg = test_preds[seg_idx : seg_idx + seg_len]
-    std_seg = test_stds[seg_idx : seg_idx + seg_len]
+    # Plot 2: Representative test time series (Contiguous physical trip from Driver A: Categorised_S1)
+    target_file = "data/cache/iovnbd/Categorised_S1.npz"
+    file_mask = (test_dataset.source_file_ids == target_file)
+    file_indices = np.where(file_mask)[0]
+    sort_order = np.argsort(test_dataset.timestamps_end_ns[file_indices])
+    sorted_indices = file_indices[sort_order]
+    
+    seg_len = min(300, len(sorted_indices))  # ~150 seconds (stride 0.5s)
+    start_offset = 100
+    sel_idx = sorted_indices[start_offset : start_offset + seg_len]
+    t_sec = (test_dataset.timestamps_end_ns[sel_idx] - test_dataset.timestamps_end_ns[sel_idx[0]]) / 1e9
 
+    true_seg = test_targets[sel_idx]
+    pred_seg = test_preds[sel_idx]
+    std_seg = test_stds[sel_idx]
+
+    plt.figure(figsize=(12, 4))
     plt.plot(t_sec, true_seg, label="Ground Truth (VBOX Doppler)", color="black", linewidth=1.5)
     plt.plot(t_sec, pred_seg, label="VelocityNet (GRU Prediction)", color="tab:blue", linewidth=1.2)
     plt.fill_between(t_sec, pred_seg - std_seg, pred_seg + std_seg, color="tab:blue", alpha=0.25, label="±1σ Predicted Uncertainty")
-    plt.xlabel("Time in Segment (seconds)")
+    plt.xlabel("Elapsed Time in Trip (seconds)")
     plt.ylabel("Forward Speed (m/s)")
-    plt.title("VelocityNet Speed Prediction & Uncertainty on Held-Out Driver A Segment")
+    plt.title("VelocityNet Speed Prediction & Uncertainty on Contiguous Driver A Trip (Categorised_S1)")
     plt.legend()
     plt.grid(True, alpha=0.3)
     plt.tight_layout()

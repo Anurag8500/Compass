@@ -62,6 +62,21 @@ class VelocityNetDataset(Dataset):
         else:
             self.driver_ids = np.array(["unknown"] * len(valid_indices), dtype=object)
 
+        # Retain or reconstruct physical-unit features for physical scenario analysis
+        if "X_raw" in data:
+            self.raw_features = data["X_raw"][valid_indices].astype(np.float32)
+        else:
+            norm_json = self.npz_path.parent / "normalization.json"
+            if norm_json.exists():
+                import json
+                with open(norm_json, "r", encoding="utf-8") as f:
+                    norm_meta = json.load(f)
+                means = np.array(norm_meta["means"], dtype=np.float32)
+                stds = np.array(norm_meta["stds"], dtype=np.float32)
+                self.raw_features = (self.features * stds) + means
+            else:
+                self.raw_features = None
+
         # Sanity check finiteness
         if not np.all(np.isfinite(self.features)):
             raise ValueError(f"Non-finite values detected in valid features of {self.npz_path}")

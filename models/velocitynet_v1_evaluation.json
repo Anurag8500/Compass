@@ -7,7 +7,7 @@
   "val_samples": 21080,
   "test_samples": 123464,
   "best_epoch": 8,
-  "best_val_loss": Infinity,
+  "best_val_loss": 3.0029851277820074,
   "val_metrics": {
     "rmse": 5.017409324645996,
     "mae": 3.8349146842956543,
@@ -31,7 +31,7 @@
       "rmse": 9.304566383361816,
       "mae": 8.035984992980957,
       "bias": 6.656191825866699,
-      "correlation": NaN,
+      "correlation": null,
       "train_mean_speed_mps": 15.571139335632324,
       "type": "operational_causal_baseline",
       "description": "Causal baseline predicting the static training set mean forward speed"
@@ -48,7 +48,7 @@
       "rmse": 9.304566383361816,
       "mae": 8.035984992980957,
       "bias": 6.656191825866699,
-      "correlation": NaN
+      "correlation": null
     },
     "naive_constant_velocity": {
       "rmse": 0.40056946873664856,
@@ -91,33 +91,33 @@
       "mean_sigma": 5.976391315460205
     },
     "Straight Driving (|w_z| <= 0.05 rad/s)": {
-      "rmse": 7.383537292480469,
-      "mae": 5.152409553527832,
-      "bias": -1.1196534633636475,
-      "correlation": 0.4626176680477748,
-      "count": 24700,
-      "mean_sigma": 4.52604866027832
+      "rmse": 7.239910125732422,
+      "mae": 5.325431823730469,
+      "bias": 0.12525542080402374,
+      "correlation": 0.4245802121528171,
+      "count": 96676,
+      "mean_sigma": 4.969630718231201
     },
     "Cornering / Turning (|w_z| > 0.05 rad/s)": {
-      "rmse": 7.304025650024414,
-      "mae": 5.542094707489014,
-      "bias": 1.3190234899520874,
-      "correlation": 0.3857938911817627,
-      "count": 98764,
-      "mean_sigma": 5.252168655395508
+      "rmse": 7.602031707763672,
+      "mae": 5.964706897735596,
+      "bias": 3.3786542415618896,
+      "correlation": 0.3100502292137437,
+      "count": 26788,
+      "mean_sigma": 5.602306842803955
     },
     "Dynamic Acceleration / Braking": {
-      "rmse": 7.319818496704102,
-      "mae": 5.464064598083496,
-      "bias": 0.8306997418403625,
-      "correlation": 0.4070356299376517,
-      "count": 123454,
-      "mean_sigma": 5.106806755065918
+      "rmse": 7.807366847991943,
+      "mae": 6.417037010192871,
+      "bias": 4.42331600189209,
+      "correlation": 0.20519125140274624,
+      "count": 1116,
+      "mean_sigma": 5.802739143371582
     }
   },
   "latency_cpu_ms": {
-    "mean": 2.022567800078832,
-    "p50": 1.8961499990837183,
-    "p95": 2.7837749981699744
+    "mean": 1.6817623999231728,
+    "p50": 1.7237000029126648,
+    "p95": 1.8455799956427654
   }
 }

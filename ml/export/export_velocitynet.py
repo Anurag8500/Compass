@@ -238,9 +238,9 @@ def run_full_export(
 
     # 3. Verify parity on held-out test windows
     test_path = project_root / "data" / "ml_dataset_v1" / "test.npz"
-    print(f"[*] Verifying parity on 100 held-out test windows...")
+    print(f"[*] Verifying parity on 500 held-out test windows...")
     test_ds = VelocityNetDataset(test_path, split_name="test")
-    test_batch = test_ds.features[:100]
+    test_batch = test_ds.features[:500]
 
     parity_report = verify_export_parity(
         model=model,

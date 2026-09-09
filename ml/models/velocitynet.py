@@ -16,7 +16,7 @@ positions, quaternions, or complete velocity vectors.
 from __future__ import annotations
 
 import math
-from typing import Tuple
+from typing import Optional, Tuple
 import torch
 import torch.nn as nn
 
@@ -31,6 +31,7 @@ class VelocityNet(nn.Module):
         num_layers: int = 2,
         dense_dim: int = 32,
         dropout: float = 0.2,
+        seq_len: Optional[int] = 20,
         min_log_var: float = -10.0,
         max_log_var: float = 10.0,
     ) -> None:
@@ -39,6 +40,7 @@ class VelocityNet(nn.Module):
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers
         self.dense_dim = dense_dim
+        self.seq_len = seq_len
         self.min_log_var = min_log_var
         self.max_log_var = max_log_var
 
@@ -68,9 +70,10 @@ class VelocityNet(nn.Module):
         """
         if x.ndim != 3:
             raise ValueError(f"Expected 3D input (batch_size, seq_len, features), got shape {tuple(x.shape)}")
-        if x.shape[1] != 20 or x.shape[2] != self.input_dim:
+        if (self.seq_len is not None and x.shape[1] != self.seq_len) or x.shape[2] != self.input_dim:
+            expected_seq = self.seq_len if self.seq_len is not None else "any"
             raise ValueError(
-                f"Expected input shape (batch_size, 20, {self.input_dim}), got (batch_size, {x.shape[1]}, {x.shape[2]})"
+                f"Expected input shape (batch_size, {expected_seq}, {self.input_dim}), got (batch_size, {x.shape[1]}, {x.shape[2]})"
             )
 
         # GRU forward pass: out shape (batch_size, 20, 64)
