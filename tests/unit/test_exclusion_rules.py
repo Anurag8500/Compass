@@ -77,3 +77,16 @@ class TestExclusionRules:
 
         assert res.eligible is True
         assert res.reason == "ELIGIBLE"
+
+    def test_outage_metadata_none_invents_no_fake_exclusions(self) -> None:
+        """When outage metadata is None, no fake exclusions are invented; all valid windows are eligible."""
+        for start_s in [0, 50, 100, 500]:
+            res = evaluate_biasnet_eligibility(
+                window_start_timestamp_ns=start_s * 1_000_000_000,
+                window_end_timestamp_ns=(start_s + 2) * 1_000_000_000,
+                is_window_valid=True,
+                real_outage_windows=None,
+            )
+            assert res.eligible is True
+            assert res.reason == "ELIGIBLE"
+

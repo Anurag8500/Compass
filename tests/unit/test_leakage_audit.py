@@ -84,6 +84,18 @@ class TestLeakageAudit:
             driver = split.driver_mapping.get(f)
             assert driver != "Driver A", f"Driver A file {f} leaked into train/val!"
 
+    def test_excluded_files_do_not_appear_in_train_val_test(self, split: DriverFileSplit) -> None:
+        """Excluded files (e.g. Driver D sync failure) must NEVER appear in active splits."""
+        excl_set = set(split.excluded_files)
+        active_set = set(split.train_files).union(split.validation_files).union(split.test_files)
+        overlap = excl_set.intersection(active_set)
+        assert len(overlap) == 0, f"Excluded files leaked into active splits: {overlap}"
+        assert len(excl_set) == 2
+        for f in excl_set:
+            assert "Y1" in f
+            assert split.driver_mapping[f] == "Driver D"
+
+
     def test_synthetic_cross_contamination_triggers_hard_failure(self) -> None:
         """Verifies that the audit code will reliably fail loudly if leakage occurs."""
         bad_split_data = {

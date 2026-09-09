@@ -54,7 +54,7 @@ class TestMLDatasetArtifacts:
         assert total_windows == 399714
 
     def test_all_features_and_labels_finite(self) -> None:
-        """Ensure zero non-finite values in features and labels."""
+        """Ensure zero non-finite values in features and valid labels."""
         for split_name, data in [
             ("train", self.train_data),
             ("val", self.val_data),
@@ -62,7 +62,9 @@ class TestMLDatasetArtifacts:
         ]:
             assert np.all(np.isfinite(data["X"])), f"Non-finite in {split_name} X"
             assert np.all(np.isfinite(data["X_raw"])), f"Non-finite in {split_name} X_raw"
-            assert np.all(np.isfinite(data["y_speed"])), f"Non-finite in {split_name} y_speed"
+            valid_mask = data["is_valid"]
+            assert np.all(np.isfinite(data["y_speed"][valid_mask])), f"Non-finite valid label in {split_name} y_speed"
+            assert np.all(np.isfinite(data["y_speed_raw"][valid_mask])), f"Non-finite valid raw label in {split_name} y_speed_raw"
 
     def test_serialized_leakage_audit_file_and_driver_isolation(self) -> None:
         """Assert zero file or driver leakage in the actual saved arrays."""
@@ -85,6 +87,21 @@ class TestMLDatasetArtifacts:
         assert train_drivers.isdisjoint(val_drivers)
         assert train_drivers.isdisjoint(test_drivers)
         assert val_drivers.isdisjoint(test_drivers)
+
+    def test_excluded_files_absent_from_all_serialized_arrays(self) -> None:
+        """Driver D files (trip Y1) must be completely absent from train, val, and test."""
+        all_active_files = set(self.train_data["source_file_ids"]).union(
+            set(self.val_data["source_file_ids"])
+        ).union(set(self.test_data["source_file_ids"]))
+
+        for f in all_active_files:
+            assert "Y1" not in f, f"Excluded file {f} found in serialized splits!"
+            assert "Driver D" not in f
+
+        all_active_drivers = set(self.train_data["driver_ids"]).union(
+            set(self.val_data["driver_ids"])
+        ).union(set(self.test_data["driver_ids"]))
+        assert "Driver D" not in all_active_drivers
 
     def test_normalization_statistical_properties(self) -> None:
         """Normalized valid train features must exhibit mean ~ 0 and std ~ 1."""

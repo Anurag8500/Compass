@@ -91,3 +91,66 @@ class TestVelocityNetLabels:
         import typing
         hints = typing.get_type_hints(extract_velocitynet_labels)
         assert "window_end_indices" in hints
+
+    def test_invalid_gap_isolation_hard_boundary(self) -> None:
+        """Invalid reference samples must form hard boundaries preventing cross-gap bridging.
+
+        Indices:
+        0: valid (10.0)
+        1: valid (10.0)
+        2: invalid (np.nan)
+        3: valid (20.0)
+        4: valid (20.0)
+        5: valid (20.0)
+
+        At index 3, the filtered value must depend ONLY on the segment starting at 3.
+        It must be 20.0, NOT median([10.0, 20.0]) = 15.0.
+        """
+        signal = np.array([10.0, 10.0, np.nan, 20.0, 20.0, 20.0])
+        filtered = causal_median_filter_1d(signal, window_size=3)
+
+        assert filtered[0] == pytest.approx(10.0)
+        assert filtered[1] == pytest.approx(10.0)
+        assert np.isnan(filtered[2])  # Hard boundary, not filtered or fabricated
+
+        # Hard barrier check: index 3 MUST NOT bridge to index 1 or 0
+        assert filtered[3] == pytest.approx(20.0)
+        assert filtered[4] == pytest.approx(20.0)
+        assert filtered[5] == pytest.approx(20.0)
+
+        # Mutate index 0 and 1: index 3 MUST remain completely unchanged
+        signal_mutated = np.array([999.0, 888.0, np.nan, 20.0, 20.0, 20.0])
+        filtered_mutated = causal_median_filter_1d(signal_mutated, window_size=3)
+        assert filtered_mutated[3] == pytest.approx(20.0)
+        assert filtered_mutated[4] == pytest.approx(20.0)
+
+    def test_no_future_median_leakage(self) -> None:
+        """Mutating reference speed samples at t > T must not alter label at T."""
+        n = 30
+        dt_ns = 100_000_000
+        ts = np.arange(0, n * dt_ns, dt_ns, dtype=np.int64)
+        speed = np.full(n, 12.5)
+
+        end_indices = [19]
+        batch_orig = extract_velocitynet_labels(ts, speed, end_indices)
+
+        # Mutate future samples after index 19 (indices 20 to 29)
+        speed_mutated = np.copy(speed)
+        speed_mutated[20:] = 999.0
+        batch_mutated = extract_velocitynet_labels(ts, speed_mutated, end_indices)
+
+        assert batch_orig.speed_smoothed_mps[0] == pytest.approx(12.5)
+        assert batch_mutated.speed_smoothed_mps[0] == pytest.approx(12.5)
+        assert batch_orig.speed_raw_mps[0] == pytest.approx(12.5)
+        assert batch_mutated.speed_raw_mps[0] == pytest.approx(12.5)
+
+    def test_invalid_label_stores_nan_not_fabricated_zero(self) -> None:
+        """Invalid reference labels must store NaN and is_valid_label=False, never 0.0."""
+        ts = np.array([0, 100_000_000, 200_000_000], dtype=np.int64)
+        speed = np.array([15.0, np.nan, 15.0])
+        batch = extract_velocitynet_labels(ts, speed, window_end_indices=[1])
+
+        assert bool(batch.is_valid_label[0]) is False
+        assert np.isnan(batch.speed_raw_mps[0])
+        assert np.isnan(batch.speed_smoothed_mps[0])
+
