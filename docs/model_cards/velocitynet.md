@@ -7,11 +7,11 @@
 
 ## 1. Model Details & Versioning Governance
 
-This model card documents both the historical baseline (**VelocityNet v1.0**) and the rigorously trained and selected production candidate (**VelocityNet v1.1**).
+This model card documents both the historical baseline (**VelocityNet v1.0**) and the rigorously trained and selected candidate (**VelocityNet v1.1**).
 
-| Attribute | VelocityNet v1.0 (Historical Baseline) | VelocityNet v1.1 (Selected Production Candidate) |
+| Attribute | VelocityNet v1.0 (Historical Baseline) | VelocityNet v1.1 (Selected Experimental Candidate) |
 | :--- | :--- | :--- |
-| **Release Status** | Frozen Historical Baseline | Selected Validated Candidate for Phase 9 ESKF Fusion |
+| **Release Status** | Frozen Historical Baseline | Selected Experimental Candidate for Phase 9 ESKF Integration |
 | **Architecture** | 2-Layer Gated Recurrent Unit (GRU) | Lightweight 1D Temporal Convolutional Network (1D-CNN) |
 | **Parameter Count** | 41,506 parameters | 25,474 parameters (-38.6% parameters) |
 | **Hidden Dimensions** | GRU hidden=64, dense=32 | Conv1D: 9→48, 48→64, 64→64, GlobalAvgPool, dense=32 |
@@ -22,24 +22,21 @@ This model card documents both the historical baseline (**VelocityNet v1.0**) an
 | **Single Held-Out Test** | Driver A ($N = 123,464$ windows) | Driver A ($N = 123,464$ windows, evaluated once post-freeze) |
 | **Validation RMSE** | $5.060\text{ m/s}$ ($5.017\text{ m/s}$ in screening) | **$4.433\text{ m/s}$** (Raw) / **$3.510\text{ m/s}$** (with EMA $\alpha=0.2$) |
 | **Test RMSE (Driver A)** | $7.320\text{ m/s}$ ($26.35\text{ km/h}$) | **$7.070\text{ m/s}$** (Raw) / **$6.484\text{ m/s}$** (with EMA $\alpha=0.2$) |
-| **CPU Latency (P50)** | $0.83\text{ ms}$ (export run) / $1.72\text{ ms}$ | **$0.26\text{ ms}$** (3.2x faster inference) |
+| **CPU Latency (P50)** | $0.83\text{ ms}$ | **$0.26\text{ ms}$** (3.2x faster inference) |
 | **Primary Artifacts** | `velocitynet_v1_best.pt` | `velocitynet_v1_1_best.pt`, `.onnx`, `.tflite` |
 
-### Architectural Governance Note
-In early architectural planning, VelocityNet was conceptualized as a 2-layer GRU. Following rigorous, fair, full-data retraining on all 226,928 Driver E windows with identical optimization budgets and evaluation strictly on Driver B validation, the lightweight 1D-CNN decisively outperformed the GRU across validation likelihood ($2.918$ vs $2.989$), validation RMSE ($4.433\text{ m/s}$ vs $5.060\text{ m/s}$), and latency ($0.26\text{ ms}$ vs $0.83\text{ ms}$). 
-
-Per the COMPASS model selection policy:
-- **VelocityNet v1.0** (GRU, 41,506 params) is preserved intact as the historical baseline.
-- **VelocityNet v1.1** (1D-CNN, 25,474 params + causal EMA $\alpha = 0.2$) is released as the selected model for Phase 9 ESKF pseudo-measurement fusion.
+### Governance & Acceptance Status
+- **VelocityNet v1.0** (GRU, 41,506 params) is preserved unchanged as the historical baseline.
+- **VelocityNet v1.1** (1D-CNN, 25,474 params + causal EMA $\alpha = 0.2$) is the selected **experimental candidate for Phase 9 integration evaluation**. It is **not** an operationally proven or standalone high-precision speedometer. Phase 7 does not integrate it into the ESKF.
 
 ---
 
 ## 2. Intended Use & Target Tasks
 
 - **Primary Application**: Pseudo-measurement generator intended for dead reckoning aiding during GNSS outages (e.g., tunnels, deep urban canyons, electronic jamming, subterranean roadways).
-- **Measurement Update Function**: Formulates forward velocity pseudo-measurement updates $\mathbf{z}_v = \mu_v$ with observation variance $R_v = \sigma_v^2 = \exp(\log \sigma_v^2)$ to constrain open-loop INS cubic drift within an Error-State Kalman Filter (ESKF).
+- **Measurement Update Function**: Formulates forward velocity pseudo-measurement updates $\mathbf{z}_v = \mu_v$ with observation variance $R_v = \sigma_v^2 = \exp(\log \sigma_v^2)$ to help constrain open-loop INS drift within an Error-State Kalman Filter (ESKF).
 - **Target Evaluation Rate**: 2.0 Hz update rate (evaluating every 0.5 s using a sliding 2.0 s history of 10 Hz inertial measurements).
-- **Target Platform**: Wheeled ground vehicles operating under typical road transport conditions.
+- **Target Platform**: Wheeled road vehicles operating under typical road transport conditions.
 - **Phase Boundary Note**: In Phase 7, VelocityNet is evaluated strictly as a standalone model. It is **NOT** integrated into the ESKF in Phase 7; ESKF integration belongs to Phase 9.
 
 ---
@@ -50,7 +47,7 @@ Per the COMPASS model selection policy:
 - **Standalone Trajectory Integrator**: VelocityNet estimates forward speed only. It is not an inertial navigation system and cannot produce position or heading without integration into a mechanization engine (such as the ESKF).
 - **Drive-by-Wire Actuation**: Predictions are intended for state estimation, not for safety-critical closed-loop braking, steering, or automated collision avoidance.
 - **Arbitrary Sensor Orientations**: The network requires inputs aligned with the vehicle Forward-Left-Up (FLU) frame. Raw, uncalibrated, or arbitrarily rotated sensor axes are out-of-scope.
-- **No Safety Certification**: Experimental research model developed under SIH 2026 Problem Statement 26168; no formal safety or operational flight/automotive certification is claimed.
+- **No Safety Certification**: Experimental research model developed under SIH 2026 Problem Statement 26168; no formal safety or operational certification is claimed.
 
 ---
 
@@ -99,51 +96,56 @@ $$\hat{\mathbf{y}} = \left[ \mu_v, \; \log \sigma_v^2 \right]^T \in \mathbb{R}^{
 
 ---
 
-## 6. Training Configuration & Split Isolation
+## 6. Architecture & Training Details (VelocityNet v1.1)
 
-All final candidates were trained on the complete Driver E training set using Heteroscedastic Gaussian Negative Log-Likelihood (NLL) loss:
+### Exact Architecture Specification
+- **Class**: `CNN1DVelocityBaseline` (in `ml/models/baselines/cnn1d_velocity.py`)
+- **Layer Structure**:
+  - `Conv1d(in_channels=9, out_channels=48, kernel_size=3, padding=1)` + `BatchNorm1d(48)` + `ReLU()` + `Dropout(p=0.2)`
+  - `Conv1d(in_channels=48, out_channels=64, kernel_size=3, padding=1)` + `BatchNorm1d(64)` + `ReLU()` + `Dropout(p=0.2)`
+  - `Conv1d(in_channels=64, out_channels=64, kernel_size=3, padding=1)` + `BatchNorm1d(64)` + `ReLU()` + `Dropout(p=0.2)`
+  - `AdaptiveAvgPool1d(output_size=1)`
+  - `Linear(in_features=64, out_features=32)` + `ReLU()` + `Dropout(p=0.2)`
+  - `Linear(in_features=32, out_features=2)`
+- **Total Parameters**: 25,474
 
-$$\mathcal{L}_{\text{NLL}}(\mu_v, s, y) = \frac{1}{2} \exp(-s) (y - \mu_v)^2 + \frac{1}{2} s + \frac{1}{2} \ln(2\pi)$$
-
-where $s = \log \sigma_v^2$ and $y$ is the Doppler-derived ground truth forward velocity.
-
+### Actual Training Configuration (Matching Source Artifacts)
 - **Optimizer**: Adam ($\beta_1=0.9, \beta_2=0.999, \epsilon=10^{-8}$)
-- **Learning Rate**: $1.0 \times 10^{-3}$ initial, scheduled with `CosineAnnealingLR` ($T_{\max}=30$, $\eta_{\min}=1.0 \times 10^{-5}$)
+- **Learning Rate**: Initial $1.0 \times 10^{-3}$, scheduled with `CosineAnnealingLR` ($T_{\max}=15$, $\eta_{\min}=1.0 \times 10^{-6}$)
 - **Weight Decay ($L_2$)**: $1.0 \times 10^{-5}$
 - **Batch Size**: 256
+- **Max Epochs**: 15
+- **Early Stopping Patience**: 5 epochs monitoring Driver B validation loss (checkpointed at epoch 1)
 - **Gradient Clipping**: $\ell_2$-norm clipped at $5.0$
-- **Early Stopping**: Monitored on Driver B validation loss (patience 7 epochs)
-- **Split Isolation**:
-  - **Train (Driver E)**: 226,928 windows (44 files, 22 trips)
-  - **Validation (Driver B)**: 21,080 windows (4 files, 2 trips) — strictly used for model selection, hyperparameter tuning, and EMA alpha selection.
-  - **Held-Out Test (Driver A)**: 123,464 windows (24 files, 12 trips) — strictly held out until the single final evaluation after model selection.
+- **Random Seed**: 42
+- **Loss Function**: Heteroscedastic Gaussian Negative Log-Likelihood (NLL):
+  $$\mathcal{L}_{\text{NLL}}(\mu_v, s, y) = \frac{1}{2} \exp(-s) (y - \mu_v)^2 + \frac{1}{2} s + \frac{1}{2} \ln(2\pi)$$
 
 ---
 
-## 7. Model Selection: Full-Data Training Validation on Driver B
+## 7. Model Selection: Full-Data Validation on Driver B
 
-All candidates were trained on the **full 226,928 Driver E dataset**. Model selection was performed on Driver B validation metrics alone:
+All candidates were trained on the complete 226,928 Driver E dataset. Model selection was governed by an explicit, deterministic hierarchical policy applied **strictly on Driver B validation data**:
+1. Primary: lowest `val_rmse`
+2. Secondary: lowest `val_mae`
+3. Tertiary: lowest `val_nll`
+4. Quaternary: lowest `high_speed_rmse`
+5. Tie-breaker: lowest `latency_p50_ms`, then lowest `params`
 
-| Candidate | Architecture | Parameters | Val NLL | Val RMSE ($\text{m/s}$) | Val MAE ($\text{m/s}$) | Val Bias ($\text{m/s}$) | Val Pearson $r$ | High-Speed RMSE | CPU P50 Latency | Val RMSE (+EMA $\alpha=0.2$) |
-| :--- | :--- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
-| **Candidate A** | 2-Layer GRU | 41,506 | 2.989 | 5.060 | 3.907 | +0.429 | 0.6786 | 5.697 | 0.83 ms | 3.738 m/s |
-| **Candidate B (Selected)** | **Lightweight 1D-CNN** | **25,474** | **2.918** | **4.433** | **3.387** | **+0.282** | **0.7110** | **5.613** | **0.26 ms** | **3.510 m/s** |
-| **Candidate C** | Conv1D-GRU Hybrid | 14,402 | 2.874 | 4.600 | 3.540 | -0.422 | 0.6834 | 6.131 | 1.23 ms | 3.598 m/s |
+| Rank | Candidate | Architecture | Params | Val RMSE ($\text{m/s}$) | Val MAE ($\text{m/s}$) | Val NLL | Val Bias ($\text{m/s}$) | Val Pearson $r$ | High-Speed RMSE | CPU P50 Latency | Val RMSE (+EMA $\alpha=0.2$) |
+| :-: | :--- | :--- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| **1** | **Candidate B (Selected)** | **1D-CNN** | **25,474** | **4.433** | **3.387** | **2.918** | **+0.282** | **0.7110** | **5.613** | **0.26 ms** | **3.510 m/s** |
+| 2 | Candidate C | Conv1D-GRU | 14,402 | 4.600 | 3.540 | 2.874 | -0.422 | 0.6834 | 6.131 | 1.23 ms | 3.598 m/s |
+| 3 | Candidate A | 2L-GRU | 41,506 | 5.060 | 3.907 | 2.989 | +0.429 | 0.6786 | 5.697 | 0.83 ms | 3.738 m/s |
 
 ### Selection Rationale
-Candidate B (1D-CNN) decisively won the validation selection:
-1. **Lowest Validation RMSE**: $4.433\text{ m/s}$ (vs $5.060\text{ m/s}$ for GRU, a $12.4\%$ reduction).
-2. **Highest Pearson Correlation**: $0.7110$ (vs $0.6786$ for GRU).
-3. **Lowest Validation Bias**: $+0.282\text{ m/s}$ (vs $+0.429\text{ m/s}$ for GRU).
-4. **Lowest Parameter Count**: 25,474 parameters (38.6% fewer than GRU).
-5. **Lowest Inference Latency**: $0.26\text{ ms}$ P50 (3.2x faster than GRU).
-6. **Best Causal Post-Filtering Response**: Combined with causal EMA ($\alpha = 0.2$), validation RMSE drops to **$3.510\text{ m/s}$**.
+Candidate B was selected because it achieved the lowest validation RMSE ($4.433\text{ m/s}$ vs $4.600\text{ m/s}$ for Candidate C and $5.060\text{ m/s}$ for Candidate A), lowest validation MAE ($3.387\text{ m/s}$), competitive NLL ($2.918$ vs $2.874$ for Candidate C), best validation bias ($+0.282\text{ m/s}$), strong correlation ($0.7110$), and substantially lower CPU latency ($0.26\text{ ms}$ P50). Candidate C achieved the lowest NLL ($2.874$) but did not achieve the lowest RMSE.
 
 ---
 
 ## 8. Causal Exponential Moving Average (EMA) Downstream Filtering
 
-To suppress high-frequency noise from windowed predictions without lookahead leakage, causal EMA filtering was studied on Driver B validation:
+To evaluate temporal smoothing without lookahead leakage, causal EMA filtering was studied on Driver B validation:
 
 $$\hat{v}_t^{\text{filtered}} = \alpha \hat{v}_t + (1 - \alpha) \hat{v}_{t-1}^{\text{filtered}}$$
 
@@ -151,6 +153,7 @@ $$\hat{v}_t^{\text{filtered}} = \alpha \hat{v}_t + (1 - \alpha) \hat{v}_{t-1}^{\
 - Evaluated strictly along contiguous physical trips (grouped by `source_file_id`, sorted monotonically by timestamp).
 - State reset $\hat{v}_0^{\text{filtered}} = \hat{v}_0$ at trip boundaries.
 - Strictly forward in time; zero future samples.
+- Post-processing only; not an alteration to neural network weights.
 
 ### Validation Sweep (Driver B)
 | Smoothing Parameter $\alpha$ | Validation RMSE ($\text{m/s}$) | Validation MAE ($\text{m/s}$) | Validation Pearson $r$ |
@@ -161,7 +164,7 @@ $$\hat{v}_t^{\text{filtered}} = \alpha \hat{v}_t + (1 - \alpha) \hat{v}_{t-1}^{\
 | $\alpha = 0.3$ | 3.630 | 2.766 | 0.7816 |
 | **$\alpha = 0.2$ (Selected)** | **3.510** | **2.673** | **0.7937** |
 
-$\alpha = 0.2$ was selected on Driver B and frozen prior to test evaluation.
+$\alpha = 0.2$ was selected on Driver B validation and frozen prior to test evaluation.
 
 ---
 
@@ -178,16 +181,16 @@ Evaluated **EXACTLY ONCE** on Driver A after model and hyperparameters were froz
 | *Lag-1 GT Oracle (Non-Causal Diagnostic)* | *0.401* | *1.44* | *0.249* | *-0.000* | *0.9981* | N/A | N/A |
 
 ### Key Generalization Findings
-1. **Raw Model Improvement**: VelocityNet v1.1 raw neural inference improves RMSE from $7.320\text{ m/s}$ to $7.070\text{ m/s}$ ($-0.250\text{ m/s}$) and test NLL from $3.8959$ to $3.6167$ ($-0.2792$).
-2. **Causal Post-Processing Gain**: Downstream causal EMA ($\alpha = 0.2$) reduces test RMSE to **$6.484\text{ m/s}$** ($23.34\text{ km/h}$) — an **$11.4\%$ total error reduction** vs the v1 baseline ($7.320\text{ m/s}$) and a **$30.3\%$ reduction** vs the operational static mean baseline ($9.305\text{ m/s}$).
-3. **Correlation Boost**: Pearson correlation increases from $0.4070$ to $0.4659$.
+1. **Raw Model Generalization**: VelocityNet v1.1 raw neural inference reduces RMSE from $7.320\text{ m/s}$ to $7.070\text{ m/s}$ ($-0.250\text{ m/s}$) and test NLL from $3.8959$ to $3.6167$ ($-0.2792$).
+2. **Observed Generalization Improvement with EMA**: Downstream causal EMA ($\alpha = 0.2$) reduces test RMSE to **$6.484\text{ m/s}$** ($23.34\text{ km/h}$) — an **$11.4\%$ error reduction** vs the v1 baseline ($7.320\text{ m/s}$) and a **$30.3\%$ error reduction** vs the operational static mean baseline ($9.305\text{ m/s}$). Causal EMA substantially reduced prediction error on both validation and held-out test data, indicating that temporal smoothing is beneficial for this model’s output.
+3. **Correlation Improvement**: Pearson correlation increases from $0.4070$ to $0.4659$.
 4. **Oracle Reference**: The lag-1 Doppler oracle ($0.401\text{ m/s}$) requires preceding ground-truth Doppler speed from GNSS; it is strictly a non-causal diagnostic bound, not an operational baseline, and was NOT beaten.
 
 ---
 
 ## 10. Scenario Analysis in Physical Units
 
-Scenario masks are computed strictly in physical units (e.g., $|\omega_z| \le 0.05\text{ rad/s}$ via raw angular rates; dynamic acceleration $|\|\mathbf{f}\| - 9.81| > 1.5\text{ m/s}^2$).
+Scenario masks are computed strictly in physical units (e.g., $|\omega_z| \le 0.05\text{ rad/s}$ via raw angular rates; specific-force magnitude deviation $|\|\mathbf{f}\| - 9.81| > 1.5\text{ m/s}^2$).
 
 | Driving Scenario | Window Count ($N$) | Percentage | Raw RMSE ($\text{m/s}$) | EMA RMSE ($\text{m/s}$) | EMA MAE ($\text{m/s}$) | Mean Bias ($\text{m/s}$) | Mean $\sigma_v$ ($\text{m/s}$) |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -197,12 +200,13 @@ Scenario masks are computed strictly in physical units (e.g., $|\omega_z| \le 0.
 | **High Speed ($> 15\text{ m/s}$)** | 17,778 | 14.40% | 10.039 | **9.603** | 7.628 | -7.008 | 6.08 |
 | **Straight Driving ($|\omega_z| \le 0.05\text{ rad/s}$)** | 96,676 | 78.30% | 6.915 | **6.428** | 4.779 | +0.953 | 5.27 |
 | **Cornering ($|\omega_z| > 0.05\text{ rad/s}$)** | 26,788 | 21.70% | 7.604 | **6.684** | 5.294 | +3.574 | 5.72 |
-| **Dynamic Accel / Braking** | 1,116 | 0.90% | 8.820 | **6.798** | 5.471 | +3.538 | 6.27 |
+| **Dynamic Specific-Force Deviation Proxy** | 1,116 | 0.90% | 8.820 | **6.798** | 5.471 | +3.538 | 6.27 |
 
 *Kinematic Regime Insights*:
 - **Medium Speed Dominance**: Medium speed represents $67.6\%$ of all test driving, where VelocityNet v1.1 achieves its best performance ($5.449\text{ m/s}$ RMSE, $4.370\text{ m/s}$ MAE).
 - **Standstill Overprediction**: Near standstill ($< 2\text{ m/s}$), the model exhibits a positive bias ($+4.62\text{ m/s}$). Standstill drift must be locked by the deterministic ZUPT detector from Phase 4.
-- **High-Speed Underprediction**: On high-speed segments ($> 15\text{ m/s}$), the model exhibits negative bias ($-7.01\text{ m/s}$). The network appropriately inflates its predicted uncertainty to $\sigma_v = 6.08\text{ m/s}$.
+- **High-Speed Underprediction**: On high-speed segments ($> 15\text{ m/s}$), the model exhibits negative bias ($-7.01\text{ m/s}$). The model predicts larger uncertainty in the high-speed regime ($\sigma_v = 6.08\text{ m/s}$); however, the associated uncertainty calibration must be validated during Phase 9 before being treated as reliable.
+- **Dynamic Specific-Force Deviation Proxy**: Evaluated via $|\|\mathbf{f}\| - 9.81| > 1.5\text{ m/s}^2$. This is a heuristic physical-unit proxy based on specific-force magnitude deviation from gravity, not a direct longitudinal acceleration detector.
 
 ---
 
@@ -217,7 +221,7 @@ Heteroscedastic Gaussian coverage evaluated on Driver A:
 | **$\pm 3\sigma$ Coverage** | 99.7% | **95.9%** | 99.6% | $16.10\text{ m/s}$ |
 
 > [!NOTE]
-> **Dispersion Finding**: On validation Driver B, predicted uncertainty matches nominal Gaussian coverage ($97.7\%$ at $2\sigma$). On unseen Driver A, empirical coverage drops to $87.6\%$ at $2\sigma$, indicating that the predicted uncertainty is **under-dispersed under domain shift**. For Phase 9 ESKF integration, empirical covariance scaling ($R_v \leftarrow s \cdot \sigma_v^2$ with $s \approx 1.5\text{--}2.0$) will be applied.
+> **Dispersion Finding**: On validation Driver B, predicted uncertainty matches nominal Gaussian coverage ($97.7\%$ at $2\sigma$). Uncertainty coverage degrades on the unseen Driver A distribution ($87.6\%$ at $2\sigma$), indicating poorer calibration under the observed train/validation-to-test distribution difference. Phase 9 must empirically calibrate or conservatively inflate the neural measurement covariance before fusion ($R_v = s \cdot \sigma_v^2$). Any covariance inflation factor $s$ must be selected using Phase 9 validation procedures rather than assumed from this Phase 7 result.
 
 ---
 
@@ -240,7 +244,7 @@ Evaluated in single-window mode ($B=1, T=20, C=9$) over $N = 500$ real held-out 
 
 1. **Standstill Positive Bias**: Overpredicts forward speed when stopped ($+4.62\text{ m/s}$). Deterministic ZUPT gating (Phase 4) is mandatory in Phase 9.
 2. **High-Speed Underprediction**: Underestimates forward speed above $15\text{ m/s}$ (bias $-7.01\text{ m/s}$).
-3. **Out-of-Distribution Dispersion**: Uncertainty is under-dispersed on unseen drivers; observation variance scaling is required for Kalman filtering.
+3. **Out-of-Distribution Dispersion**: Uncertainty coverage degrades on unseen drivers; observation variance scaling is required for Kalman filtering.
 4. **Reverse Motion Inoperability**: No reverse motion data exists in the corpus; negative forward speeds must be gated out.
 
 ---

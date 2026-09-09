@@ -3,12 +3,52 @@
   "version": "v1.1",
   "architecture": "CNN1DVelocityBaseline",
   "selection_experiment_id": "Candidate B (1D-CNN)",
-  "governance_note": "Selected via empirical validation superiority on Driver B (12.4% lower Val RMSE, 73.7% lower latency). GRU 41,506-param model remains preserved as historical v1 baseline.",
+  "governance_note": "VelocityNet v1.0 (2-layer GRU, 41,506 params) is preserved unchanged as the historical baseline. VelocityNet v1.1 is the selected experimental candidate for Phase 9 integration evaluation; it is not an operationally proven or standalone high-precision speedometer.",
   "parameters": 25474,
   "dataset_manifest_hash": "6fadb0c74a1890fd2c5ab6997a33f3c04724f4083e862642a35244ef9a265b2b",
   "normalization_sha256": "0649fdd7e350c931f48c9b7c2d6e9eb74cd731e4ec8d797a713e41753d1ee219",
+  "architecture_details": {
+    "architecture_class": "CNN1DVelocityBaseline",
+    "input_dim": 9,
+    "conv_channels": [
+      48,
+      64,
+      64
+    ],
+    "kernel_size": 3,
+    "padding": 1,
+    "dense_dim": 32,
+    "dropout": 0.2,
+    "layers": [
+      "Conv1d(9, 48, kernel_size=3, padding=1)",
+      "BatchNorm1d(48)",
+      "ReLU()",
+      "Dropout(p=0.2)",
+      "Conv1d(48, 64, kernel_size=3, padding=1)",
+      "BatchNorm1d(64)",
+      "ReLU()",
+      "Dropout(p=0.2)",
+      "Conv1d(64, 64, kernel_size=3, padding=1)",
+      "BatchNorm1d(64)",
+      "ReLU()",
+      "Dropout(p=0.2)",
+      "AdaptiveAvgPool1d(1)",
+      "Linear(64, 32)",
+      "ReLU()",
+      "Dropout(p=0.2)",
+      "Linear(32, 2)"
+    ],
+    "output_heads": {
+      "speed": "Linear(32, 1) unconstrained",
+      "log_variance": "Linear(32, 1) clamped to [-10.0, 10.0]"
+    }
+  },
   "input_contract": {
-    "tensor_shape": [1, 20, 9],
+    "tensor_shape": [
+      1,
+      20,
+      9
+    ],
     "batch_mode": "Fixed single-window deployment (B=1) for real-time edge streaming; training supports arbitrary batch sizes",
     "sequence_length": 20,
     "feature_dim": 9,
@@ -41,7 +81,10 @@
       "name": "log_variance",
       "unit": "unitless (log m^2/s^2)",
       "type": "float32",
-      "clamping": [-10.0, 10.0]
+      "clamping": [
+        -10.0,
+        10.0
+      ]
     }
   },
   "post_processing": {
@@ -57,7 +100,13 @@
     "weight_decay": 1e-05,
     "batch_size": 256,
     "dropout": 0.2,
+    "max_epochs": 15,
+    "patience": 5,
     "scheduler": "CosineAnnealingLR",
+    "scheduler_t_max": 15,
+    "scheduler_eta_min": 1e-06,
+    "gradient_clipping": 5.0,
+    "seed": 42,
     "loss": "Heteroscedastic Gaussian NLL",
     "train_driver": "Driver E (226,928 windows)",
     "val_driver": "Driver B (21,080 windows)",

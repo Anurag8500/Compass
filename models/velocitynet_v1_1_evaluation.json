@@ -131,7 +131,7 @@
       "ema_corr": 0.39745579982797336,
       "mean_sigma": 5.715663433074951
     },
-    "Dynamic Acceleration / Braking (|norm_f - 9.81| > 1.5)": {
+    "Dynamic Specific-Force Deviation Proxy (|norm_f - 9.81| > 1.5)": {
       "count": 1116,
       "percentage": 0.9039072118188298,
       "raw_rmse": 8.819621086120605,
