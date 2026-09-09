@@ -1,0 +1,90 @@
+{
+  "dataset_version": "v1.0",
+  "split_version": "split_v1",
+  "sample_rate_hz": 10.0,
+  "window_duration_s": 2.0,
+  "window_size_samples": 20,
+  "stride_duration_s": 0.5,
+  "stride_samples": 5,
+  "channel_count": 9,
+  "channel_order": [
+    "f_x_v",
+    "f_y_v",
+    "f_z_v",
+    "omega_x_v",
+    "omega_y_v",
+    "omega_z_v",
+    "norm_f_v",
+    "norm_f_dot_v",
+    "norm_omega_v"
+  ],
+  "total_source_files_processed": 142,
+  "files_per_split": {
+    "train": 128,
+    "validation": 2,
+    "test": 12
+  },
+  "drivers_per_split": {
+    "train": [
+      "Driver E"
+    ],
+    "validation": [
+      "Driver B"
+    ],
+    "test": [
+      "Driver A"
+    ]
+  },
+  "windows_per_split": {
+    "train": 233830,
+    "validation": 42388,
+    "test": 123496
+  },
+  "valid_windows_per_split": {
+    "train": 226928,
+    "validation": 21080,
+    "test": 123464
+  },
+  "normalization": {
+    "means": [
+      -0.06920408310771252,
+      0.04611596143051142,
+      9.838189143360792,
+      6.716860244409394e-05,
+      0.0032188013324710523,
+      9.148845056971664e-06,
+      10.015575989535133,
+      9.446759362591472,
+      0.22186022954469567
+    ],
+    "stds": [
+      1.3782260457318682,
+      1.2958856096241136,
+      0.5653567354888664,
+      0.1196240029320649,
+      0.2472681625254527,
+      0.12106944998375407,
+      0.6193328007517598,
+      8.807671942323514,
+      0.20223167647341322
+    ],
+    "channel_names": [
+      "f_x_v",
+      "f_y_v",
+      "f_z_v",
+      "omega_x_v",
+      "omega_y_v",
+      "omega_z_v",
+      "norm_f_v",
+      "norm_f_dot_v",
+      "norm_omega_v"
+    ],
+    "sample_count": 4538560
+  },
+  "outage_status": "NO_REAL_OUTAGES_IN_DATASET",
+  "biasnet_eligible_windows": {
+    "train": 226928,
+    "validation": 21080,
+    "test": 123464
+  }
+}
