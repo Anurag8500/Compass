@@ -33,6 +33,7 @@ from navigation.eskf.measurements.gnss import (
     GNSSMeasurementModel,
     GNSSUpdateConfig,
     course_to_enu_velocity,
+    course_to_horizontal_velocity,
 )
 from navigation.eskf.measurements.zupt import (
     ClassicalZUPTDetector,
@@ -64,6 +65,7 @@ __all__ = [
     "GNSSMeasurementModel",
     "GNSSUpdateConfig",
     "course_to_enu_velocity",
+    "course_to_horizontal_velocity",
     "ClassicalZUPTDetector",
     "ZUPTDetectorConfig",
     "ZUPTDetectorDiagnostics",

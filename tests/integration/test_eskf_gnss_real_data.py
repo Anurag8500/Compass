@@ -128,7 +128,7 @@ class TestESKFRealDataIntegration:
         zupt_accepted = 0
         zupt_rejected = 0
 
-        prev_lat = None
+        prev_fix_sig = None
 
         # 4. Filter Loop over Evaluation Window
         for k in range(len(ts_win) - 1):
@@ -145,7 +145,8 @@ class TestESKFRealDataIntegration:
                 process_noise=proc_noise,
             )
 
-            # GNSS Fix Check (evaluate on new fix arrival)
+            # GNSS Fix Arrival Check: robust multi-field comparison (lat, lon, alt, speed, bearing)
+            # avoids fragile lat-only checks and avoids duplicate fusion of held samples.
             lat_k = float(self.trip.s_gnss_lat[start_sample_idx + k + 1])
             lon_k = float(self.trip.s_gnss_lon[start_sample_idx + k + 1])
             alt_k = float(self.trip.s_gnss_alt[start_sample_idx + k + 1])
@@ -153,11 +154,13 @@ class TestESKFRealDataIntegration:
             spd_k = float(self.trip.s_gnss_speed_mps[start_sample_idx + k + 1])
             brg_k = float(self.trip.s_gnss_bearing_deg[start_sample_idx + k + 1])
 
-            if prev_lat is None:
-                prev_lat = lat_k
-            elif lat_k != prev_lat:
-                prev_lat = lat_k
-                # 4a. GNSS Position Update
+            fix_sig = (lat_k, lon_k, alt_k, spd_k, brg_k)
+            if prev_fix_sig is None:
+                prev_fix_sig = fix_sig
+            elif fix_sig != prev_fix_sig:
+                prev_fix_sig = fix_sig
+
+                # 4a. GNSS 3D Position Update
                 state, d_pos = gnss_model.update_position(
                     state=state,
                     lat=lat_k,
@@ -171,17 +174,19 @@ class TestESKFRealDataIntegration:
                 else:
                     pos_rejected += 1
 
-                # 4b. GNSS Velocity Update (fused when valid)
-                # Note: raw Android S-file logs m/s under 'GPS SPEED (Kmh)' label;
-                # Phase 2 ingestion divided by 3.6. Multiplying cached spd_k by 3.6
+                # 4b. GNSS 2D Horizontal Velocity Update (from course speed + bearing)
+                # Note: Phone GPS provides horizontal speed and course over ground; it does
+                # not provide measured vertical velocity. Fusing as a 2D measurement (v_E, v_N)
+                # correctly updates horizontal states without falsely constraining vertical velocity.
+                # In raw Android S-file, speed was logged in m/s under 'GPS SPEED (Kmh)' label;
+                # Phase 2 ingestion divided by 3.6 per column header. Multiplying by 3.6
                 # restores the true physical speed in m/s without mutating Phase 2 cache.
                 if math.isfinite(spd_k) and math.isfinite(brg_k) and spd_k >= 0.0:
                     true_speed_mps = spd_k * 3.6
-                    state, d_vel = gnss_model.update_velocity_from_course(
+                    state, d_vel = gnss_model.update_horizontal_velocity_from_course(
                         state=state,
                         speed_mps=true_speed_mps,
                         bearing_deg=brg_k,
-                        v_up=0.0,
                         accuracy_speed_mps=0.5,
                         timestamp_ns=t_ns,
                     )
@@ -211,29 +216,41 @@ class TestESKFRealDataIntegration:
         est_positions_arr = np.array(est_positions)
         err_e = est_positions_arr[:, 0] - gt_east
         err_n = est_positions_arr[:, 1] - gt_north
+        err_u = est_positions_arr[:, 2] - gt_up
         err_horiz = np.sqrt(err_e ** 2 + err_n ** 2)
+        err_3d = np.sqrt(err_e ** 2 + err_n ** 2 + err_u ** 2)
 
         final_error_m = float(err_horiz[-1])
         max_error_m = float(np.max(err_horiz))
         rmse_error_m = float(np.sqrt(np.mean(err_horiz ** 2)))
+        final_vert_err_m = float(abs(err_u[-1]))
+        vert_rmse_m = float(np.sqrt(np.mean(err_u ** 2)))
+        final_3d_err_m = float(err_3d[-1])
+        rmse_3d_m = float(np.sqrt(np.mean(err_3d ** 2)))
 
         phase4_baseline_final_err = 3249.32
         phase4_baseline_rmse = 1487.53
 
         improvement_pct = (1.0 - final_error_m / phase4_baseline_final_err) * 100.0
+        improvement_rmse_pct = (1.0 - rmse_error_m / phase4_baseline_rmse) * 100.0
 
         print("\n--- Phase 5 Real Data Validation Results ---")
         print(f"Final Horizontal Error: {final_error_m:.2f} m (Phase 4 baseline: {phase4_baseline_final_err:.2f} m)")
         print(f"Horizontal RMSE: {rmse_error_m:.2f} m (Phase 4 baseline: {phase4_baseline_rmse:.2f} m)")
         print(f"Max Horizontal Error: {max_error_m:.2f} m")
-        print(f"Improvement over Phase 4: {improvement_pct:.2f}%")
+        print(f"Final Vertical Error: {final_vert_err_m:.2f} m")
+        print(f"Vertical RMSE: {vert_rmse_m:.2f} m")
+        print(f"Final 3D Error: {final_3d_err_m:.2f} m")
+        print(f"3D RMSE: {rmse_3d_m:.2f} m")
+        print(f"Improvement over Phase 4 (Final): {improvement_pct:.2f}%")
+        print(f"Improvement over Phase 4 (RMSE): {improvement_rmse_pct:.2f}%")
         print(f"GNSS Position Accepted: {pos_accepted}, Rejected: {pos_rejected}")
-        print(f"GNSS Velocity Accepted: {vel_accepted}, Rejected: {vel_rejected}")
+        print(f"GNSS Horizontal Velocity Accepted: {vel_accepted}, Rejected: {vel_rejected}")
         print(f"ZUPT Updates Accepted: {zupt_accepted}, Rejected: {zupt_rejected}")
 
-        # Assert both position and velocity updates were accepted on real data
+        # Assert both position and 2D horizontal velocity updates were accepted on real data
         assert pos_accepted > 0, "No GNSS position updates were accepted"
-        assert vel_accepted > 0, "No GNSS velocity updates were accepted"
+        assert vel_accepted > 0, "No GNSS horizontal velocity updates were accepted"
 
         # Assert statistically measurable improvement over Phase 4
         assert final_error_m < phase4_baseline_final_err, (

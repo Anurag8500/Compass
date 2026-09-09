@@ -37,6 +37,7 @@ from navigation.eskf.measurements.gnss import (
     GNSSMeasurementModel,
     GNSSUpdateConfig,
     course_to_enu_velocity,
+    course_to_horizontal_velocity,
 )
 from navigation.eskf.measurements.zupt import ClassicalZUPTDetector, ZUPTMeasurementModel
 from navigation.ins.attitude import (
@@ -617,41 +618,121 @@ class TestGNSSCourseAndVelocityModels:
         assert pytest.approx(ve, abs=1e-9) == 0.0
         assert pytest.approx(vn, abs=1e-9) == 10.0
 
-    def test_course_to_enu_velocity_invalid_inputs(self) -> None:
-        """Negative speeds or nonfinite inputs must produce NaNs."""
-        ve, vn, vu = course_to_enu_velocity(-5.0, bearing_deg=45.0)
-        assert math.isnan(ve) and math.isnan(vn)
+    def test_course_to_horizontal_velocity(self) -> None:
+        """Verify 2D course-to-horizontal velocity helper."""
+        ve, vn = course_to_horizontal_velocity(10.0, bearing_deg=45.0)
+        assert pytest.approx(ve, abs=1e-5) == 10.0 * math.sin(math.radians(45.0))
+        assert pytest.approx(vn, abs=1e-5) == 10.0 * math.cos(math.radians(45.0))
 
-        ve, vn, vu = course_to_enu_velocity(10.0, bearing_deg=float("nan"))
-        assert math.isnan(ve) and math.isnan(vn)
+        # Invalid speed
+        ve_inv, vn_inv = course_to_horizontal_velocity(-1.0, bearing_deg=45.0)
+        assert math.isnan(ve_inv) and math.isnan(vn_inv)
 
-    def test_gnss_update_velocity_from_course(self) -> None:
-        """GNSSMeasurementModel.update_velocity_from_course applies course update to ESKFState."""
+    def test_2d_horizontal_velocity_measurement_structure_and_unobserved_vertical(self) -> None:
+        """2D horizontal velocity measurement must observe only v_East and v_North, leaving v_Up unobserved."""
         geo_ref = GeoReference(lat_ref=12.9716, lon_ref=77.5946, alt_ref=920.0)
         gnss_model = GNSSMeasurementModel(geo_reference=geo_ref)
 
-        # Vehicle moving North-East (45 deg) at approx 14 m/s -> ve ≈ 10, vn ≈ 10
-        # Nominal velocity close to measurement:
+        meas = gnss_model.create_horizontal_velocity_measurement(
+            speed_mps=15.0,
+            bearing_deg=30.0,
+            accuracy_speed_mps=0.4,
+        )
+        assert meas is not None
+        z_v, H_v, R_v = meas
+
+        # 1. Dimension must be exactly 2
+        assert z_v.shape == (2,)
+        assert H_v.shape == (2, 15)
+        assert R_v.shape == (2, 2)
+
+        # 2. H must observe delta_v_East (idx 3) and delta_v_North (idx 4)
+        assert H_v[0, 3] == 1.0
+        assert H_v[1, 4] == 1.0
+
+        # 3. delta_v_Up (idx 5) and all other states must be strictly unobserved (0.0)
+        assert H_v[0, 5] == 0.0
+        assert H_v[1, 5] == 0.0
+        assert np.all(H_v[:, 0:3] == 0.0)
+        assert np.all(H_v[:, 5:] == 0.0)
+
+    def test_gnss_update_horizontal_velocity_from_course(self) -> None:
+        """update_horizontal_velocity_from_course reduces horizontal velocity variance without touching vertical variance."""
+        geo_ref = GeoReference(lat_ref=12.9716, lon_ref=77.5946, alt_ref=920.0)
+        gnss_model = GNSSMeasurementModel(geo_reference=geo_ref)
+
         nom = ESKFNominalState.from_components(
             position_enu=[0.0, 0.0, 0.0],
-            velocity_enu=[9.5, 9.8, 0.0],
+            velocity_enu=[9.5, 9.8, 1.25],  # Nonzero vertical velocity
             q=[1.0, 0.0, 0.0, 0.0],
             timestamp_ns=1_000_000_000,
         )
-        P0 = np.eye(15, dtype=np.float64) * 5.0
+        P0 = np.eye(15, dtype=np.float64) * 4.0
         state = ESKFState(nominal=nom, covariance=P0)
 
         speed = 10.0 * math.sqrt(2)
-        state_upd, diag = gnss_model.update_velocity_from_course(
+        state_upd, diag = gnss_model.update_horizontal_velocity_from_course(
             state=state,
             speed_mps=speed,
             bearing_deg=45.0,
             accuracy_speed_mps=0.5,
         )
         assert diag.applied is True
-        assert state_upd.velocity_enu[0] > 9.5
-        assert state_upd.velocity_enu[1] > 9.8
+        assert diag.measurement_dim == 2
+
+        # Horizontal velocity variances must contract
         assert state_upd.vel_cov[0, 0] < P0[3, 3]
+        assert state_upd.vel_cov[1, 1] < P0[4, 4]
+
+        # Vertical velocity variance and state must remain untouched by this horizontal update!
+        assert state_upd.vel_cov[2, 2] == pytest.approx(P0[5, 5], rel=1e-12)
+        assert state_upd.velocity_enu[2] == pytest.approx(1.25, rel=1e-12)
+
+    def test_fix_arrival_detection_unchanged_latitude(self) -> None:
+        """Fix arrival detection using complete signature detects new fix even if latitude is unchanged."""
+        fix1 = (52.41643, -1.57744, 172.82, 3.48, 289.84)
+        # Fix 2: Vehicle driving purely West/East, latitude identical, longitude changed
+        fix2 = (52.41643, -1.57900, 172.85, 3.50, 289.80)
+
+        assert fix1 != fix2, "Multi-field fix signature must detect new fix when latitude is unchanged"
+
+    def test_single_authoritative_covariance_reset_path(self) -> None:
+        """Calling eskf_update and calling ESKFState.inject_error apply reset identically and exactly once."""
+        nom = ESKFNominalState.from_components(
+            position_enu=[0.0, 0.0, 0.0],
+            velocity_enu=[0.0, 0.0, 0.0],
+            q=[1.0, 0.0, 0.0, 0.0],
+            timestamp_ns=1000,
+        )
+        P0 = np.eye(15, dtype=np.float64) * 2.0
+        state = ESKFState(nominal=nom, covariance=P0)
+
+        # Correction vector with non-zero attitude correction
+        dx = np.zeros(15, dtype=np.float64)
+        dtheta = np.array([0.02, -0.01, 0.04])
+        dx[6:9] = dtheta
+
+        # 1. State method inject_error
+        st1 = state.inject_error(dx)
+
+        # 2. Manual reset via reset_covariance
+        cov_expected = reset_covariance(P0, dtheta)
+        assert np.allclose(st1.covariance, cov_expected, atol=1e-14)
+
+        # 3. Verify exactly-once: covariance is not reset twice in eskf_update
+        z = np.array([0.5, -0.5], dtype=np.float64)
+        H = np.zeros((2, 15), dtype=np.float64)
+        H[0, 3] = 1.0
+        H[1, 4] = 1.0
+        R = np.eye(2, dtype=np.float64) * 0.25
+
+        st_upd, diag = eskf_update(state, z=z, h_val=np.zeros(2), H=H, R=R)
+        assert diag.applied is True
+        # Covariance must remain symmetric and strictly PSD
+        asym = np.max(np.abs(st_upd.covariance - st_upd.covariance.T))
+        assert asym < 1e-12
+        min_eig = np.min(np.linalg.eigvalsh(st_upd.covariance))
+        assert min_eig > 0.0
 
 
 

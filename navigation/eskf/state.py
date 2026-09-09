@@ -240,6 +240,14 @@ class ESKFState:
             raise ValueError(f"covariance must have shape (15, 15), got {cov.shape}")
         if not np.isfinite(cov).all():
             raise ValueError("Covariance matrix contains non-finite elements (NaN/Inf)")
+        # Numerical symmetry verification (tolerance 1e-4)
+        asym = float(np.max(np.abs(cov - cov.T)))
+        if asym > 1e-4:
+            raise ValueError(f"Covariance matrix is materially asymmetric (max asymmetry: {asym:.2e})")
+        # Positive-semidefiniteness verification (tolerance -1e-4)
+        min_eig = float(np.min(np.linalg.eigvalsh(cov)))
+        if min_eig < -1e-4:
+            raise ValueError(f"Covariance matrix is materially indefinite (min eigenvalue: {min_eig:.2e})")
 
     @property
     def position_enu(self) -> np.ndarray:
@@ -294,12 +302,30 @@ class ESKFState:
         """3x3 gyroscope bias error covariance."""
         return self.covariance[12:15, 12:15]
 
-    def inject_error(self, delta_x: np.ndarray, new_covariance: Optional[np.ndarray] = None) -> ESKFState:
-        """Inject error state into nominal state and apply covariance reset transformation."""
+    def inject_error(
+        self,
+        delta_x: np.ndarray,
+        new_covariance: Optional[np.ndarray] = None,
+        timestamp_ns: Optional[int] = None,
+    ) -> ESKFState:
+        """Inject error state into nominal state and apply covariance reset transformation.
+
+        This is the single authoritative entry point for error injection and covariance reset.
+
+        Args:
+            delta_x: (15,) float64 error state correction vector [dp, dv, dtheta, dba, dbg].
+            new_covariance: Optional (15, 15) float64 updated covariance matrix (e.g. from
+                Joseph update). If None, self.covariance is transformed.
+            timestamp_ns: Optional nanosecond timestamp for the updated state.
+
+        Returns:
+            ESKFState with updated nominal state and transformed covariance matrix.
+        """
         dx = np.asarray(delta_x, dtype=np.float64)
         if dx.shape != (15,):
             raise ValueError(f"delta_x must have shape (15,), got {dx.shape}")
-        new_nom = self.nominal.inject_error(dx)
+        t = self.timestamp_ns if timestamp_ns is None else int(timestamp_ns)
+        new_nom = self.nominal.inject_error(dx, timestamp_ns=t)
         cov = self.covariance if new_covariance is None else new_covariance
         # Apply error-state covariance reset transformation
         cov_reset = reset_covariance(cov, dx[6:9])
@@ -358,10 +384,11 @@ def inject_error(
     state: Union[ESKFState, ESKFNominalState],
     delta_x: np.ndarray,
     new_covariance: Optional[np.ndarray] = None,
+    timestamp_ns: Optional[int] = None,
 ) -> Union[ESKFState, ESKFNominalState]:
     """Module-level convenience function to inject 15D error vector into ESKF state."""
     if isinstance(state, ESKFState):
-        return state.inject_error(delta_x, new_covariance=new_covariance)
-    return state.inject_error(delta_x)
+        return state.inject_error(delta_x, new_covariance=new_covariance, timestamp_ns=timestamp_ns)
+    return state.inject_error(delta_x, timestamp_ns=timestamp_ns)
 
 

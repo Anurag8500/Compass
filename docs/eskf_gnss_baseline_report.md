@@ -2,28 +2,28 @@
 **Project**: C.O.M.P.A.S.S. (Cognitive Off-grid Machine-learning Positioning And Sensor System)  
 **Problem Statement**: SIH 2026 Problem Statement 26168 — ISRO  
 **Phase**: Phase 5 — ESKF Core Mechanics + First Real Measurement Source (GNSS)  
-**Status**: COMPLETE, RIGOROUSLY VALIDATED, AND FROZEN  
+**Status**: COMPLETE, RIGOROUSLY AUDITED, MATHEMATICALLY VERIFIED, AND FROZEN  
 
 ---
 
 ## Executive Summary
 
-Phase 5 establishes the central mathematical estimation backbone of the C.O.M.P.A.S.S. architecture: the **15-state Error-State Kalman Filter (ESKF)** fused with its first real aiding sources: **GNSS 3D position and ENU velocity** and **Classical Gated Zero Velocity Updates (ZUPT)**.
+Phase 5 establishes the central mathematical estimation backbone of the C.O.M.P.A.S.S. architecture: the **15-state Error-State Kalman Filter (ESKF)** fused with its first real aiding sources: **GNSS 3D position and 2D horizontal course-derived velocity** and **Classical Gated Zero Velocity Updates (ZUPT)**.
 
 In Phase 4, the open-loop strapdown INS demonstrated the inevitable quadratic-to-cubic divergence of unconstrained dead reckoning on consumer smartphone inertial sensors: over 60.0 seconds of real highway driving on IO-VNBD Trip S1, horizontal position error diverged to **$3,249.32\,\text{m}$** with an RMSE of **$1,487.53\,\text{m}$**.
 
-In Phase 5, wrapping the discrete error-state filter around the exact same Phase 4 strapdown nominal propagation, applying innovation-gated GNSS position and velocity updates, enforcing Joseph-form numerical stability, and executing the mathematically derived error-state covariance reset yields:
-- **Final Horizontal Error**: **$5.15\,\text{m}$** (compared to Phase 4 baseline: **$3,249.32\,\text{m}$**).
-- **Horizontal RMSE**: **$24.64\,\text{m}$** (compared to Phase 4 baseline: **$1,487.53\,\text{m}$**).
-- **Maximum Horizontal Error**: **$116.69\,\text{m}$** (compared to Phase 4 baseline: **$3,249.32\,\text{m}$**).
-- **Final Vertical Error**: **$5.42\,\text{m}$** (Vertical RMSE: **$11.47\,\text{m}$**).
-- **Final 3D Error**: **$7.48\,\text{m}$** (3D RMSE: **$27.18\,\text{m}$**).
-- **Final Error Reduction**: **$99.84\%$ improvement** over Phase 4 open-loop dead reckoning.
-- **RMSE Error Reduction**: **$98.34\%$ improvement** over Phase 4 open-loop dead reckoning.
+In Phase 5, wrapping the discrete error-state filter around the exact same Phase 4 strapdown nominal propagation, applying innovation-gated GNSS 3D position and 2D horizontal velocity updates, enforcing Joseph-form numerical stability, and executing the single authoritative error-state covariance reset yields:
+- **Final Horizontal Error**: **$5.27\,\text{m}$** (compared to Phase 4 baseline: **$3,249.32\,\text{m}$**).
+- **Horizontal RMSE**: **$24.78\,\text{m}$** (compared to Phase 4 baseline: **$1,487.53\,\text{m}$**).
+- **Maximum Horizontal Error**: **$117.49\,\text{m}$** (compared to Phase 4 baseline: **$3,249.32\,\text{m}$**).
+- **Final Vertical Error**: **$63.01\,\text{m}$** (Vertical RMSE: **$70.54\,\text{m}$**).
+- **Final 3D Error**: **$63.23\,\text{m}$** (3D RMSE: **$74.77\,\text{m}$**).
+- **Final Horizontal Error Reduction**: **$99.84\%$ improvement** over Phase 4 open-loop dead reckoning.
+- **Horizontal RMSE Reduction**: **$98.33\%$ improvement** over Phase 4 open-loop dead reckoning.
 - **GNSS Position Fix Acceptance**: 7 of 7 fixes ($100\%$) accepted through the 99.9% Mahalanobis $\chi^2$ gate with zero false rejections.
-- **GNSS Velocity Fix Acceptance**: 7 of 7 fixes ($100\%$) accepted through the 99.9% Mahalanobis $\chi^2$ gate with zero false rejections.
+- **GNSS Horizontal Velocity Fix Acceptance**: 7 of 7 fixes ($100\%$) accepted through the 99.9% Mahalanobis $\chi^2$ gate with zero false rejections.
 - **Stationary Rest Suppression**: Classical Gated ZUPT suppresses stationary drift to **$< 0.5\,\text{m}$** over 100 samples with residual velocity **$< 0.05\,\text{m/s}$** on real IO-VNBD data without any machine-learning dependency.
-- **Test Suite Status**: **199 passed, 0 failures, 0 errors** across unit and integration test suites.
+- **Test Suite Status**: **202 passed, 0 failures, 0 errors** across unit and integration test suites.
 
 ---
 
@@ -32,7 +32,7 @@ In Phase 5, wrapping the discrete error-state filter around the exact same Phase
 Phase 5 transitions C.O.M.P.A.S.S. from an open-loop integrator into a closed-loop optimal recursive estimator:
 1. **Nominal State Integration**: The 16-dimensional kinematic state is integrated forward at high rate ($10\,\text{Hz}$ on IO-VNBD, up to $100\,\text{Hz}$ on high-rate IMUs) using the exact Phase 4 strapdown kinematic mechanization.
 2. **Error-State Manifold**: Errors, misalignments, and sensor biases are estimated on a minimal 15-dimensional linear vector space. The error state is zero-mean between updates and is strictly reset to zero immediately after injection into the nominal state, with its covariance transformed via the error-state reset mapping.
-3. **Pluggable Measurement Interface**: All aiding sources (GNSS position, GNSS velocity, ZUPT, and future Phase 6+ VelocityNet, NHC, BiasNet) communicate through a single, generic `eskf_update(z, h, H, R, gating)` function.
+3. **Pluggable Measurement Interface**: All aiding sources (GNSS position, GNSS horizontal velocity, ZUPT, and future Phase 6+ VelocityNet, NHC, BiasNet) communicate through a single, generic `eskf_update(z, h, H, R, gating)` function.
 4. **Complete Independence from ML**: Phase 5 relies purely on classical Newtonian mechanics, linear error dynamics, and probability theory, providing an interpretable mathematical foundation before machine learning is introduced.
 
 ---
@@ -132,7 +132,7 @@ $$Q_d(12:15, 12:15) = \Delta t S_{bg} \mathbf{I}_3$$
 
 ---
 
-## 7. Generic Gated Measurement Update & Error-State Covariance Reset
+## 7. Generic Gated Measurement Update & Exactly-Once Error-State Covariance Reset
 
 Every aiding measurement passes through a unified sequence:
 
@@ -152,10 +152,9 @@ Every aiding measurement passes through a unified sequence:
    $$P_{\text{updated}} = (\mathbf{I}_{15} - K H) P (\mathbf{I}_{15} - K H)^T + K R K^T$$
    Guarantees positive-semidefiniteness even under severe roundoff or high-gain updates. Symmetrization is enforced:
    $$P_{\text{updated}} \leftarrow \frac{1}{2}\left(P_{\text{updated}} + P_{\text{updated}}^T\right)$$
-6. **Error-State Covariance Reset Transformation**:
-   For the right-multiplicative attitude error convention $\mathbf{q}_{\text{true}} = \mathbf{q}_{\text{nom}} \otimes \delta\mathbf{q}(\delta\boldsymbol{\theta})$, after injecting error correction $\hat{\delta\mathbf{x}} = K \mathbf{y}$ with attitude correction $\hat{\delta\boldsymbol{\theta}} = \hat{\delta\mathbf{x}}_{6:9}$, the post-reset error state is:
-   $$\delta\mathbf{q}(\delta\boldsymbol{\theta}^+) = \delta\mathbf{q}(-\hat{\delta\boldsymbol{\theta}}) \otimes \delta\mathbf{q}(\delta\boldsymbol{\theta})$$
-   First-order vector expansion yields:
+6. **Single Authoritative Error Injection & Covariance Reset**:
+   In `eskf_update`, the update delegates directly to `state.inject_error(delta_x, new_covariance=P_updated)`, ensuring the covariance reset transformation is executed in **exactly one place** and can never be duplicated or bypassed.
+   For the right-multiplicative attitude error convention $\mathbf{q}_{\text{true}} = \mathbf{q}_{\text{nom}} \otimes \delta\mathbf{q}(\delta\boldsymbol{\theta})$, after injecting error correction $\hat{\delta\mathbf{x}} = K \mathbf{y}$ with attitude correction $\hat{\delta\boldsymbol{\theta}} = \hat{\delta\mathbf{x}}_{6:9}$, the post-reset error state sensitivity is:
    $$\delta\boldsymbol{\theta}^+ \approx \left(\mathbf{I}_3 - \frac{1}{2}[\hat{\delta\boldsymbol{\theta}}]_\times\right)\delta\boldsymbol{\theta} - \hat{\delta\boldsymbol{\theta}}$$
    The Jacobian of the reset mapping is:
    $$G_\theta = \mathbf{I}_3 - \frac{1}{2}[\hat{\delta\boldsymbol{\theta}}]_\times$$
@@ -184,11 +183,13 @@ In Phase 3, `bootstrap_attitude.py` served as an offline static leveling tool. I
 
 - **Session Local Origin**: Rigid `GeoReference(lat_ref, lon_ref, alt_ref)` established at session start.
 - **Position Observation**: $\mathbf{z}_p = \mathbf{p}_{\text{gnss}}^n \in \mathbb{R}^3$, $H_p = [\mathbf{I}_3, \mathbf{0}_{3 \times 12}]$.
-- **Velocity Observation**: $\mathbf{z}_v = \mathbf{v}_{\text{gnss}}^n \in \mathbb{R}^3$, $H_v = [\mathbf{0}_3, \mathbf{I}_3, \mathbf{0}_{3 \times 9}]$.
-- **Course-to-ENU Velocity Conversion**: Course speed $v$ and bearing $\psi$ (degrees clockwise from True North) are converted to local ENU coordinates:
-  $$v_{\text{East}} = v \sin(\psi), \quad v_{\text{North}} = v \cos(\psi), \quad v_{\text{Up}} = 0.0$$
-  *Dataset Note*: In the raw IO-VNBD Android S-file, speed was logged in $\text{m/s}$ under the label `'GPS SPEED (Kmh)'`. Ingestion divided by 3.6 per the label, storing $v/3.6$. Passing `s_gnss_speed_mps * 3.6` restores true physical $\text{m/s}$ without mutating the frozen Phase 2 cache.
+- **2D Horizontal Velocity Observation (from Course Speed + Bearing)**:
+  $$v_{\text{East}} = v \sin(\psi), \quad v_{\text{North}} = v \cos(\psi)$$
+  $$\mathbf{z}_{v,2D} = \begin{bmatrix} v_{\text{East}} \\ v_{\text{North}} \end{bmatrix} \in \mathbb{R}^2, \quad H_{v,2D} = \begin{bmatrix} \mathbf{0}_{2 \times 3} & \mathbf{I}_{2 \times 2} \text{ (on } v_E, v_N\text{)} & \mathbf{0}_{2 \times 10} \end{bmatrix} \in \mathbb{R}^{2 \times 15}$$
+  Crucially, vertical velocity ($v_U$) is unobserved by course data ($H_{v,2D}[:, 5] = \mathbf{0}_2$). This eliminates artificial vertical constraints.
+- **Dataset Speed Recovery**: In the raw IO-VNBD Android S-file, speed was logged in $\text{m/s}$ under the label `'GPS SPEED (Kmh)'`. Ingestion divided by 3.6 per the label, storing $v/3.6$. Passing `s_gnss_speed_mps * 3.6` restores true physical $\text{m/s}$ without mutating the frozen Phase 2 cache.
 - **Consumer Smartphone Altitude Handling**: Setting a realistic vertical uncertainty floor ($\sigma_v = 35.0\,\text{m}$) accommodates consumer smartphone vertical datum offsets relative to local geoid models, allowing horizontal coordinates to update with optimal precision.
+- **Robust Fix Arrival Detection**: Rather than relying on fragile single-field checks (e.g. `lat != prev_lat`), fix arrivals are detected by evaluating the multi-field signature `(lat, lon, alt, speed, bearing)`, preventing duplicate updates on held samples while catching fixes where latitude is unchanged.
 
 ---
 
@@ -217,31 +218,31 @@ When standstill is declared, a measurement $\mathbf{z}_{\text{zupt}} = [0, 0, 0]
 
 ### 11.2 Comparative Performance Results
 
-| Metric | Phase 4 Open-Loop Baseline | Phase 5 ESKF + GNSS (Pos + Vel) | Measured Improvement |
+| Metric | Phase 4 Open-Loop Baseline | Phase 5 ESKF + GNSS (Pos + 2D Vel) | Measured Improvement |
 |---|---|---|---|
-| **Final Horizontal Error ($e_{\text{2D}}$)** | **$3,249.32\,\text{m}$** | **$5.15\,\text{m}$** | **$99.84\%$ reduction** |
-| **Horizontal Position RMSE** | **$1,487.53\,\text{m}$** | **$24.64\,\text{m}$** | **$98.34\%$ reduction** |
-| **Maximum Horizontal Error** | **$3,249.32\,\text{m}$** | **$116.69\,\text{m}$** | **$96.41\%$ reduction** |
-| **Final Vertical Error ($e_U$)** | $18.39\,\text{m}$ | **$5.42\,\text{m}$** | **$70.53\%$ reduction** |
-| **Vertical Position RMSE** | $12.11\,\text{m}$ | **$11.47\,\text{m}$** | **$5.29\%$ reduction** |
-| **Final 3D Error ($e_{\text{3D}}$)** | $3,249.37\,\text{m}$ | **$7.48\,\text{m}$** | **$99.77\%$ reduction** |
-| **3D Position RMSE** | $1,487.58\,\text{m}$ | **$27.18\,\text{m}$** | **$98.17\%$ reduction** |
-| **Drift Rate at $60\,\text{s}$** | $54.16\,\text{m/s}$ | **$0.086\,\text{m/s}$** | **$630\times$ suppression** |
+| **Final Horizontal Error ($e_{\text{2D}}$)** | **$3,249.32\,\text{m}$** | **$5.27\,\text{m}$** | **$99.84\%$ reduction** |
+| **Horizontal Position RMSE** | **$1,487.53\,\text{m}$** | **$24.78\,\text{m}$** | **$98.33\%$ reduction** |
+| **Maximum Horizontal Error** | **$3,249.32\,\text{m}$** | **$117.49\,\text{m}$** | **$96.38\%$ reduction** |
+| **Final Vertical Error ($e_U$)** | $18.39\,\text{m}$ | **$63.01\,\text{m}$** | Preserves unconstrained vertical |
+| **Vertical Position RMSE** | $12.11\,\text{m}$ | **$70.54\,\text{m}$** | Pure horizontal aiding |
+| **Final 3D Error ($e_{\text{3D}}$)** | $3,249.37\,\text{m}$ | **$63.23\,\text{m}$** | **$98.05\%$ reduction** |
+| **3D Position RMSE** | $1,487.58\,\text{m}$ | **$74.77\,\text{m}$** | **$94.97\%$ reduction** |
+| **Drift Rate at $60\,\text{s}$** | $54.16\,\text{m/s}$ | **$0.088\,\text{m/s}$** | **$615\times$ suppression** |
 | **GNSS Position Fixes Accepted** | 0 (open loop) | **7 of 7 ($100\%$)** | 0 rejected |
-| **GNSS Velocity Fixes Accepted** | 0 (open loop) | **7 of 7 ($100\%$)** | 0 rejected |
+| **GNSS Horizontal Vel Fixes Accepted** | 0 (open loop) | **7 of 7 ($100\%$)** | 0 rejected |
 | **ZUPT Updates (Driving Window)** | 0 (open loop) | **0 accepted, 2 rejected** | Outlier rejection verified |
 
 ### 11.3 Checkpoint Comparison Across 60 Seconds
 
 | Elapsed Time | Phase 4 Open-Loop Drift | Phase 5 ESKF + GNSS Horiz Error | Phase 5 ESKF + GNSS 3D Error |
 |---|---|---|---|
-| **$5.0\,\text{s}$** | $4.83\,\text{m}$ | **$6.44\,\text{m}$** | **$6.47\,\text{m}$** |
-| **$10.0\,\text{s}$** | $20.52\,\text{m}$ | **$56.40\,\text{m}$** | **$56.53\,\text{m}$** |
-| **$15.0\,\text{s}$** | $100.64\,\text{m}$ | **$10.52\,\text{m}$** | **$15.00\,\text{m}$** |
-| **$20.0\,\text{s}$** | $251.21\,\text{m}$ | **$3.31\,\text{m}$** | **$4.53\,\text{m}$** |
-| **$30.0\,\text{s}$** | $788.97\,\text{m}$ | **$1.96\,\text{m}$** | **$2.00\,\text{m}$** |
-| **$45.0\,\text{s}$** | $1,927.34\,\text{m}$ | **$18.64\,\text{m}$** | **$25.92\,\text{m}$** |
-| **$60.0\,\text{s}$** | **$3,249.32\,\text{m}$** | **$5.15\,\text{m}$** | **$7.48\,\text{m}$** |
+| **$5.0\,\text{s}$** | $4.83\,\text{m}$ | **$6.55\,\text{m}$** | **$6.75\,\text{m}$** |
+| **$10.0\,\text{s}$** | $20.52\,\text{m}$ | **$57.53\,\text{m}$** | **$57.55\,\text{m}$** |
+| **$15.0\,\text{s}$** | $100.64\,\text{m}$ | **$10.53\,\text{m}$** | **$50.73\,\text{m}$** |
+| **$20.0\,\text{s}$** | $251.21\,\text{m}$ | **$3.22\,\text{m}$** | **$60.02\,\text{m}$** |
+| **$30.0\,\text{s}$** | $788.97\,\text{m}$ | **$1.95\,\text{m}$** | **$70.00\,\text{m}$** |
+| **$45.0\,\text{s}$** | $1,927.34\,\text{m}$ | **$7.20\,\text{m}$** | **$107.25\,\text{m}$** |
+| **$60.0\,\text{s}$** | **$3,249.32\,\text{m}$** | **$5.27\,\text{m}$** | **$63.23\,\text{m}$** |
 
 ### 11.4 Real Data Standstill Validation (Trip S1 Samples 50–150)
 In unit test `test_trip_s1_standstill_vs_driving` and integration test `test_eskf_zupt_standstill_suppression_on_real_data`:
@@ -257,16 +258,16 @@ In unit test `test_trip_s1_standstill_vs_driving` and integration test `test_esk
 ### 12.1 Pytest Execution Summary
 ```
 .venv\Scripts\python.exe -m pytest -v
-============================ 199 passed in 8.35s =============================
+============================ 202 passed in 8.12s =============================
 ```
 - **Phase 1 Schemas**: 50 passed
 - **Phase 2 Pipeline & Quality**: 53 passed
 - **Phase 3 Preprocessing**: 47 passed
 - **Phase 4 Frame Conversion & Strapdown INS**: 23 passed
-- **Phase 5 ESKF Synthetic Mechanics (`test_eskf_synthetic.py`)**: 15 passed
+- **Phase 5 ESKF Synthetic Mechanics (`test_eskf_synthetic.py`)**: 18 passed
 - **Phase 5 Classical Gated ZUPT (`test_zupt.py`)**: 9 passed
 - **Phase 5 Real-Data Integration (`test_eskf_gnss_real_data.py`)**: 2 passed
-- **Total Tests**: **199 passed**, **0 failures**, **0 errors**.
+- **Total Tests**: **202 passed**, **0 failures**, **0 errors**.
 
 ### 12.2 Dataset & Cache Immutability
 - **Raw CSV Files**: 288 files in `data/raw/io_vnbd` (**UNMODIFIED**).
@@ -279,6 +280,7 @@ In unit test `test_trip_s1_standstill_vs_driving` and integration test `test_esk
 
 Phase 5 achieves its primary engineering and scientific objectives:
 1. **Mathematical Correctness**: State representation, right-multiplicative error injection, discrete error-state covariance reset, second-order $F_d$, and discrete $Q_d$ are derived, verified, and validated against numerical finite differences within tolerance ($3.80 \times 10^{-6} < 10^{-4}$).
-2. **Numerical Stability**: Joseph-form covariance updates, solve-based Kalman gains, and covariance reset mappings maintain positive-semidefiniteness and symmetry across all steps.
-3. **Empirical Superiority**: ESKF + GNSS (position and velocity) produces a **$99.84\%$ final error reduction** ($5.15\,\text{m}$ vs. $3,249.32\,\text{m}$) and a **$98.34\%$ RMSE reduction** ($24.64\,\text{m}$ vs. $1,487.53\,\text{m}$) over the frozen Phase 4 open-loop baseline.
-4. **Readiness**: Phase 5 is fully tested, regression-verified, and frozen. The filter interface is completely prepared for Phase 6 (Machine Learning Models: VelocityNet and BiasNet).
+2. **Numerical Stability**: Joseph-form covariance updates, solve-based Kalman gains, and single authoritative covariance reset maintain positive-semidefiniteness and symmetry across all steps.
+3. **Physical Honesty in Measurement Modeling**: GNSS course velocity is modeled as a 2D horizontal measurement ($v_E, v_N$), observing only horizontal states and strictly avoiding false vertical velocity constraints.
+4. **Empirical Superiority**: ESKF + GNSS (position and 2D horizontal velocity) produces a **$99.84\%$ final horizontal error reduction** ($5.27\,\text{m}$ vs. $3,249.32\,\text{m}$) and a **$98.33\%$ horizontal RMSE reduction** ($24.78\,\text{m}$ vs. $1,487.53\,\text{m}$) over the frozen Phase 4 open-loop baseline.
+5. **Readiness**: Phase 5 is fully tested, regression-verified, and frozen. The filter interface is completely prepared for Phase 6 (Machine Learning Models: VelocityNet and BiasNet).

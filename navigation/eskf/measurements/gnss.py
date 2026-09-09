@@ -41,6 +41,37 @@ class GNSSUpdateConfig:
     min_trust_score: float = 0.1
 
 
+def course_to_horizontal_velocity(
+    speed_mps: float,
+    bearing_deg: float,
+) -> Tuple[float, float]:
+    """Convert horizontal ground speed and bearing into 2D horizontal ENU velocity.
+
+    Navigation Convention:
+        - Bearing psi is measured in degrees clockwise from True North:
+          0 deg = North, 90 deg = East, 180 deg = South, 270 deg = West.
+        - In local Cartesian ENU coordinates (East, North):
+          v_east  = speed * sin(psi)
+          v_north = speed * cos(psi)
+
+    Args:
+        speed_mps: Horizontal ground speed in meters per second.
+        bearing_deg: Course over ground in degrees clockwise from North [0, 360).
+
+    Returns:
+        Tuple of (v_east, v_north) in meters per second.
+    """
+    if not (math.isfinite(speed_mps) and math.isfinite(bearing_deg)):
+        return float("nan"), float("nan")
+    if speed_mps < 0.0:
+        return float("nan"), float("nan")
+
+    psi_rad = math.radians(bearing_deg % 360.0)
+    v_east = float(speed_mps * math.sin(psi_rad))
+    v_north = float(speed_mps * math.cos(psi_rad))
+    return v_east, v_north
+
+
 def course_to_enu_velocity(
     speed_mps: float,
     bearing_deg: float,
@@ -72,16 +103,10 @@ def course_to_enu_velocity(
     Returns:
         Tuple of (v_east, v_north, v_up) in meters per second.
     """
-    if not (math.isfinite(speed_mps) and math.isfinite(bearing_deg) and math.isfinite(v_up_mps)):
+    ve, vn = course_to_horizontal_velocity(speed_mps, bearing_deg)
+    if not (math.isfinite(ve) and math.isfinite(vn) and math.isfinite(v_up_mps)):
         return float("nan"), float("nan"), float("nan")
-    if speed_mps < 0.0:
-        return float("nan"), float("nan"), float("nan")
-
-    psi_rad = math.radians(bearing_deg % 360.0)
-    v_east = float(speed_mps * math.sin(psi_rad))
-    v_north = float(speed_mps * math.cos(psi_rad))
-    v_up = float(v_up_mps)
-    return v_east, v_north, v_up
+    return ve, vn, float(v_up_mps)
 
 
 class GNSSMeasurementModel:
@@ -250,17 +275,111 @@ class GNSSMeasurementModel:
             timestamp_ns=timestamp_ns,
         )
 
+    def create_horizontal_velocity_measurement(
+        self,
+        speed_mps: float,
+        bearing_deg: float,
+        accuracy_speed_mps: Optional[float] = None,
+        trust_score: float = 1.0,
+    ) -> Optional[Tuple[np.ndarray, np.ndarray, np.ndarray]]:
+        """Construct 2D horizontal ENU velocity measurement z_v, Jacobian H_v, and noise R_v.
+
+        This models course-derived velocity (speed over ground + bearing). It observes only
+        horizontal velocity components (v_East, v_North) and strictly avoids injecting any
+        artificial or unmeasured vertical velocity.
+
+        Returns:
+            Tuple of (z_v(2,), H_v(2, 15), R_v(2, 2)) or None if input is invalid.
+        """
+        ve, vn = course_to_horizontal_velocity(speed_mps, bearing_deg)
+        if not (math.isfinite(ve) and math.isfinite(vn)):
+            return None
+
+        z_v = np.array([float(ve), float(vn)], dtype=np.float64)
+
+        # Build Jacobian H_v (observes delta_v_East and delta_v_North directly)
+        # Note: delta_v_Up (index 5) is completely unobserved!
+        H_v = np.zeros((2, 15), dtype=np.float64)
+        H_v[0, 3] = 1.0  # delta_v_East
+        H_v[1, 4] = 1.0  # delta_v_North
+
+        # Build noise covariance R_v
+        sigma_v = (
+            self.config.default_speed_accuracy_mps
+            if accuracy_speed_mps is None or not math.isfinite(accuracy_speed_mps) or accuracy_speed_mps <= 0
+            else max(accuracy_speed_mps, self.config.min_speed_accuracy_mps)
+        )
+
+        trust = max(float(trust_score), self.config.min_trust_score) if math.isfinite(trust_score) else self.config.min_trust_score
+        scale = 1.0 / trust
+
+        R_v = np.diag([
+            (sigma_v ** 2) * scale,
+            (sigma_v ** 2) * scale,
+        ]).astype(np.float64)
+
+        return z_v, H_v, R_v
+
+    def update_horizontal_velocity_from_course(
+        self,
+        state: ESKFState,
+        speed_mps: float,
+        bearing_deg: float,
+        accuracy_speed_mps: Optional[float] = None,
+        trust_score: float = 1.0,
+        timestamp_ns: Optional[int] = None,
+    ) -> Tuple[ESKFState, UpdateDiagnostics]:
+        """Apply 2D horizontal velocity update computed from course (speed + bearing) to ESKF state.
+
+        Observes only [v_East, v_North] and leaves vertical velocity unconstrained.
+        """
+        meas = self.create_horizontal_velocity_measurement(speed_mps, bearing_deg, accuracy_speed_mps, trust_score)
+        if meas is None:
+            diag = UpdateDiagnostics(
+                applied=False,
+                measurement_dim=2,
+                innovation=np.full(2, np.nan, dtype=np.float64),
+                innovation_covariance=np.full((2, 2), np.nan, dtype=np.float64),
+            )
+            return state, diag
+
+        z_v, H_v, R_v = meas
+        h_val = state.velocity_enu[0:2]
+        return eskf_update(
+            state=state,
+            z=z_v,
+            h_val=h_val,
+            H=H_v,
+            R=R_v,
+            gating=self.gating,
+            timestamp_ns=timestamp_ns,
+        )
+
     def update_velocity_from_course(
         self,
         state: ESKFState,
         speed_mps: float,
         bearing_deg: float,
-        v_up: float = 0.0,
+        v_up: Optional[float] = None,
         accuracy_speed_mps: Optional[float] = None,
         trust_score: float = 1.0,
         timestamp_ns: Optional[int] = None,
     ) -> Tuple[ESKFState, UpdateDiagnostics]:
-        """Apply velocity GNSS fix computed from course (speed + bearing) to ESKF state."""
+        """Apply course-derived velocity update.
+
+        If v_up is None, performs the physically accurate 2D horizontal velocity update.
+        If v_up is provided, performs a 3D velocity update with the specified vertical velocity.
+        """
+        if v_up is None:
+            return self.update_horizontal_velocity_from_course(
+                state=state,
+                speed_mps=speed_mps,
+                bearing_deg=bearing_deg,
+                accuracy_speed_mps=accuracy_speed_mps,
+                trust_score=trust_score,
+                timestamp_ns=timestamp_ns,
+            )
+
         ve, vn, vu = course_to_enu_velocity(speed_mps, bearing_deg, v_up)
         if not (math.isfinite(ve) and math.isfinite(vn) and math.isfinite(vu)):
             diag = UpdateDiagnostics(

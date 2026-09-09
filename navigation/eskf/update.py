@@ -17,7 +17,7 @@ from typing import Optional, Tuple, Union
 import numpy as np
 
 from navigation.eskf.gating import GatingDiagnostics, MahalanobisGating
-from navigation.eskf.state import ESKFState, reset_covariance
+from navigation.eskf.state import ESKFState
 
 
 @dataclass(frozen=True)
@@ -163,15 +163,10 @@ def eskf_update(
     # Controlled numerical symmetrization
     P_updated = 0.5 * (P_updated + P_updated.T)
 
-    # 7. Apply error-state covariance reset transformation for attitude error
-    delta_theta = delta_x[6:9]
-    P_reset = reset_covariance(P_updated, delta_theta)
-
-    # 8. Inject error state into nominal state (and reset error state to 0)
+    # 7. Authoritative state injection and error-state covariance reset
+    # Delegates directly to ESKFState.inject_error, ensuring exactly-once reset execution
     t = state.timestamp_ns if timestamp_ns is None else int(timestamp_ns)
-    new_nominal = state.nominal.inject_error(delta_x, timestamp_ns=t)
-
-    new_state = ESKFState(nominal=new_nominal, covariance=P_reset)
+    new_state = state.inject_error(delta_x=delta_x, new_covariance=P_updated, timestamp_ns=t)
 
 
     diag = UpdateDiagnostics(
