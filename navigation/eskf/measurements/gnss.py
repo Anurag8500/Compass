@@ -41,6 +41,49 @@ class GNSSUpdateConfig:
     min_trust_score: float = 0.1
 
 
+def course_to_enu_velocity(
+    speed_mps: float,
+    bearing_deg: float,
+    v_up_mps: float = 0.0,
+) -> Tuple[float, float, float]:
+    """Convert horizontal ground speed and bearing into local ENU velocity.
+
+    Navigation Convention:
+        - Bearing psi is measured in degrees clockwise from True North:
+          0 deg = North, 90 deg = East, 180 deg = South, 270 deg = West.
+        - In local Cartesian ENU coordinates (East, North, Up):
+          v_east  = speed * sin(psi)
+          v_north = speed * cos(psi)
+          v_up    = v_up_mps
+
+    Note on IO-VNBD Dataset (Phase 2 S-file):
+        In raw Android logger S-files (e.g. S-S1.csv), the column header is
+        'GPS SPEED (Kmh)', but Android's Location.getSpeed() API natively outputs
+        values in meters per second (m/s). The Phase 2 ingestion code divided
+        by 3.6 per the column label, storing (true_speed_mps / 3.6).
+        To recover true physical velocity without modifying frozen Phase 2 caches,
+        pass (trip.s_gnss_speed_mps * 3.6) to this function.
+
+    Args:
+        speed_mps: Horizontal ground speed in meters per second.
+        bearing_deg: Course over ground in degrees clockwise from North [0, 360).
+        v_up_mps: Vertical velocity in meters per second (defaults to 0.0).
+
+    Returns:
+        Tuple of (v_east, v_north, v_up) in meters per second.
+    """
+    if not (math.isfinite(speed_mps) and math.isfinite(bearing_deg) and math.isfinite(v_up_mps)):
+        return float("nan"), float("nan"), float("nan")
+    if speed_mps < 0.0:
+        return float("nan"), float("nan"), float("nan")
+
+    psi_rad = math.radians(bearing_deg % 360.0)
+    v_east = float(speed_mps * math.sin(psi_rad))
+    v_north = float(speed_mps * math.cos(psi_rad))
+    v_up = float(v_up_mps)
+    return v_east, v_north, v_up
+
+
 class GNSSMeasurementModel:
     """Adapter transforming GNSS fixes into generic ESKF measurement updates."""
 
@@ -204,6 +247,37 @@ class GNSSMeasurementModel:
             H=H_v,
             R=R_v,
             gating=self.gating,
+            timestamp_ns=timestamp_ns,
+        )
+
+    def update_velocity_from_course(
+        self,
+        state: ESKFState,
+        speed_mps: float,
+        bearing_deg: float,
+        v_up: float = 0.0,
+        accuracy_speed_mps: Optional[float] = None,
+        trust_score: float = 1.0,
+        timestamp_ns: Optional[int] = None,
+    ) -> Tuple[ESKFState, UpdateDiagnostics]:
+        """Apply velocity GNSS fix computed from course (speed + bearing) to ESKF state."""
+        ve, vn, vu = course_to_enu_velocity(speed_mps, bearing_deg, v_up)
+        if not (math.isfinite(ve) and math.isfinite(vn) and math.isfinite(vu)):
+            diag = UpdateDiagnostics(
+                applied=False,
+                measurement_dim=3,
+                innovation=np.full(3, np.nan, dtype=np.float64),
+                innovation_covariance=np.full((3, 3), np.nan, dtype=np.float64),
+            )
+            return state, diag
+
+        return self.update_velocity(
+            state=state,
+            v_east=ve,
+            v_north=vn,
+            v_up=vu,
+            accuracy_speed_mps=accuracy_speed_mps,
+            trust_score=trust_score,
             timestamp_ns=timestamp_ns,
         )
 

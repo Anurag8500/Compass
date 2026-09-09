@@ -295,12 +295,63 @@ class ESKFState:
         return self.covariance[12:15, 12:15]
 
     def inject_error(self, delta_x: np.ndarray, new_covariance: Optional[np.ndarray] = None) -> ESKFState:
-        """Inject error state into nominal state and update covariance."""
-        new_nom = self.nominal.inject_error(delta_x)
+        """Inject error state into nominal state and apply covariance reset transformation."""
+        dx = np.asarray(delta_x, dtype=np.float64)
+        if dx.shape != (15,):
+            raise ValueError(f"delta_x must have shape (15,), got {dx.shape}")
+        new_nom = self.nominal.inject_error(dx)
         cov = self.covariance if new_covariance is None else new_covariance
-        # Enforce exact numerical symmetry
-        cov_sym = 0.5 * (cov + cov.T)
-        return ESKFState(nominal=new_nom, covariance=cov_sym)
+        # Apply error-state covariance reset transformation
+        cov_reset = reset_covariance(cov, dx[6:9])
+        return ESKFState(nominal=new_nom, covariance=cov_reset)
+
+
+def compute_reset_jacobian(delta_theta: np.ndarray) -> np.ndarray:
+    """Compute 15x15 error-state reset Jacobian J_reset for right-multiplicative attitude error.
+
+    Under right-multiplicative body-frame attitude error convention:
+        q_true = q_nom ⊗ delta_q(delta_theta)
+    Following correction injection with attitude update delta_theta_hat:
+        q_nom_new = normalize(q_nom ⊗ delta_q(delta_theta_hat))
+    The new post-reset attitude error delta_theta_plus satisfies:
+        delta_q(delta_theta_plus) = delta_q(-delta_theta_hat) ⊗ delta_q(delta_theta)
+    To first order:
+        delta_theta_plus ≈ (I - 0.5 * [delta_theta_hat]_x) delta_theta - delta_theta_hat
+
+    The sensitivity G_theta = d(delta_theta_plus) / d(delta_theta) is:
+        G_theta = I_3 - 0.5 * [delta_theta_hat]_x
+    All other error states (delta_p, delta_v, delta_ba, delta_bg) have identity sensitivity.
+
+    Args:
+        delta_theta: (3,) float64 estimated angular correction vector delta_theta_hat [rad].
+
+    Returns:
+        (15, 15) float64 block-diagonal reset Jacobian J_reset.
+    """
+    dtheta = np.asarray(delta_theta, dtype=np.float64).reshape(3)
+    J_reset = np.eye(15, dtype=np.float64)
+    J_reset[6:9, 6:9] = np.eye(3, dtype=np.float64) - 0.5 * skew(dtheta)
+    return J_reset
+
+
+def reset_covariance(covariance: np.ndarray, delta_theta: np.ndarray) -> np.ndarray:
+    """Apply error-state reset transformation to 15x15 covariance matrix.
+
+    Transforms covariance P_reset = J_reset @ P @ J_reset.T and enforces numerical symmetry.
+
+    Args:
+        covariance: (15, 15) float64 prior error covariance matrix.
+        delta_theta: (3,) float64 estimated angular correction vector delta_theta_hat [rad].
+
+    Returns:
+        (15, 15) float64 transformed, symmetric, positive-semidefinite covariance matrix.
+    """
+    P = np.asarray(covariance, dtype=np.float64)
+    if P.shape != (15, 15):
+        raise ValueError(f"Covariance must have shape (15, 15), got {P.shape}")
+    J_reset = compute_reset_jacobian(delta_theta)
+    P_reset = J_reset @ P @ J_reset.T
+    return 0.5 * (P_reset + P_reset.T)
 
 
 def inject_error(
@@ -312,4 +363,5 @@ def inject_error(
     if isinstance(state, ESKFState):
         return state.inject_error(delta_x, new_covariance=new_covariance)
     return state.inject_error(delta_x)
+
 

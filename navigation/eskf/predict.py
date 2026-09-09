@@ -117,7 +117,7 @@ def compute_discrete_Q(
 ) -> np.ndarray:
     """Compute 15x15 discrete-time process noise covariance Q_d.
 
-    Uses Van Loan / standard continuous-to-discrete approximations scaled by dt:
+    Uses canonical closed-form polynomial continuous-to-discrete block integration approximations scaled by dt:
         Position:  1/3 * dt^3 * sigma_a^2
         Velocity:  dt * sigma_a^2
         Attitude:  dt * sigma_g^2

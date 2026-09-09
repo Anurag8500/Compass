@@ -10,7 +10,9 @@ Provides:
 from navigation.eskf.state import (
     ESKFNominalState,
     ESKFState,
+    compute_reset_jacobian,
     inject_error,
+    reset_covariance,
     skew,
 )
 from navigation.eskf.predict import (
@@ -30,6 +32,7 @@ from navigation.eskf.update import (
 from navigation.eskf.measurements.gnss import (
     GNSSMeasurementModel,
     GNSSUpdateConfig,
+    course_to_enu_velocity,
 )
 from navigation.eskf.measurements.zupt import (
     ClassicalZUPTDetector,
@@ -43,7 +46,9 @@ __all__ = [
     # State
     "ESKFNominalState",
     "ESKFState",
+    "compute_reset_jacobian",
     "inject_error",
+    "reset_covariance",
     "skew",
     # Prediction
     "ProcessNoiseConfig",
@@ -58,6 +63,7 @@ __all__ = [
     # Measurements
     "GNSSMeasurementModel",
     "GNSSUpdateConfig",
+    "course_to_enu_velocity",
     "ClassicalZUPTDetector",
     "ZUPTDetectorConfig",
     "ZUPTDetectorDiagnostics",

@@ -26,12 +26,18 @@ from navigation.eskf.predict import (
 from navigation.eskf.state import (
     ESKFNominalState,
     ESKFState,
+    compute_reset_jacobian,
     inject_error,
+    reset_covariance,
     skew,
 )
 from navigation.eskf.update import eskf_update
 from navigation.frames.local_geo import GeoReference
-from navigation.eskf.measurements.gnss import GNSSMeasurementModel, GNSSUpdateConfig
+from navigation.eskf.measurements.gnss import (
+    GNSSMeasurementModel,
+    GNSSUpdateConfig,
+    course_to_enu_velocity,
+)
 from navigation.eskf.measurements.zupt import ClassicalZUPTDetector, ZUPTMeasurementModel
 from navigation.ins.attitude import (
     delta_quaternion,
@@ -111,6 +117,85 @@ class TestESKFStateAndAlgebra:
         R_true_linear = R_nom @ (np.eye(3) + skew(np.array([delta_theta_x, 0.0, 0.0])))
         R_injected = injected.R_v_n
         assert np.allclose(R_injected, R_true_linear, atol=1e-3)
+
+    def test_error_state_covariance_reset_transformation(self) -> None:
+        """Covariance reset must transform attitude and cross-attitude covariances correctly.
+
+        For right-multiplicative attitude error q = q_nom ⊗ delta_q(delta_theta),
+        the error-state reset sensitivity is:
+            G_theta = I - 0.5 * [delta_theta_hat]_x
+            J_reset = diag(I, I, G_theta, I, I)
+            P^+ = J_reset * P * J_reset^T
+
+        Tests:
+            1. Correct transformation for non-zero delta_theta_hat.
+            2. Cross-covariances involving attitude transform via G_theta.
+            3. Non-attitude blocks (pos, vel, ba, bg) remain strictly invariant.
+            4. State.inject_error(dx) applies reset_covariance identically.
+            5. Covariance symmetry and positive-definiteness are preserved.
+        """
+        # Non-zero attitude correction
+        dtheta_hat = np.array([0.03, -0.02, 0.05], dtype=np.float64)
+        dx = np.zeros(15, dtype=np.float64)
+        dx[6:9] = dtheta_hat
+        dx[0:3] = [0.1, -0.2, 0.3]  # position correction
+        dx[3:6] = [-0.05, 0.1, -0.15]  # velocity correction
+
+        # Build reset Jacobian
+        J_reset = compute_reset_jacobian(dtheta_hat)
+        assert J_reset.shape == (15, 15)
+        # Position, velocity, ba, bg diagonal blocks must be identity
+        assert np.allclose(J_reset[0:3, 0:3], np.eye(3))
+        assert np.allclose(J_reset[3:6, 3:6], np.eye(3))
+        assert np.allclose(J_reset[9:12, 9:12], np.eye(3))
+        assert np.allclose(J_reset[12:15, 12:15], np.eye(3))
+
+        # Attitude block G_theta = I - 0.5 * [dtheta_hat]_x
+        G_theta_expected = np.eye(3) - 0.5 * skew(dtheta_hat)
+        assert np.allclose(J_reset[6:9, 6:9], G_theta_expected, atol=1e-15)
+
+        # Create a full, non-diagonal positive definite covariance matrix with cross-correlations
+        np.random.seed(42)
+        A = np.random.randn(15, 15) * 0.1
+        P_orig = A @ A.T + np.eye(15) * 1.0  # strictly positive definite
+
+        P_reset = reset_covariance(P_orig, dtheta_hat)
+
+        # Check analytic transformation P^+ = J * P * J^T
+        P_expected = J_reset @ P_orig @ J_reset.T
+        P_expected = 0.5 * (P_expected + P_expected.T)
+        assert np.allclose(P_reset, P_expected, atol=1e-14)
+
+        # Check non-attitude blocks are strictly invariant
+        assert np.allclose(P_reset[0:3, 0:3], P_orig[0:3, 0:3], atol=1e-14)
+        assert np.allclose(P_reset[3:6, 3:6], P_orig[3:6, 3:6], atol=1e-14)
+        assert np.allclose(P_reset[9:12, 9:12], P_orig[9:12, 9:12], atol=1e-14)
+        assert np.allclose(P_reset[12:15, 12:15], P_orig[12:15, 12:15], atol=1e-14)
+
+        # Check cross-covariance between velocity and attitude
+        # P_v_theta^+ = P_v_theta * G_theta^T
+        assert np.allclose(P_reset[3:6, 6:9], P_orig[3:6, 6:9] @ G_theta_expected.T, atol=1e-14)
+        assert np.allclose(P_reset[6:9, 3:6], G_theta_expected @ P_orig[6:9, 3:6], atol=1e-14)
+
+        # Check attitude block P_theta_theta^+ = G_theta * P_theta_theta * G_theta^T
+        assert np.allclose(P_reset[6:9, 6:9], G_theta_expected @ P_orig[6:9, 6:9] @ G_theta_expected.T, atol=1e-14)
+
+        # Check symmetry and PSD
+        asym = np.max(np.abs(P_reset - P_reset.T))
+        assert asym < 1e-14
+        min_eig = np.min(np.linalg.eigvalsh(P_reset))
+        assert min_eig > 0.0
+
+        # Verify ESKFState.inject_error integrates this reset
+        nom = ESKFNominalState.from_components(
+            position_enu=[0.0, 0.0, 0.0],
+            velocity_enu=[0.0, 0.0, 0.0],
+            q=[1.0, 0.0, 0.0, 0.0],
+            timestamp_ns=0,
+        )
+        st = ESKFState(nominal=nom, covariance=P_orig.copy())
+        st_injected = st.inject_error(dx)
+        assert np.allclose(st_injected.covariance, P_reset, atol=1e-14)
 
 
 class TestESKFJacobianValidation:
@@ -321,6 +406,75 @@ class TestESKFGatedUpdates:
         assert np.array_equal(updated_state.nominal.nominal_vector, nom.nominal_vector)
         assert np.array_equal(updated_state.covariance, P0)
 
+    def test_gating_malformed_singular_and_nonfinite_inputs(self) -> None:
+        """Gating must safely reject nonfinite innovations, singular S, or invalid inputs."""
+        gating = MahalanobisGating(confidence_level=0.99)
+
+        # 1. Nonfinite innovation
+        diag = gating.evaluate(
+            innovation=np.array([np.nan, 1.0, 2.0]),
+            S=np.eye(3),
+        )
+        assert diag.accepted is False
+        assert not math.isfinite(diag.mahalanobis_sq)
+
+        diag_inf = gating.evaluate(
+            innovation=np.array([np.inf, 1.0, 2.0]),
+            S=np.eye(3),
+        )
+        assert diag_inf.accepted is False
+
+        # 2. Singular / ill-conditioned innovation covariance S
+        S_singular = np.zeros((3, 3))
+        diag_sing = gating.evaluate(
+            innovation=np.array([1.0, 2.0, 3.0]),
+            S=S_singular,
+        )
+        assert diag_sing.accepted is False
+
+        # 3. Nonfinite S
+        S_nan = np.eye(3)
+        S_nan[0, 0] = np.nan
+        diag_nan_s = gating.evaluate(
+            innovation=np.array([1.0, 2.0, 3.0]),
+            S=S_nan,
+        )
+        assert diag_nan_s.accepted is False
+
+    def test_update_malformed_and_invalid_r(self) -> None:
+        """Generic ESKF update must safely reject invalid R or nonfinite measurements."""
+        nom = ESKFNominalState.from_components(
+            position_enu=[0.0, 0.0, 0.0],
+            velocity_enu=[0.0, 0.0, 0.0],
+            q=[1.0, 0.0, 0.0, 0.0],
+            timestamp_ns=1000,
+        )
+        P0 = np.eye(15, dtype=np.float64) * 1.0
+        state = ESKFState(nominal=nom, covariance=P0)
+        H = np.zeros((3, 15), dtype=np.float64)
+        H[0:3, 0:3] = np.eye(3)
+
+        # 1. Invalid R with negative or zero diagonal
+        R_invalid_diag = np.diag([1.0, 0.0, 1.0])
+        st_out, diag = eskf_update(state, z=np.ones(3), h_val=np.zeros(3), H=H, R=R_invalid_diag)
+        assert diag.applied is False
+        assert np.array_equal(st_out.covariance, P0)
+
+        # 2. Asymmetric R
+        R_asym = np.array([
+            [1.0, 0.5, 0.0],
+            [0.1, 1.0, 0.0],
+            [0.0, 0.0, 1.0],
+        ])
+        st_out, diag = eskf_update(state, z=np.ones(3), h_val=np.zeros(3), H=H, R=R_asym)
+        assert diag.applied is False
+        assert np.array_equal(st_out.covariance, P0)
+
+        # 3. Nonfinite z
+        st_out, diag = eskf_update(state, z=np.array([np.nan, 0.0, 0.0]), h_val=np.zeros(3), H=H, R=np.eye(3))
+        assert diag.applied is False
+        assert np.array_equal(st_out.covariance, P0)
+
 
 class TestESKFSyntheticTrajectoryConvergence:
     """Validates filter convergence under simulated motion with noisy GNSS aiding."""
@@ -428,5 +582,76 @@ class TestESKFSyntheticTrajectoryConvergence:
         assert asym < 1e-12
         min_eig = np.min(np.linalg.eigvalsh(state.covariance))
         assert min_eig > 0.0
+
+
+class TestGNSSCourseAndVelocityModels:
+    """Validates horizontal speed + bearing conversion to local ENU and velocity updates."""
+
+    def test_course_to_enu_velocity_cardinal_directions(self) -> None:
+        """Verify course conversion matches standard clockwise-from-North navigation convention."""
+        speed = 10.0  # m/s
+
+        # 0 deg: True North -> v_east = 0, v_north = 10
+        ve, vn, vu = course_to_enu_velocity(speed, bearing_deg=0.0)
+        assert pytest.approx(ve, abs=1e-9) == 0.0
+        assert pytest.approx(vn, abs=1e-9) == 10.0
+        assert pytest.approx(vu, abs=1e-9) == 0.0
+
+        # 90 deg: East -> v_east = 10, v_north = 0
+        ve, vn, vu = course_to_enu_velocity(speed, bearing_deg=90.0)
+        assert pytest.approx(ve, abs=1e-9) == 10.0
+        assert pytest.approx(vn, abs=1e-9) == 0.0
+
+        # 180 deg: South -> v_east = 0, v_north = -10
+        ve, vn, vu = course_to_enu_velocity(speed, bearing_deg=180.0)
+        assert pytest.approx(ve, abs=1e-9) == 0.0
+        assert pytest.approx(vn, abs=1e-9) == -10.0
+
+        # 270 deg: West -> v_east = -10, v_north = 0
+        ve, vn, vu = course_to_enu_velocity(speed, bearing_deg=270.0)
+        assert pytest.approx(ve, abs=1e-9) == -10.0
+        assert pytest.approx(vn, abs=1e-9) == 0.0
+
+        # 360 deg wrap: same as 0 deg
+        ve, vn, vu = course_to_enu_velocity(speed, bearing_deg=360.0)
+        assert pytest.approx(ve, abs=1e-9) == 0.0
+        assert pytest.approx(vn, abs=1e-9) == 10.0
+
+    def test_course_to_enu_velocity_invalid_inputs(self) -> None:
+        """Negative speeds or nonfinite inputs must produce NaNs."""
+        ve, vn, vu = course_to_enu_velocity(-5.0, bearing_deg=45.0)
+        assert math.isnan(ve) and math.isnan(vn)
+
+        ve, vn, vu = course_to_enu_velocity(10.0, bearing_deg=float("nan"))
+        assert math.isnan(ve) and math.isnan(vn)
+
+    def test_gnss_update_velocity_from_course(self) -> None:
+        """GNSSMeasurementModel.update_velocity_from_course applies course update to ESKFState."""
+        geo_ref = GeoReference(lat_ref=12.9716, lon_ref=77.5946, alt_ref=920.0)
+        gnss_model = GNSSMeasurementModel(geo_reference=geo_ref)
+
+        # Vehicle moving North-East (45 deg) at approx 14 m/s -> ve ≈ 10, vn ≈ 10
+        # Nominal velocity close to measurement:
+        nom = ESKFNominalState.from_components(
+            position_enu=[0.0, 0.0, 0.0],
+            velocity_enu=[9.5, 9.8, 0.0],
+            q=[1.0, 0.0, 0.0, 0.0],
+            timestamp_ns=1_000_000_000,
+        )
+        P0 = np.eye(15, dtype=np.float64) * 5.0
+        state = ESKFState(nominal=nom, covariance=P0)
+
+        speed = 10.0 * math.sqrt(2)
+        state_upd, diag = gnss_model.update_velocity_from_course(
+            state=state,
+            speed_mps=speed,
+            bearing_deg=45.0,
+            accuracy_speed_mps=0.5,
+        )
+        assert diag.applied is True
+        assert state_upd.velocity_enu[0] > 9.5
+        assert state_upd.velocity_enu[1] > 9.8
+        assert state_upd.vel_cov[0, 0] < P0[3, 3]
+
 
 

@@ -124,7 +124,9 @@ class TestESKFRealDataIntegration:
         pos_accepted = 0
         pos_rejected = 0
         vel_accepted = 0
+        vel_rejected = 0
         zupt_accepted = 0
+        zupt_rejected = 0
 
         prev_lat = None
 
@@ -155,6 +157,7 @@ class TestESKFRealDataIntegration:
                 prev_lat = lat_k
             elif lat_k != prev_lat:
                 prev_lat = lat_k
+                # 4a. GNSS Position Update
                 state, d_pos = gnss_model.update_position(
                     state=state,
                     lat=lat_k,
@@ -168,13 +171,33 @@ class TestESKFRealDataIntegration:
                 else:
                     pos_rejected += 1
 
-            # Classical ZUPT Check
+                # 4b. GNSS Velocity Update (fused when valid)
+                # Note: raw Android S-file logs m/s under 'GPS SPEED (Kmh)' label;
+                # Phase 2 ingestion divided by 3.6. Multiplying cached spd_k by 3.6
+                # restores the true physical speed in m/s without mutating Phase 2 cache.
+                if math.isfinite(spd_k) and math.isfinite(brg_k) and spd_k >= 0.0:
+                    true_speed_mps = spd_k * 3.6
+                    state, d_vel = gnss_model.update_velocity_from_course(
+                        state=state,
+                        speed_mps=true_speed_mps,
+                        bearing_deg=brg_k,
+                        v_up=0.0,
+                        accuracy_speed_mps=0.5,
+                        timestamp_ns=t_ns,
+                    )
+                    if d_vel.applied:
+                        vel_accepted += 1
+                    else:
+                        vel_rejected += 1
 
+            # Classical ZUPT Check
             diag_z = zupt_detector.push(omega_v=w_win[k+1], f_v=f_win[k+1])
             if diag_z.is_stationary:
                 state, d_z = zupt_model.update(state, timestamp_ns=t_ns)
                 if d_z.applied:
                     zupt_accepted += 1
+                else:
+                    zupt_rejected += 1
 
             # Assert covariance integrity at each step
             asym = np.max(np.abs(state.covariance - state.covariance.T))
@@ -205,8 +228,12 @@ class TestESKFRealDataIntegration:
         print(f"Max Horizontal Error: {max_error_m:.2f} m")
         print(f"Improvement over Phase 4: {improvement_pct:.2f}%")
         print(f"GNSS Position Accepted: {pos_accepted}, Rejected: {pos_rejected}")
-        print(f"GNSS Velocity Accepted: {vel_accepted}")
-        print(f"ZUPT Updates Accepted: {zupt_accepted}")
+        print(f"GNSS Velocity Accepted: {vel_accepted}, Rejected: {vel_rejected}")
+        print(f"ZUPT Updates Accepted: {zupt_accepted}, Rejected: {zupt_rejected}")
+
+        # Assert both position and velocity updates were accepted on real data
+        assert pos_accepted > 0, "No GNSS position updates were accepted"
+        assert vel_accepted > 0, "No GNSS velocity updates were accepted"
 
         # Assert statistically measurable improvement over Phase 4
         assert final_error_m < phase4_baseline_final_err, (

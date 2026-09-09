@@ -105,9 +105,23 @@ class MahalanobisGating:
                 confidence_level=self.confidence_level,
             )
 
+        # Enforce numerical symmetry
+        S_sym = 0.5 * (S_mat + S_mat.T)
+
         try:
+            # Check for positive definiteness
+            min_eig = float(np.min(np.linalg.eigvalsh(S_sym)))
+            if min_eig <= 1e-12:
+                return GatingDiagnostics(
+                    accepted=False,
+                    mahalanobis_sq=float("nan"),
+                    threshold=self.get_threshold(m),
+                    dof=m,
+                    confidence_level=self.confidence_level,
+                )
+
             # Solve S @ x = y for x = S^-1 @ y
-            S_inv_y = np.linalg.solve(S_mat, y)
+            S_inv_y = np.linalg.solve(S_sym, y)
             d_sq = float(np.dot(y, S_inv_y))
         except (np.linalg.LinAlgError, ValueError):
             # Ill-conditioned or singular innovation covariance
@@ -120,7 +134,7 @@ class MahalanobisGating:
             )
 
         threshold = self.get_threshold(m)
-        accepted = bool(d_sq <= threshold and math.isfinite(d_sq))
+        accepted = bool(0.0 <= d_sq <= threshold and math.isfinite(d_sq))
 
         return GatingDiagnostics(
             accepted=accepted,
@@ -129,3 +143,4 @@ class MahalanobisGating:
             dof=m,
             confidence_level=self.confidence_level,
         )
+
