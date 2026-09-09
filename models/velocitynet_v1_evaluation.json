@@ -1,0 +1,123 @@
+{
+  "model_name": "VelocityNet",
+  "version": "v1.0",
+  "seed": 42,
+  "parameters": 41506,
+  "train_samples": 226928,
+  "val_samples": 21080,
+  "test_samples": 123464,
+  "best_epoch": 8,
+  "best_val_loss": Infinity,
+  "val_metrics": {
+    "rmse": 5.017409324645996,
+    "mae": 3.8349146842956543,
+    "bias": 0.31266894936561584,
+    "correlation": 0.6952434536284751
+  },
+  "test_metrics": {
+    "rmse": 7.32000207901001,
+    "mae": 5.46413516998291,
+    "bias": 0.8311457633972168,
+    "correlation": 0.4070213467598589
+  },
+  "uncertainty_coverage": {
+    "in_1sigma": 0.589637465172034,
+    "in_2sigma": 0.8482391628328906,
+    "in_3sigma": 0.9407438605585434,
+    "mean_sigma_mps": 5.106902599334717
+  },
+  "baselines": {
+    "operational_static_train_mean": {
+      "rmse": 9.304566383361816,
+      "mae": 8.035984992980957,
+      "bias": 6.656191825866699,
+      "correlation": NaN,
+      "train_mean_speed_mps": 15.571139335632324,
+      "type": "operational_causal_baseline",
+      "description": "Causal baseline predicting the static training set mean forward speed"
+    },
+    "non_causal_lag1_ground_truth_oracle": {
+      "rmse": 0.40056946873664856,
+      "mae": 0.2494475245475769,
+      "bias": -0.00010013883729698136,
+      "correlation": 0.9981020032417952,
+      "type": "non_causal_oracle_diagnostic_reference",
+      "description": "Non-causal diagnostic reference using prior ground-truth speed (infeasible in GNSS outage; not an operational baseline)"
+    },
+    "static_train_mean": {
+      "rmse": 9.304566383361816,
+      "mae": 8.035984992980957,
+      "bias": 6.656191825866699,
+      "correlation": NaN
+    },
+    "naive_constant_velocity": {
+      "rmse": 0.40056946873664856,
+      "mae": 0.2494475245475769,
+      "bias": -0.00010013883729698136,
+      "correlation": 0.9981020032417952
+    }
+  },
+  "scenarios": {
+    "Overall Test Set": {
+      "rmse": 7.32000207901001,
+      "mae": 5.46413516998291,
+      "bias": 0.8311457633972168,
+      "correlation": 0.4070213467598589,
+      "count": 123464,
+      "mean_sigma": 5.106902599334717
+    },
+    "Low Speed (< 2 m/s)": {
+      "rmse": 6.9850568771362305,
+      "mae": 4.143560409545898,
+      "bias": 4.092535972595215,
+      "correlation": 0.12442168413302439,
+      "count": 22276,
+      "mean_sigma": 3.578704357147217
+    },
+    "Medium Speed (2-15 m/s)": {
+      "rmse": 6.463958263397217,
+      "mae": 5.140641689300537,
+      "bias": 1.6828391551971436,
+      "correlation": 0.3049316982242372,
+      "count": 83410,
+      "mean_sigma": 5.329710006713867
+    },
+    "High Speed (> 15 m/s)": {
+      "rmse": 10.721345901489258,
+      "mae": 8.636576652526855,
+      "bias": -7.2513427734375,
+      "correlation": 0.036584606690400354,
+      "count": 17778,
+      "mean_sigma": 5.976391315460205
+    },
+    "Straight Driving (|w_z| <= 0.05 rad/s)": {
+      "rmse": 7.383537292480469,
+      "mae": 5.152409553527832,
+      "bias": -1.1196534633636475,
+      "correlation": 0.4626176680477748,
+      "count": 24700,
+      "mean_sigma": 4.52604866027832
+    },
+    "Cornering / Turning (|w_z| > 0.05 rad/s)": {
+      "rmse": 7.304025650024414,
+      "mae": 5.542094707489014,
+      "bias": 1.3190234899520874,
+      "correlation": 0.3857938911817627,
+      "count": 98764,
+      "mean_sigma": 5.252168655395508
+    },
+    "Dynamic Acceleration / Braking": {
+      "rmse": 7.319818496704102,
+      "mae": 5.464064598083496,
+      "bias": 0.8306997418403625,
+      "correlation": 0.4070356299376517,
+      "count": 123454,
+      "mean_sigma": 5.106806755065918
+    }
+  },
+  "latency_cpu_ms": {
+    "mean": 2.022567800078832,
+    "p50": 1.8961499990837183,
+    "p95": 2.7837749981699744
+  }
+}

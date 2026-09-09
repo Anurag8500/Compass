@@ -1,0 +1,20 @@
+{
+  "num_test_samples": 100,
+  "onnx_parity": {
+    "speed_max_abs_err": 1.9073486328125e-06,
+    "speed_mean_abs_err": 1.4245510726595967e-07,
+    "log_var_max_abs_err": 1.1920928955078125e-06,
+    "log_var_mean_abs_err": 1.6115605205868633e-07,
+    "tolerance": 0.0001,
+    "passed": true
+  },
+  "litert_parity": {
+    "speed_max_abs_err": 9.5367431640625e-07,
+    "speed_mean_abs_err": 7.942318802633963e-08,
+    "log_var_max_abs_err": 5.960464477539062e-07,
+    "log_var_mean_abs_err": 1.0602175848362094e-07,
+    "tolerance": 0.001,
+    "passed": true
+  },
+  "all_passed": true
+}

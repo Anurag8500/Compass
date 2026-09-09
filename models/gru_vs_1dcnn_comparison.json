@@ -1,0 +1,20 @@
+{
+  "VelocityNet (2L-GRU)": {
+    "parameters": 41506,
+    "train_time_sec": 29.148250818252563,
+    "test_rmse": 8.211865425109863,
+    "test_mae": 6.393845558166504,
+    "test_corr": 0.2572818144203106,
+    "latency_p50_ms": 3.939449999961653,
+    "latency_p95_ms": 4.240945000128704
+  },
+  "Baseline (1D-CNN)": {
+    "parameters": 25474,
+    "train_time_sec": 20.297152280807495,
+    "test_rmse": 7.22181510925293,
+    "test_mae": 5.3585638999938965,
+    "test_corr": 0.4187912691830847,
+    "latency_p50_ms": 0.49869999929796904,
+    "latency_p95_ms": 0.5557849995966535
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "model_name": "VelocityNet",
+  "version": "v1.0",
+  "dataset_manifest_hash": "6fadb0c7",
+  "normalization_sha256": "0649fdd7e350c931f48c9b7c2d6e9eb74cd731e4ec8d797a713e41753d1ee219",
+  "input_contract": {
+    "tensor_shape": [
+      1,
+      20,
+      9
+    ],
+    "batch_mode": "Fixed single-window deployment (B=1) for real-time edge streaming; training supports arbitrary batch sizes",
+    "sequence_length": 20,
+    "feature_dim": 9,
+    "sample_rate_hz": 10.0,
+    "window_duration_s": 2.0,
+    "stride_s": 0.5,
+    "coordinate_frame": "vehicle_FLU",
+    "gravity_preserved": true,
+    "feature_order": [
+      "f_x_v",
+      "f_y_v",
+      "f_z_v",
+      "omega_x_v",
+      "omega_y_v",
+      "omega_z_v",
+      "norm_f_v",
+      "norm_f_dot_v",
+      "norm_omega_v"
+    ]
+  },
+  "output_contract": {
+    "outputs": [
+      {
+        "name": "speed",
+        "unit": "m/s",
+        "meaning": "Predicted forward driving speed mu_v"
+      },
+      {
+        "name": "log_variance",
+        "unit": "unitless",
+        "meaning": "Predicted log variance log(sigma_v^2)"
+      }
+    ],
+    "clamping": {
+      "min_log_var": -10.0,
+      "max_log_var": 10.0
+    }
+  },
+  "architecture": {
+    "type": "GRU",
+    "input_size": 9,
+    "hidden_size": 64,
+    "num_layers": 2,
+    "dense_dim": 32,
+    "output_dim": 2,
+    "parameters": 41506
+  },
+  "artifacts": {
+    "pytorch_checkpoint": "velocitynet_v1_best.pt",
+    "onnx_model": "velocitynet_v1_6fadb0c7.onnx",
+    "litert_model": "velocitynet_v1_6fadb0c7.tflite",
+    "onnx_sha256": "7758d8a1f75e134a79ddc5d343ea11b659af240584dbbcfe203f5016bf2faf3b",
+    "litert_sha256": "98b58a96c0354ea84ec8a3685370e5c0d1fa5514d7b8048f679241111cafe8ff"
+  },
+  "parity_summary": {
+    "num_test_samples": 100,
+    "onnx_parity": {
+      "speed_max_abs_err": 1.9073486328125e-06,
+      "speed_mean_abs_err": 1.4245510726595967e-07,
+      "log_var_max_abs_err": 1.1920928955078125e-06,
+      "log_var_mean_abs_err": 1.6115605205868633e-07,
+      "tolerance": 0.0001,
+      "passed": true
+    },
+    "litert_parity": {
+      "speed_max_abs_err": 9.5367431640625e-07,
+      "speed_mean_abs_err": 7.942318802633963e-08,
+      "log_var_max_abs_err": 5.960464477539062e-07,
+      "log_var_mean_abs_err": 1.0602175848362094e-07,
+      "tolerance": 0.001,
+      "passed": true
+    },
+    "all_passed": true
+  }
+}
