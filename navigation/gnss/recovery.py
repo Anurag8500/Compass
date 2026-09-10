@@ -46,7 +46,7 @@ class RecoveryConfig:
     max_single_step_m: float = 3.0
     convergence_pos_tolerance_m: float = 1.5
     required_consecutive_fixes: int = 3
-    nis_gate_reacq: float = 100.0
+    nis_gate_reacq: float = 11.345
 
 
 @dataclass(frozen=True)

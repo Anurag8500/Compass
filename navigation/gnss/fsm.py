@@ -84,6 +84,29 @@ class GNSSModeFSM:
         self._mode_entry_timestamp_ns = int(timestamp_ns)
         self._transition_history.clear()
 
+    def force_mode(
+        self,
+        mode: GNSSMode,
+        timestamp_ns: int,
+        reason: str = "FORCED_TRANSITION",
+        trust_score: float = 1.0,
+    ) -> GNSSModeTransition:
+        """Forcibly set state machine mode (e.g. for safety abort or supervisory override)."""
+        t_ns = int(timestamp_ns)
+        dwell_s = self.time_in_current_mode_s(t_ns)
+        record = GNSSModeTransition(
+            timestamp_ns=t_ns,
+            previous_mode=self._current_mode,
+            new_mode=mode,
+            reason=reason,
+            trust_score=float(trust_score),
+            dwell_duration_s=dwell_s,
+        )
+        self._transition_history.append(record)
+        self._current_mode = mode
+        self._mode_entry_timestamp_ns = t_ns
+        return record
+
     @property
     def current_mode(self) -> GNSSMode:
         return self._current_mode

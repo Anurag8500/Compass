@@ -154,6 +154,7 @@ class NavigationCore:
         self._last_gnss_timestamp_ns: Optional[int] = None
         self._last_gnss_quality: Optional[GNSSQualityResult] = None
         self._last_recovery_step: Optional[BoundedCorrectionStep] = None
+        self._last_gnss_nis: Optional[float] = None
 
         self._ml_telemetry: dict[str, Any] = {
             "velocitynet": {
@@ -199,6 +200,7 @@ class NavigationCore:
         self._last_gnss_timestamp_ns = None
         self._last_gnss_quality = None
         self._last_recovery_step = None
+        self._last_gnss_nis = None
 
         nom = ESKFNominalState.from_components(
             position_enu=p0_enu,
@@ -426,12 +428,13 @@ class NavigationCore:
         # 1. Record fix arrival in outage detector
         self.gnss_outage_detector.record_fix_received(t_ns)
 
-        # 2. Continuous trust evaluation
+        # 2. Continuous trust evaluation with latest ESKF innovation NIS
         quality_res = self.gnss_trust_calculator.compute_trust(
             accuracy_m=accuracy_h_m,
             sat_count=sat_count,
             current_pos_enu=p_enu,
             timestamp_ns=t_ns,
+            nis=self._last_gnss_nis,
         )
         self._last_gnss_quality = quality_res
 
@@ -482,6 +485,9 @@ class NavigationCore:
                         trust_score=effective_trust,
                         timestamp_ns=t_ns,
                     )
+                    if diag_p.gating is not None:
+                        self._last_gnss_nis = float(diag_p.gating.mahalanobis_sq)
+                        self.gnss_trust_calculator.update_innovation_nis(self._last_gnss_nis)
                 self.last_gnss_diagnostics = (diag_p, None)
                 self.gnss_outage_detector.record_update_result(t_ns, applied=True)
                 applied = True
@@ -491,6 +497,25 @@ class NavigationCore:
                 applied = False
 
         elif self.mode == GNSSMode.REACQUIRING:
+            # Validate returning fix plausibility while reacquiring
+            val_res = self.gnss_recovery_manager.validate_returning_fix(
+                gnss_pos_enu=p_enu,
+                eskf_state=self.state,
+                trust_score=effective_trust,
+                timestamp_ns=t_ns,
+            )
+            if not val_res.is_plausible:
+                self.gnss_recovery_manager.reset()
+                self.gnss_outage_detector.record_update_result(t_ns, applied=False)
+                self.gnss_fsm.force_mode(
+                    GNSSMode.DR_ONLY,
+                    timestamp_ns=t_ns,
+                    reason=f"REACQUISITION_FAILED_IMPLAUSIBLE_FIX_{val_res.reason}",
+                )
+                self.mode = self.gnss_fsm.current_mode
+                self._last_gnss_timestamp_ns = t_ns
+                return False
+
             # Continuing bounded recovery
             dt_s = (t_ns - self._last_gnss_timestamp_ns) * 1e-9 if self._last_gnss_timestamp_ns else 1.0
             step = self.gnss_recovery_manager.compute_bounded_correction(p_enu, self.state, dt_s)
@@ -509,6 +534,9 @@ class NavigationCore:
                     trust_score=effective_trust,
                     timestamp_ns=t_ns,
                 )
+                if diag_p.gating is not None:
+                    self._last_gnss_nis = float(diag_p.gating.mahalanobis_sq)
+                    self.gnss_trust_calculator.update_innovation_nis(self._last_gnss_nis)
             diag_v = None
             if v_east is not None and v_north is not None:
                 v_u = 0.0 if v_up is None else float(v_up)
@@ -564,7 +592,8 @@ class NavigationCore:
             self.last_gnss_diagnostics = (diag_p, diag_v)
             self.gnss_outage_detector.record_update_result(t_ns, applied=diag_p.applied)
             if diag_p.gating is not None:
-                self.gnss_trust_calculator.update_innovation_nis(diag_p.gating.mahalanobis_sq)
+                self._last_gnss_nis = float(diag_p.gating.mahalanobis_sq)
+                self.gnss_trust_calculator.update_innovation_nis(self._last_gnss_nis)
 
             # Evaluate if persistent rejection or outage occurred
             outage_status = self.gnss_outage_detector.evaluate_outage(t_ns)
@@ -614,6 +643,7 @@ class NavigationCore:
             "is_outage": outage_status.is_outage,
             "time_since_last_fix_s": outage_status.time_since_last_fix_s,
             "last_trust_score": self._last_gnss_quality.trust_score if self._last_gnss_quality else 1.0,
+            "last_eskf_nis": self._last_gnss_nis,
             "covariance_scale": 1.0 / max(0.05, self._last_gnss_quality.trust_score) if self._last_gnss_quality else 1.0,
             "recovery_cycles": self.gnss_recovery_manager.recovery_cycles,
             "maximum_recovery_correction_m": self.gnss_recovery_manager.maximum_correction_applied_m,

@@ -124,18 +124,17 @@
       "drift_pct_of_distance": 24.62,
       "modes_traversed": [
         "DR_ONLY",
-        "GNSS_AIDED",
-        "REACQUIRING"
+        "GNSS_AIDED"
       ],
-      "final_mode": "REACQUIRING",
+      "final_mode": "DR_ONLY",
       "outage_entry_latency_s": 2.0,
-      "reacquisition_latency_s": 0.0,
+      "reacquisition_latency_s": null,
       "recovery_convergence_latency_s": null,
-      "max_single_step_correction_m": 3.0,
+      "max_single_step_correction_m": 0.0,
       "rate_bounded_satisfied": true,
-      "dr_only_vnet_inferences": 57,
-      "dr_only_bnet_inferences": 29,
-      "total_fsm_transitions": 2,
+      "dr_only_vnet_inferences": 86,
+      "dr_only_bnet_inferences": 43,
+      "total_fsm_transitions": 1,
       "transitions": [
         {
           "timestamp_ns": 502000000000,
@@ -144,14 +143,6 @@
           "reason": "OUTAGE_DETECTED_CONFIRMED_OUTAGE",
           "trust_score": 1.0,
           "dwell_duration_s": 12.0
-        },
-        {
-          "timestamp_ns": 530000000000,
-          "previous_mode": "DR_ONLY",
-          "new_mode": "REACQUIRING",
-          "reason": "VALID_RETURNING_FIX_ACQUIRED",
-          "trust_score": 0.9910485933503836,
-          "dwell_duration_s": 28.0
         }
       ]
     },
@@ -163,18 +154,17 @@
       "drift_pct_of_distance": 70.73,
       "modes_traversed": [
         "DR_ONLY",
-        "GNSS_AIDED",
-        "REACQUIRING"
+        "GNSS_AIDED"
       ],
-      "final_mode": "REACQUIRING",
+      "final_mode": "DR_ONLY",
       "outage_entry_latency_s": 2.0,
-      "reacquisition_latency_s": 0.0,
+      "reacquisition_latency_s": null,
       "recovery_convergence_latency_s": null,
-      "max_single_step_correction_m": 3.0,
+      "max_single_step_correction_m": 0.0,
       "rate_bounded_satisfied": true,
-      "dr_only_vnet_inferences": 117,
-      "dr_only_bnet_inferences": 59,
-      "total_fsm_transitions": 2,
+      "dr_only_vnet_inferences": 146,
+      "dr_only_bnet_inferences": 73,
+      "total_fsm_transitions": 1,
       "transitions": [
         {
           "timestamp_ns": 502000000000,
@@ -183,14 +173,6 @@
           "reason": "OUTAGE_DETECTED_CONFIRMED_OUTAGE",
           "trust_score": 1.0,
           "dwell_duration_s": 12.0
-        },
-        {
-          "timestamp_ns": 559999000000,
-          "previous_mode": "DR_ONLY",
-          "new_mode": "REACQUIRING",
-          "reason": "VALID_RETURNING_FIX_ACQUIRED",
-          "trust_score": 0.9910485933503836,
-          "dwell_duration_s": 57.999
         }
       ]
     }

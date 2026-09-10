@@ -278,3 +278,137 @@ class TestGNSSRecoveryManager:
         # Clamped delta must point along direction of discrepancy
         assert step.delta_p_bounded[0] == pytest.approx(2.0, abs=1e-5)
         assert step.delta_p_bounded[1] == pytest.approx(0.0, abs=1e-5)
+
+
+class TestESKFInnovationToTrustWiringAndGating:
+    """Test suite proving real ESKF innovation NIS wiring into trust calculation,
+    continuous trust degradation, Phase 5 innovation gate preservation, and reacquisition abort.
+    """
+
+    def test_eskf_nis_wired_to_trust_and_telemetry(self) -> None:
+        from navigation.core import NavigationCore, NavigationCoreConfig
+        core = NavigationCore(NavigationCoreConfig(
+            velocitynet_enabled=False,
+            biasnet_enabled=False,
+            zupt_enabled=False,
+            gnss_enabled=True,
+        ))
+        lat0, lon0, alt0 = 52.0, -1.5, 100.0
+        core.initialize(
+            lat0=lat0,
+            lon0=lon0,
+            alt0=alt0,
+            p0_enu=np.zeros(3),
+            v0_enu=np.zeros(3),
+            q0=np.array([1.0, 0.0, 0.0, 0.0]),
+            timestamp_ns=0,
+        )
+
+        # Fix 1: exactly at nominal position
+        core.step_gnss_fix(lat0, lon0, alt0, accuracy_h_m=2.0, timestamp_ns=int(1e9))
+        diag_p, _ = core.last_gnss_diagnostics
+        assert diag_p is not None
+        assert diag_p.gating is not None
+
+        expected_nis = float(diag_p.gating.mahalanobis_sq)
+        assert core._last_gnss_nis == pytest.approx(expected_nis, rel=1e-5)
+        telem = core.get_gnss_telemetry()
+        assert "last_eskf_nis" in telem
+        assert telem["last_eskf_nis"] == pytest.approx(expected_nis, rel=1e-5)
+
+        # Fix 2: verify trust calculator received this NIS
+        core.step_gnss_fix(lat0, lon0, alt0, accuracy_h_m=2.0, timestamp_ns=int(2e9))
+        assert "ESKF_INNOVATION" in core._last_gnss_quality.available_evidence
+        assert core.gnss_trust_calculator._recent_nis == pytest.approx(expected_nis, rel=1e-5)
+
+    def test_high_eskf_nis_lowers_trust_continuously_in_aided_mode(self) -> None:
+        calc = GNSSTrustScoreCalculator(TrustScoreConfig(nis_threshold_95=7.815))
+        # Nominal NIS (2.0 < 7.815)
+        res_nom = calc.compute_trust(accuracy_m=2.0, sat_count=10, current_pos_enu=np.zeros(3), timestamp_ns=int(1e9), nis=2.0)
+        assert res_nom.innovation_component == 1.0
+
+        # Elevated NIS (12.0 > 7.815) -> continuous exponential decay
+        calc.reset()
+        res_elevated = calc.compute_trust(accuracy_m=2.0, sat_count=10, current_pos_enu=np.zeros(3), timestamp_ns=int(1e9), nis=12.0)
+        assert 0.0 < res_elevated.innovation_component < 1.0
+        assert res_elevated.trust_score < res_nom.trust_score
+        assert 0.0 <= res_elevated.trust_score <= 1.0
+
+        # Higher NIS (25.0) -> further decay
+        calc.reset()
+        res_high = calc.compute_trust(accuracy_m=2.0, sat_count=10, current_pos_enu=np.zeros(3), timestamp_ns=int(1e9), nis=25.0)
+        assert res_high.innovation_component < res_elevated.innovation_component
+        assert res_high.trust_score < res_elevated.trust_score
+
+    def test_phase5_gating_preservation_rejects_outlier_normally(self) -> None:
+        from navigation.core import NavigationCore, NavigationCoreConfig
+        core = NavigationCore(NavigationCoreConfig(
+            velocitynet_enabled=False,
+            biasnet_enabled=False,
+            zupt_enabled=False,
+            gnss_enabled=True,
+        ))
+        lat0, lon0, alt0 = 52.0, -1.5, 100.0
+        core.initialize(
+            lat0=lat0,
+            lon0=lon0,
+            alt0=alt0,
+            p0_enu=np.zeros(3),
+            v0_enu=np.zeros(3),
+            q0=np.array([1.0, 0.0, 0.0, 0.0]),
+            timestamp_ns=0,
+        )
+
+        # Nominal fix
+        core.step_gnss_fix(lat0, lon0, alt0, accuracy_h_m=2.0, timestamp_ns=int(1e9))
+        pos_before = core.state.nominal.position_enu.copy()
+
+        # Send a corrupt / outlier fix 80 meters away in GNSS_AIDED mode
+        d_lon80 = 80.0 / (6371000.0 * math.cos(math.radians(lat0))) * (180.0 / math.pi)
+        applied = core.step_gnss_fix(lat0, lon0 + d_lon80, alt0, accuracy_h_m=1.0, timestamp_ns=int(2e9))
+
+        # Phase 5 Chi-Square gating must reject the update completely
+        assert applied is False
+        diag_p, _ = core.last_gnss_diagnostics
+        assert diag_p is not None
+        assert diag_p.applied is False
+        assert diag_p.gating is not None
+        assert diag_p.gating.accepted is False
+        # State position must be strictly uncorrupted
+        assert np.allclose(core.state.nominal.position_enu, pos_before)
+        # Gating NIS was calculated and stored
+        assert diag_p.gating.mahalanobis_sq > 16.266
+        assert core._last_gnss_nis == pytest.approx(float(diag_p.gating.mahalanobis_sq), rel=1e-5)
+
+    def test_reacquiring_aborts_on_implausible_fix(self) -> None:
+        from navigation.core import NavigationCore, NavigationCoreConfig
+        core = NavigationCore(NavigationCoreConfig(
+            velocitynet_enabled=False,
+            biasnet_enabled=False,
+            zupt_enabled=False,
+            gnss_enabled=True,
+        ))
+        lat0, lon0, alt0 = 52.0, -1.5, 100.0
+        core.initialize(
+            lat0=lat0,
+            lon0=lon0,
+            alt0=alt0,
+            p0_enu=np.zeros(3),
+            v0_enu=np.zeros(3),
+            q0=np.array([1.0, 0.0, 0.0, 0.0]),
+            timestamp_ns=0,
+        )
+
+        # Force state to REACQUIRING
+        core.gnss_fsm.force_mode(GNSSMode.REACQUIRING, timestamp_ns=int(1e9), reason="RETURNING_FIX_ACCEPTED")
+        core.mode = GNSSMode.REACQUIRING
+
+        # Send an implausible fix (25m away when covariance is tiny -> NIS > 11.345)
+        d_lon25 = 25.0 / (6371000.0 * math.cos(math.radians(lat0))) * (180.0 / math.pi)
+        applied = core.step_gnss_fix(lat0, lon0 + d_lon25, alt0, accuracy_h_m=2.0, timestamp_ns=int(2e9))
+
+        # Must reject and abort immediately back to DR_ONLY
+        assert applied is False
+        assert core.mode == GNSSMode.DR_ONLY
+        assert core.gnss_recovery_manager.consecutive_valid_fixes == 0
+
