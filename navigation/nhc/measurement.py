@@ -236,47 +236,75 @@ class NHCMeasurementModel:
 
         # 7. Apply gated measurement update with effective inflated covariance R_eff
         R_eff = R_base * eval_res.inflation_factor
+        S_eff = H @ P @ H.T + R_eff
+        S_eff = 0.5 * (S_eff + S_eff.T)
 
-        updated_state, diag = eskf_update(
-            state=state,
-            z=z,
-            h_val=h_val,
-            H=H,
-            R=R_eff,
-            gating=None,  # Already evaluated and gated via SkidSlipDetector
-            timestamp_ns=timestamp_ns,
-        )
+        try:
+            # Solve S_eff @ K^T = H @ P --> K = (S_eff^-1 @ (H @ P))^T
+            X = np.linalg.solve(S_eff, H @ P)
+            K = X.T  # Shape (15, 2)
+        except np.linalg.LinAlgError:
+            diag = UpdateDiagnostics(
+                applied=False,
+                measurement_dim=2,
+                innovation=y,
+                innovation_covariance=S_eff,
+                kalman_gain=None,
+                delta_x=None,
+                gating=None,
+            )
+            return state, NHCDiagnostics(
+                status=NHCStatus.SKIPPED,
+                applied=False,
+                reason="SINGULAR_COVARIANCE",
+                innovation=y,
+                predicted_v_v=v_v,
+                nis=nis,
+                covariance_inflation=eval_res.inflation_factor,
+                update_diagnostics=diag,
+            )
 
-        # 8. Kinematic Subspace Constraint:
+        # 8. Kinematic Subspace Constraint via Simon-Chia Constrained Projection:
         # NHC is strictly a 2D virtual measurement constraining lateral (v_y^v = 0) and
         # vertical (v_z^v = 0) motion. Forward velocity (v_x^v) is unobserved by NHC and must
-        # not suffer artificial deceleration due to cross-covariance coupling (P_v_theta, P_vx_vy)
-        # during high-speed cruising.
-        if diag.applied and self.config.preserve_forward_speed:
-            R_v_n_pre = state.nominal.R_v_n
-            v_v_pre = R_v_n_pre.T @ state.nominal.velocity_enu
+        # not suffer artificial deceleration due to cross-covariance coupling (P_v_theta, P_vx_vy).
+        # We project Kalman gain K into the constraint subspace C @ delta_x = 0:
+        # C = [0_1x3, (e_x^n)^T, 0_1x9]
+        if self.config.preserve_forward_speed:
+            ex_n = state.nominal.R_v_n[:, 0]
+            C = np.zeros((1, 15), dtype=np.float64)
+            C[0, 3:6] = ex_n
+            u = P @ C.T  # (15, 1)
+            Cu = float((C @ u)[0, 0])
+            if Cu > 1e-12:
+                M = np.eye(15, dtype=np.float64) - (u @ C) / Cu
+                K = M @ K
 
-            R_v_n_post = updated_state.nominal.R_v_n
-            v_v_post = R_v_n_post.T @ updated_state.nominal.velocity_enu
+        delta_x = K @ y
 
-            # Preserve forward velocity v_x^v from nominal state prior to NHC update
-            v_v_clean = np.array([v_v_pre[0], v_v_post[1], v_v_post[2]], dtype=np.float64)
-            v_enu_clean = R_v_n_post @ v_v_clean
+        # Joseph form covariance update:
+        # P_new = (I - K H) P (I - K H)^T + K R_eff K^T
+        I15 = np.eye(15, dtype=np.float64)
+        I_KH = I15 - K @ H
+        P_updated = I_KH @ P @ I_KH.T + K @ R_eff @ K.T
+        P_updated = 0.5 * (P_updated + P_updated.T)
 
-            from navigation.eskf.state import ESKFNominalState
-            clean_nom = ESKFNominalState(
-                position_enu=updated_state.nominal.position_enu,
-                velocity_enu=v_enu_clean,
-                q=updated_state.nominal.q,
-                accel_bias=updated_state.nominal.accel_bias,
-                gyro_bias=updated_state.nominal.gyro_bias,
-                timestamp_ns=updated_state.nominal.timestamp_ns,
-            )
-            updated_state = ESKFState(nominal=clean_nom, covariance=updated_state.covariance)
+        t = state.timestamp_ns if timestamp_ns is None else int(timestamp_ns)
+        updated_state = state.inject_error(delta_x=delta_x, new_covariance=P_updated, timestamp_ns=t)
+
+        diag = UpdateDiagnostics(
+            applied=True,
+            measurement_dim=2,
+            innovation=y,
+            innovation_covariance=S_eff,
+            kalman_gain=K,
+            delta_x=delta_x,
+            gating=None,
+        )
 
         return updated_state, NHCDiagnostics(
             status=eval_res.status,
-            applied=diag.applied,
+            applied=True,
             reason=eval_res.reason,
             innovation=y,
             predicted_v_v=v_v,

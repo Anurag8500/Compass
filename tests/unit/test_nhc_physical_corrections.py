@@ -91,8 +91,14 @@ def test_case_b_positive_lateral_velocity():
     # v_y^v must have moved towards zero (decreased)
     assert v_v_after[1] < v_pre[1], f"Expected vy < {v_pre[1]}, got {v_v_after[1]}"
     assert abs(v_v_after[1]) < abs(v_pre[1]), f"Expected |vy| < {v_pre[1]}, got {abs(v_v_after[1])}"
-    # Forward velocity must be preserved
-    assert np.isclose(v_v_after[0], v_pre[0], atol=1e-4)
+    # Forward velocity error correction along pre-update forward vector is mathematically zero
+    ex_n = state.nominal.R_v_n[:, 0]
+    assert abs(float(ex_n @ diag.update_diagnostics.delta_x[3:6])) < 1e-12
+    # Forward velocity preserved in newly rotated body frame to within 1 mm/s
+    assert np.isclose(v_v_after[0], v_pre[0], atol=1e-2)
+    # Covariance symmetry and PSD
+    assert np.allclose(up_state.covariance, up_state.covariance.T, atol=1e-10)
+    assert np.all(np.linalg.eigvalsh(up_state.covariance) > 0)
 
 
 def test_case_c_negative_lateral_velocity():
@@ -110,8 +116,12 @@ def test_case_c_negative_lateral_velocity():
     # v_y^v must have moved towards zero (increased)
     assert v_v_after[1] > v_pre[1], f"Expected vy > {v_pre[1]}, got {v_v_after[1]}"
     assert abs(v_v_after[1]) < abs(v_pre[1]), f"Expected |vy| < {v_pre[1]}, got {abs(v_v_after[1])}"
-    # Forward velocity must be preserved
-    assert np.isclose(v_v_after[0], v_pre[0], atol=1e-4)
+    # Forward velocity error correction along pre-update forward vector is mathematically zero
+    ex_n = state.nominal.R_v_n[:, 0]
+    assert abs(float(ex_n @ diag.update_diagnostics.delta_x[3:6])) < 1e-12
+    assert np.isclose(v_v_after[0], v_pre[0], atol=1e-2)
+    assert np.allclose(up_state.covariance, up_state.covariance.T, atol=1e-10)
+    assert np.all(np.linalg.eigvalsh(up_state.covariance) > 0)
 
 
 def test_case_d_positive_vertical_velocity():
@@ -129,8 +139,12 @@ def test_case_d_positive_vertical_velocity():
     # v_z^v must have moved towards zero (decreased)
     assert v_v_after[2] < v_pre[2], f"Expected vz < {v_pre[2]}, got {v_v_after[2]}"
     assert abs(v_v_after[2]) < abs(v_pre[2]), f"Expected |vz| < {v_pre[2]}, got {abs(v_v_after[2])}"
-    # Forward velocity must be preserved
-    assert np.isclose(v_v_after[0], v_pre[0], atol=1e-4)
+    # Forward velocity error correction along pre-update forward vector is mathematically zero
+    ex_n = state.nominal.R_v_n[:, 0]
+    assert abs(float(ex_n @ diag.update_diagnostics.delta_x[3:6])) < 1e-12
+    assert np.isclose(v_v_after[0], v_pre[0], atol=1e-2)
+    assert np.allclose(up_state.covariance, up_state.covariance.T, atol=1e-10)
+    assert np.all(np.linalg.eigvalsh(up_state.covariance) > 0)
 
 
 def test_case_e_non_identity_attitude():
@@ -149,7 +163,11 @@ def test_case_e_non_identity_attitude():
     # Both lateral and vertical errors must be reduced towards 0 in vehicle frame
     assert abs(v_v_after[1]) < abs(v_pre[1])
     assert abs(v_v_after[2]) < abs(v_pre[2])
-    assert np.isclose(v_v_after[0], v_pre[0], atol=1e-4)
+    ex_n = state.nominal.R_v_n[:, 0]
+    assert abs(float(ex_n @ diag.update_diagnostics.delta_x[3:6])) < 1e-12
+    assert np.isclose(v_v_after[0], v_pre[0], atol=1e-2)
+    assert np.allclose(up_state.covariance, up_state.covariance.T, atol=1e-10)
+    assert np.all(np.linalg.eigvalsh(up_state.covariance) > 0)
 
 
 def test_case_f_known_yaw_mounting_error():

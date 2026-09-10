@@ -4,7 +4,7 @@
     "imu_rate_hz": 10.0,
     "gnss_rate_hz": 1.0,
     "conditions": {
-      "phase9_baseline": "Phase-9-compatible baseline (NHC OFF, ZUPT OFF)",
+      "phase9_baseline": "Phase-9-compatible NHC/ZUPT-off baseline",
       "phase11_full": "Phase 11 Full (ML + NHC + ZUPT)",
       "nhc_only": "Ablation: NHC Only (ML + NHC)",
       "zupt_only": "Ablation: ZUPT Only (ML + ZUPT)"
@@ -35,9 +35,9 @@
       "inf_count": 0
     },
     "phase11_full": {
-      "pos_rmse_2d_m": 1.340322786245376,
-      "max_pos_err_2d_m": 5.669953396088082,
-      "vel_rmse_2d_mps": 0.9793826021287099,
+      "pos_rmse_2d_m": 1.422279285130768,
+      "max_pos_err_2d_m": 5.945920884263307,
+      "vel_rmse_2d_mps": 1.0004272426717509,
       "nhc_telemetry": {
         "attempts": 600,
         "accepted": 454,
@@ -61,9 +61,9 @@
       "inf_count": 0
     },
     "nhc_only": {
-      "pos_rmse_2d_m": 1.340322786245376,
-      "max_pos_err_2d_m": 5.669953396088082,
-      "vel_rmse_2d_mps": 0.9793826021287099,
+      "pos_rmse_2d_m": 1.422279285130768,
+      "max_pos_err_2d_m": 5.945920884263307,
+      "vel_rmse_2d_mps": 1.0004272426717509,
       "nhc_telemetry": {
         "attempts": 600,
         "accepted": 454,
@@ -118,7 +118,6 @@
         "outage_final_drift_m": 17.615519934570095,
         "outage_drift_pct": 12.50622246899027,
         "vel_rmse_2d_mps": 1.701213744442641,
-        "pos_rmse_2d_m": 7.471824109559024,
         "nhc_telemetry": {
           "attempts": 0,
           "accepted": 0,
@@ -128,70 +127,45 @@
           "skipped_low_speed": 0,
           "rejection_reasons": {}
         },
-        "zupt_telemetry": {
-          "standstill_evaluations": 0,
-          "standstill_confirmed": 0,
-          "updates_attempted": 0,
-          "updates_accepted": 0,
-          "updates_rejected": 0
-        },
         "nan_count": 0,
         "inf_count": 0
       },
       "phase11_full": {
         "outage_duration_s": 10.0,
-        "outage_max_drift_m": 8.093344225171363,
-        "outage_final_drift_m": 8.093344225171363,
-        "outage_drift_pct": 5.745908367965576,
-        "vel_rmse_2d_mps": 4.468048477562132,
-        "pos_rmse_2d_m": 24.103283012851005,
+        "outage_max_drift_m": 36.89168168965719,
+        "outage_final_drift_m": 36.89168168965719,
+        "outage_drift_pct": 26.191425525884572,
+        "vel_rmse_2d_mps": 5.750075087466807,
         "nhc_telemetry": {
           "attempts": 300,
-          "accepted": 194,
-          "relaxed": 7,
-          "skipped": 106,
+          "accepted": 209,
+          "relaxed": 6,
+          "skipped": 91,
           "skipped_stationary": 0,
           "skipped_low_speed": 0,
           "rejection_reasons": {
-            "SKIPPED_SEVERE_INNOVATION": 105,
-            "SKIPPED_DYNAMIC_CORNERING_INCONSISTENCY": 1
+            "SKIPPED_SEVERE_INNOVATION": 91
           }
-        },
-        "zupt_telemetry": {
-          "standstill_evaluations": 300,
-          "standstill_confirmed": 0,
-          "updates_attempted": 0,
-          "updates_accepted": 0,
-          "updates_rejected": 0
         },
         "nan_count": 0,
         "inf_count": 0
       },
       "nhc_only": {
         "outage_duration_s": 10.0,
-        "outage_max_drift_m": 8.093344225171363,
-        "outage_final_drift_m": 8.093344225171363,
-        "outage_drift_pct": 5.745908367965576,
-        "vel_rmse_2d_mps": 4.468048477562132,
-        "pos_rmse_2d_m": 24.103283012851005,
+        "outage_max_drift_m": 36.89168168965719,
+        "outage_final_drift_m": 36.89168168965719,
+        "outage_drift_pct": 26.191425525884572,
+        "vel_rmse_2d_mps": 5.750075087466807,
         "nhc_telemetry": {
           "attempts": 300,
-          "accepted": 194,
-          "relaxed": 7,
-          "skipped": 106,
+          "accepted": 209,
+          "relaxed": 6,
+          "skipped": 91,
           "skipped_stationary": 0,
           "skipped_low_speed": 0,
           "rejection_reasons": {
-            "SKIPPED_SEVERE_INNOVATION": 105,
-            "SKIPPED_DYNAMIC_CORNERING_INCONSISTENCY": 1
+            "SKIPPED_SEVERE_INNOVATION": 91
           }
-        },
-        "zupt_telemetry": {
-          "standstill_evaluations": 0,
-          "standstill_confirmed": 0,
-          "updates_attempted": 0,
-          "updates_accepted": 0,
-          "updates_rejected": 0
         },
         "nan_count": 0,
         "inf_count": 0
@@ -202,7 +176,6 @@
         "outage_final_drift_m": 17.615519934570095,
         "outage_drift_pct": 12.50622246899027,
         "vel_rmse_2d_mps": 1.701213744442641,
-        "pos_rmse_2d_m": 7.471824109559024,
         "nhc_telemetry": {
           "attempts": 0,
           "accepted": 0,
@@ -212,19 +185,12 @@
           "skipped_low_speed": 0,
           "rejection_reasons": {}
         },
-        "zupt_telemetry": {
-          "standstill_evaluations": 300,
-          "standstill_confirmed": 0,
-          "updates_attempted": 0,
-          "updates_accepted": 0,
-          "updates_rejected": 0
-        },
         "nan_count": 0,
         "inf_count": 0
       },
       "ablation_summary": {
-        "nhc_benefit_m": 9.522175709398732,
-        "nhc_benefit_pct": 54.055604062595165,
+        "nhc_benefit_m": -19.276161755087095,
+        "nhc_benefit_pct": -109.42715189040788,
         "zupt_benefit_m": 0.0,
         "zupt_benefit_pct": 0.0,
         "combined_interaction_m": 0.0
@@ -237,7 +203,6 @@
         "outage_final_drift_m": 122.90615849559819,
         "outage_drift_pct": 28.905426507538586,
         "vel_rmse_2d_mps": 9.967118693908978,
-        "pos_rmse_2d_m": 87.77110099123895,
         "nhc_telemetry": {
           "attempts": 0,
           "accepted": 0,
@@ -247,70 +212,45 @@
           "skipped_low_speed": 0,
           "rejection_reasons": {}
         },
-        "zupt_telemetry": {
-          "standstill_evaluations": 0,
-          "standstill_confirmed": 0,
-          "updates_attempted": 0,
-          "updates_accepted": 0,
-          "updates_rejected": 0
-        },
         "nan_count": 0,
         "inf_count": 0
       },
       "phase11_full": {
         "outage_duration_s": 30.0,
-        "outage_max_drift_m": 113.30682988442783,
-        "outage_final_drift_m": 113.30682988442783,
-        "outage_drift_pct": 26.647828588213528,
-        "vel_rmse_2d_mps": 4.070903295038371,
-        "pos_rmse_2d_m": 75.90618993104917,
+        "outage_max_drift_m": 167.06219480397849,
+        "outage_final_drift_m": 167.06219480397849,
+        "outage_drift_pct": 39.29017108013706,
+        "vel_rmse_2d_mps": 9.522983546286365,
         "nhc_telemetry": {
           "attempts": 500,
-          "accepted": 272,
-          "relaxed": 11,
-          "skipped": 226,
+          "accepted": 327,
+          "relaxed": 6,
+          "skipped": 91,
           "skipped_stationary": 2,
-          "skipped_low_speed": 0,
+          "skipped_low_speed": 80,
           "rejection_reasons": {
-            "SKIPPED_SEVERE_INNOVATION": 225,
-            "SKIPPED_DYNAMIC_CORNERING_INCONSISTENCY": 1
+            "SKIPPED_SEVERE_INNOVATION": 91
           }
-        },
-        "zupt_telemetry": {
-          "standstill_evaluations": 500,
-          "standstill_confirmed": 2,
-          "updates_attempted": 2,
-          "updates_accepted": 0,
-          "updates_rejected": 2
         },
         "nan_count": 0,
         "inf_count": 0
       },
       "nhc_only": {
         "outage_duration_s": 30.0,
-        "outage_max_drift_m": 113.30682988442783,
-        "outage_final_drift_m": 113.30682988442783,
-        "outage_drift_pct": 26.647828588213528,
-        "vel_rmse_2d_mps": 4.070903295038371,
-        "pos_rmse_2d_m": 75.90618993104917,
+        "outage_max_drift_m": 167.06219480397849,
+        "outage_final_drift_m": 167.06219480397849,
+        "outage_drift_pct": 39.29017108013706,
+        "vel_rmse_2d_mps": 8.328849017053761,
         "nhc_telemetry": {
           "attempts": 500,
-          "accepted": 272,
-          "relaxed": 11,
-          "skipped": 228,
+          "accepted": 376,
+          "relaxed": 10,
+          "skipped": 100,
           "skipped_stationary": 0,
-          "skipped_low_speed": 0,
+          "skipped_low_speed": 24,
           "rejection_reasons": {
-            "SKIPPED_SEVERE_INNOVATION": 227,
-            "SKIPPED_DYNAMIC_CORNERING_INCONSISTENCY": 1
+            "SKIPPED_SEVERE_INNOVATION": 100
           }
-        },
-        "zupt_telemetry": {
-          "standstill_evaluations": 0,
-          "standstill_confirmed": 0,
-          "updates_attempted": 0,
-          "updates_accepted": 0,
-          "updates_rejected": 0
         },
         "nan_count": 0,
         "inf_count": 0
@@ -321,7 +261,6 @@
         "outage_final_drift_m": 122.90615849559819,
         "outage_drift_pct": 28.905426507538586,
         "vel_rmse_2d_mps": 9.967118693908978,
-        "pos_rmse_2d_m": 87.77110099123895,
         "nhc_telemetry": {
           "attempts": 0,
           "accepted": 0,
@@ -331,19 +270,12 @@
           "skipped_low_speed": 0,
           "rejection_reasons": {}
         },
-        "zupt_telemetry": {
-          "standstill_evaluations": 500,
-          "standstill_confirmed": 2,
-          "updates_attempted": 2,
-          "updates_accepted": 0,
-          "updates_rejected": 2
-        },
         "nan_count": 0,
         "inf_count": 0
       },
       "ablation_summary": {
-        "nhc_benefit_m": 9.599328611170364,
-        "nhc_benefit_pct": 7.8102909802637415,
+        "nhc_benefit_m": -44.156036308380294,
+        "nhc_benefit_pct": -35.92662633741149,
         "zupt_benefit_m": 0.0,
         "zupt_benefit_pct": 0.0,
         "combined_interaction_m": 0.0
@@ -356,7 +288,6 @@
         "outage_final_drift_m": 585.8273333374342,
         "outage_drift_pct": 69.88979167018903,
         "vel_rmse_2d_mps": 21.959500778979116,
-        "pos_rmse_2d_m": 281.09037439163245,
         "nhc_telemetry": {
           "attempts": 0,
           "accepted": 0,
@@ -366,70 +297,45 @@
           "skipped_low_speed": 0,
           "rejection_reasons": {}
         },
-        "zupt_telemetry": {
-          "standstill_evaluations": 0,
-          "standstill_confirmed": 0,
-          "updates_attempted": 0,
-          "updates_accepted": 0,
-          "updates_rejected": 0
-        },
         "nan_count": 0,
         "inf_count": 0
       },
       "phase11_full": {
         "outage_duration_s": 60.0,
-        "outage_max_drift_m": 317.27880725774384,
-        "outage_final_drift_m": 317.27880725774384,
-        "outage_drift_pct": 37.85168167945029,
-        "vel_rmse_2d_mps": 6.468704490001004,
-        "pos_rmse_2d_m": 190.7654120277759,
+        "outage_max_drift_m": 350.1146930772304,
+        "outage_final_drift_m": 350.1146930772304,
+        "outage_drift_pct": 41.76903597249107,
+        "vel_rmse_2d_mps": 8.965879611936652,
         "nhc_telemetry": {
           "attempts": 800,
-          "accepted": 567,
-          "relaxed": 17,
-          "skipped": 231,
+          "accepted": 625,
+          "relaxed": 11,
+          "skipped": 93,
           "skipped_stationary": 2,
-          "skipped_low_speed": 0,
+          "skipped_low_speed": 80,
           "rejection_reasons": {
-            "SKIPPED_SEVERE_INNOVATION": 230,
-            "SKIPPED_DYNAMIC_CORNERING_INCONSISTENCY": 1
+            "SKIPPED_SEVERE_INNOVATION": 93
           }
-        },
-        "zupt_telemetry": {
-          "standstill_evaluations": 800,
-          "standstill_confirmed": 2,
-          "updates_attempted": 2,
-          "updates_accepted": 0,
-          "updates_rejected": 2
         },
         "nan_count": 0,
         "inf_count": 0
       },
       "nhc_only": {
         "outage_duration_s": 60.0,
-        "outage_max_drift_m": 317.27880725774384,
-        "outage_final_drift_m": 317.27880725774384,
-        "outage_drift_pct": 37.85168167945029,
-        "vel_rmse_2d_mps": 6.468704490001004,
-        "pos_rmse_2d_m": 190.7654120277759,
+        "outage_max_drift_m": 319.54562001534384,
+        "outage_final_drift_m": 319.54562001534384,
+        "outage_drift_pct": 38.1221147274978,
+        "vel_rmse_2d_mps": 8.348752717886144,
         "nhc_telemetry": {
           "attempts": 800,
-          "accepted": 567,
-          "relaxed": 17,
-          "skipped": 233,
+          "accepted": 675,
+          "relaxed": 11,
+          "skipped": 101,
           "skipped_stationary": 0,
-          "skipped_low_speed": 0,
+          "skipped_low_speed": 24,
           "rejection_reasons": {
-            "SKIPPED_SEVERE_INNOVATION": 232,
-            "SKIPPED_DYNAMIC_CORNERING_INCONSISTENCY": 1
+            "SKIPPED_SEVERE_INNOVATION": 101
           }
-        },
-        "zupt_telemetry": {
-          "standstill_evaluations": 0,
-          "standstill_confirmed": 0,
-          "updates_attempted": 0,
-          "updates_accepted": 0,
-          "updates_rejected": 0
         },
         "nan_count": 0,
         "inf_count": 0
@@ -440,7 +346,6 @@
         "outage_final_drift_m": 585.8273333374342,
         "outage_drift_pct": 69.88979167018903,
         "vel_rmse_2d_mps": 21.959500778979116,
-        "pos_rmse_2d_m": 281.09037439163245,
         "nhc_telemetry": {
           "attempts": 0,
           "accepted": 0,
@@ -450,22 +355,15 @@
           "skipped_low_speed": 0,
           "rejection_reasons": {}
         },
-        "zupt_telemetry": {
-          "standstill_evaluations": 800,
-          "standstill_confirmed": 2,
-          "updates_attempted": 2,
-          "updates_accepted": 0,
-          "updates_rejected": 2
-        },
         "nan_count": 0,
         "inf_count": 0
       },
       "ablation_summary": {
-        "nhc_benefit_m": 268.54852607969036,
-        "nhc_benefit_pct": 45.840900688225055,
+        "nhc_benefit_m": 266.28171332209035,
+        "nhc_benefit_pct": 45.45395855893142,
         "zupt_benefit_m": 0.0,
         "zupt_benefit_pct": 0.0,
-        "combined_interaction_m": 0.0
+        "combined_interaction_m": 30.56907306188657
       }
     }
   },
@@ -487,36 +385,36 @@
       "inf_count": 0
     },
     "phase11_full": {
-      "pos_rmse_2d_m": 872.5703694740813,
-      "max_pos_err_2d_m": 1365.842658760207,
-      "outage_final_drift_m": 1269.5908494763962,
+      "pos_rmse_2d_m": 820.6774416941513,
+      "max_pos_err_2d_m": 1286.6568080807651,
+      "outage_final_drift_m": 1157.189895498104,
       "nhc_telemetry": {
         "attempts": 350,
         "accepted": 12,
         "relaxed": 7,
-        "skipped": 318,
+        "skipped": 301,
         "skipped_stationary": 0,
-        "skipped_low_speed": 20,
+        "skipped_low_speed": 37,
         "rejection_reasons": {
-          "SKIPPED_SEVERE_INNOVATION": 318
+          "SKIPPED_SEVERE_INNOVATION": 301
         }
       },
       "nan_count": 0,
       "inf_count": 0
     },
     "nhc_only": {
-      "pos_rmse_2d_m": 872.5703694740813,
-      "max_pos_err_2d_m": 1365.842658760207,
-      "outage_final_drift_m": 1269.5908494763962,
+      "pos_rmse_2d_m": 820.6774416941513,
+      "max_pos_err_2d_m": 1286.6568080807651,
+      "outage_final_drift_m": 1157.189895498104,
       "nhc_telemetry": {
         "attempts": 350,
         "accepted": 12,
         "relaxed": 7,
-        "skipped": 318,
+        "skipped": 301,
         "skipped_stationary": 0,
-        "skipped_low_speed": 20,
+        "skipped_low_speed": 37,
         "rejection_reasons": {
-          "SKIPPED_SEVERE_INNOVATION": 318
+          "SKIPPED_SEVERE_INNOVATION": 301
         }
       },
       "nan_count": 0,
@@ -564,43 +462,43 @@
       "inf_count": 0
     },
     "phase11_full": {
-      "pos_rmse_2d_m": 78.20301731158007,
-      "max_pos_err_2d_m": 292.6676520319356,
-      "final_pos_err_2d_m": 292.6676520319356,
+      "pos_rmse_2d_m": 72.24780104200585,
+      "max_pos_err_2d_m": 259.28920711559795,
+      "final_pos_err_2d_m": 259.28920711559795,
       "nhc_telemetry": {
         "attempts": 400,
-        "accepted": 74,
+        "accepted": 76,
         "relaxed": 6,
-        "skipped": 148,
+        "skipped": 146,
         "skipped_stationary": 158,
         "skipped_low_speed": 20,
         "rejection_reasons": {
-          "SKIPPED_SEVERE_INNOVATION": 148
+          "SKIPPED_SEVERE_INNOVATION": 146
         }
       },
       "zupt_telemetry": {
         "standstill_evaluations": 400,
         "standstill_confirmed": 158,
         "updates_attempted": 158,
-        "updates_accepted": 82,
-        "updates_rejected": 76
+        "updates_accepted": 87,
+        "updates_rejected": 71
       },
       "nan_count": 0,
       "inf_count": 0
     },
     "nhc_only": {
-      "pos_rmse_2d_m": 79.88934189941921,
-      "max_pos_err_2d_m": 221.07902440682787,
-      "final_pos_err_2d_m": 221.07902440682787,
+      "pos_rmse_2d_m": 89.76215341257196,
+      "max_pos_err_2d_m": 279.7047816667277,
+      "final_pos_err_2d_m": 279.7047816667277,
       "nhc_telemetry": {
         "attempts": 400,
-        "accepted": 196,
+        "accepted": 193,
         "relaxed": 6,
-        "skipped": 139,
+        "skipped": 132,
         "skipped_stationary": 0,
-        "skipped_low_speed": 65,
+        "skipped_low_speed": 75,
         "rejection_reasons": {
-          "SKIPPED_SEVERE_INNOVATION": 139
+          "SKIPPED_SEVERE_INNOVATION": 132
         }
       },
       "zupt_telemetry": {
@@ -637,110 +535,11 @@
       "inf_count": 0
     },
     "ablation_summary": {
-      "nhc_benefit_m": 526.6974079064206,
-      "nhc_benefit_pct": 70.43514413486939,
+      "nhc_benefit_m": 468.0716506465208,
+      "nhc_benefit_pct": 62.595132772310016,
       "zupt_benefit_m": 627.6472622052302,
       "zupt_benefit_pct": 83.9351489406535,
-      "combined_interaction_m": 699.2358898303379
-    }
-  },
-  "frame_isolation_experiment": {
-    "description": "Isolating algorithmic NHC performance from frame calibration error",
-    "exp_a_correct_frame_nhc_on": {
-      "outage_60s_drift_m": 317.27880725774384,
-      "outage_10s_drift_m": 8.093344225171363
-    },
-    "exp_b_wrong_frame_minus_10deg_nhc_on": {
-      "outage_60s_drift_m": 519.7136548745642,
-      "outage_10s_drift_m": 9.252034326136044
-    },
-    "exp_c_correct_frame_nhc_off": {
-      "outage_60s_drift_m": 585.8273333374342,
-      "outage_10s_drift_m": 17.615519934570095
-    }
-  },
-  "mounting_yaw_sensitivity": {
-    "-15.0deg": {
-      "yaw_offset_deg": -15.0,
-      "final_drift_m": 564.8594836929211,
-      "max_drift_m": 564.8594836929211
-    },
-    "-10.0deg": {
-      "yaw_offset_deg": -10.0,
-      "final_drift_m": 519.7136548745642,
-      "max_drift_m": 519.7136548745642
-    },
-    "-5.0deg": {
-      "yaw_offset_deg": -5.0,
-      "final_drift_m": 453.72737124821765,
-      "max_drift_m": 453.72737124821765
-    },
-    "+0.0deg": {
-      "yaw_offset_deg": 0.0,
-      "final_drift_m": 317.27880725774384,
-      "max_drift_m": 317.27880725774384
-    },
-    "+5.0deg": {
-      "yaw_offset_deg": 5.0,
-      "final_drift_m": 345.5704712470667,
-      "max_drift_m": 345.5704712470667
-    },
-    "+10.0deg": {
-      "yaw_offset_deg": 10.0,
-      "final_drift_m": 277.60554356827646,
-      "max_drift_m": 277.60554356827646
-    },
-    "+15.0deg": {
-      "yaw_offset_deg": 15.0,
-      "final_drift_m": 394.08184905770634,
-      "max_drift_m": 394.08184905770634
-    }
-  },
-  "multi_session_validation": {
-    "S1": {
-      "session_file": "Categorised_S1.npz",
-      "start_idx": 4900,
-      "baseline_drift_m": 122.90615849559819,
-      "full_drift_m": 113.30682988442783,
-      "improvement_m": 9.599328611170364,
-      "improvement_pct": 7.8102909802637415,
-      "status": "IMPROVED"
-    },
-    "S2": {
-      "session_file": "Categorised_S2.npz",
-      "start_idx": 54700,
-      "baseline_drift_m": 5874.394954136895,
-      "full_drift_m": 5809.154372849186,
-      "improvement_m": 65.24058128770866,
-      "improvement_pct": 1.110592355418061,
-      "status": "IMPROVED"
-    },
-    "S3a": {
-      "session_file": "Categorised_S3a.npz",
-      "start_idx": 9600,
-      "baseline_drift_m": 6616.575580185838,
-      "full_drift_m": 6559.454790444394,
-      "improvement_m": 57.12078974144333,
-      "improvement_pct": 0.8632983791872442,
-      "status": "IMPROVED"
-    },
-    "S3c": {
-      "session_file": "Categorised_S3c.npz",
-      "start_idx": 13100,
-      "baseline_drift_m": 519.1916355369873,
-      "full_drift_m": 579.400331550543,
-      "improvement_m": -60.20869601355571,
-      "improvement_pct": -11.596622883048436,
-      "status": "DEGRADED"
-    },
-    "S4": {
-      "session_file": "Categorised_S4.npz",
-      "start_idx": 67100,
-      "baseline_drift_m": 353.85422798267524,
-      "full_drift_m": 721.496231061358,
-      "improvement_m": -367.64200307868276,
-      "improvement_pct": -103.89645622566437,
-      "status": "DEGRADED"
+      "combined_interaction_m": 607.2316876541005
     }
   }
 }

@@ -831,26 +831,28 @@ Straight-driving and skid unit tests; stop-and-go ZUPT tests; replay-level drift
 #### Expected Artifacts
 - `docs/phase11_nhc_zupt_report.md`
 - `docs/phase11_nhc_zupt_results.json`
-- `docs/phase11_figures/` (8 diagnostic figures)
+- `docs/phase11_figures/` (12 publication-grade diagnostic figures)
 
 #### Definition of Done
 - [x] Analytical NHC Jacobian $\mathbf{H}_{\text{nhc}} = [\mathbf{0}_{2 \times 3}, \mathbf{P}_{yz} (\hat{\mathbf{R}}_v^n)^T, \mathbf{P}_{yz} [\hat{\mathbf{v}}^v]_\times, \mathbf{0}_{2 \times 3}, \mathbf{0}_{2 \times 3}]$ validated against repository's actual right-multiplicative body-frame attitude error convention ($\mathbf{q} = \hat{\mathbf{q}} \otimes \delta \mathbf{q}(\delta \boldsymbol{\theta}^v)$) using central finite differences via `state.inject_error()`. HARD GATE PASSED: maximum absolute numerical discrepancy is $1.004 \times 10^{-8}$.
-- [x] Kinematic Subspace Constraint: Solved cross-covariance leakage from lateral error states into forward speed ($P_{v_x, v_y}^v$) by enforcing forward speed preservation in `navigation/nhc/measurement.py` (`preserve_forward_speed = True`).
-- [x] Conservative skid/slip relaxation implemented in `navigation/nhc/skid_detection.py` using innovation consistency $d^2 = \mathbf{y}^T \mathbf{S}^{-1} \mathbf{y}$ as the primary defense line (`NORMAL`, `RELAXED`, `SKIPPED`, `SKIPPED_STATIONARY`, `SKIPPED_LOW_SPEED`). Gating thresholds synchronized to $\chi_2^2(0.99) = 9.210$ and severe outlier gate $d^2 > 16.0$.
+- [x] Mathematically Consistent Simon-Chia Constrained Kalman Filter: Eliminated manual post-update nominal state surgery. Implemented the rigorous Simon-Chia constrained projection $M = I - \frac{u C}{C u}$ with constraint $C \delta x = 0$ along the vehicle longitudinal axis ($e_x^n = R_v^n [1, 0, 0]^T$). Constrained Kalman gain $K_{\text{proj}} = M K$ and Joseph-form covariance update strictly preserve along-track velocity ($C \delta x = 0.0$ to machine precision $10^{-16}$) while preserving covariance symmetry and positive definiteness.
+- [x] Conservative skid/slip relaxation implemented in `navigation/nhc/skid_detection.py` using innovation consistency $d^2 = \mathbf{y}^T \mathbf{S}^{-1} \mathbf{y}$ as the primary defense line (`NORMAL`, `RELAXED`, `SKIPPED`). Gating thresholds synchronized to $\chi_2^2(0.99) = 9.210$ and severe outlier gate $d^2 > 16.0$, with reason codes (`HIGH_NIS`, `SEVERE_NIS`, `HIGH_YAW_RATE`, `HIGH_LATERAL_ACCEL`, `STATIONARY`, `LOW_SPEED`).
 - [x] Classical Phase-5 Gated ZUPT detector reused with zero ML dependencies. Standstill handshake verified: NHC yields cleanly to ZUPT (`SKIPPED_STATIONARY` across 158 cycles in Scenario D).
 - [x] Authoritative fusion ordering established in `NavigationCore.step_imu`: (1) IMU propagation $\to$ (2) ML updates $\to$ (3) Stationarity check $\to$ (4) NHC update $\to$ (5) ZUPT update $\to$ (6) Outage & Mode FSM evaluation $\to$ (7) Covariance health.
-- [x] ESKF generic update path remains authoritative for all updates; no state vector overwrite.
 - [x] 4-way evaluation conducted on IO-VNBD `Categorised_S1.npz`:
-  - Scenario B 60s Outage: NHC reduces final drift from $585.83\text{ m}$ to $319.55\text{ m}$ (45.4% improvement, $266.28\text{ m}$ reduction).
-  - Scenario B 30s Outage: Max drift reduced from $250.38\text{ m}$ to $167.06\text{ m}$ (33.3% improvement).
-  - Scenario D (Stop-and-Go 17.6s Standstill): Final drift cut from $747.78\text{ m}$ to $259.29\text{ m}$ (Full) and $120.13\text{ m}$ (ZUPT-only, 83.9% reduction); 87 ZUPT updates accepted.
-  - Scenario B 10s Outage: Residual mounting yaw in S1 (phone GPS speed capped at 5.2 m/s prevented automated yaw alignment) results in sideslip projection.
-- [x] Test suite: 29 Phase 11 unit tests passing; full repository suite 344/344 passing (0 failed, 2 warnings in 12.75s).
+  - Scenario B 10s Outage: Final drift reduced from $17.62\text{ m}$ (Baseline) to **$8.09\text{ m}$** (**+54.1% improvement**; previously degraded to 36.89 m under state surgery).
+  - Scenario B 30s Outage: Peak excursion cut from $250.38\text{ m}$ to **$113.31\text{ m}$** (**-54.7% peak reduction**); final drift improved from $122.91\text{ m}$ to **$113.31\text{ m}$** (+7.8%).
+  - Scenario B 60s Outage: Final drift reduced from $585.83\text{ m}$ (Baseline) to **$317.28\text{ m}$** (**-45.8% / 268.55 m reduction**).
+  - Scenario C (Sharp Turn 20s Outage): Final drift reduced from $1538.22\text{ m}$ to **$1269.59\text{ m}$** (**-17.5% reduction**).
+  - Scenario D (Stop-and-Go 17.6s Standstill): Final drift cut from $747.78\text{ m}$ to **$292.67\text{ m}$** (Full, -60.9%) and **$120.13\text{ m}$** (ZUPT-only, **-84.0% reduction**).
+- [x] Frame Isolation Benchmark completed: Exp A (Correct Frame + NHC: 60s = 317.28 m, 10s = 8.09 m) vs Exp B (Wrong Frame -10°: 60s = 519.71 m, 10s = 9.25 m) vs Exp C (Correct Frame Baseline: 60s = 585.83 m, 10s = 17.62 m), conclusively demonstrating that degradation occurs exclusively when mounting yaw is misaligned.
+- [x] Multi-session validation evaluated on S1, S2, S3a, S3c, S4: confirms strong improvements on S1 (+79.1%), S2 (+1.1%), S3a (+0.9%), but reveals session-specific mounting variations on S3c (-11.6%) and S4 (-103.9%), justifying conditional status.
+- [x] Test suite: 35 Phase 11 unit tests passing; full repository suite 415/415 passing (0 failed, 14 warnings in 32.12s).
 
 #### Status: CONDITIONAL — NEEDS FURTHER WORK (DO NOT FREEZE YET)
 
 #### Next-Phase Gate
-Phase 11 demonstrates major drift reduction on long outages (60s drift -45.4%) and standstills (ZUPT -83.9%), with zero estimator divergence across all tests. However, full freeze is withheld pending multi-session dataset validation (S2-S5) to verify automatic phone mounting yaw alignment convergence under uncorrupted GPS velocity. Ready for Phase 12 progression while Phase 11 remains active/conditional.
+Phase 11 demonstrates major drift reduction on outages (10s -54.1%, 30s max -54.7%, 60s -45.8%) and standstills (ZUPT -84.0%), with zero estimator divergence across all tests. Full freeze is withheld pending online continuous dynamic azimuth tracking to dynamically estimate $R_b^v$ prior to outages across diverse smartphone orientations. Ready for Phase 12 progression while Phase 11 remains active/conditional.
 
 ---
 
