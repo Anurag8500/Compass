@@ -402,3 +402,58 @@ class TestBiasNetMeasurementModel:
     def test_frozen_phase8_covariance_preserved(self) -> None:
         model = BiasNetMeasurementModel(BiasNetConfig(covariance_mode="fixed_phase8"))
         np.testing.assert_array_equal(model.R_diag, np.array(PHASE8_R_BIAS_DIAG))
+
+
+# ==============================================================================
+# 6. ML Telemetry Accounting Tests
+# ==============================================================================
+
+class TestMLTelemetryAccounting:
+    """Test suite ensuring strict mathematical consistency of ML telemetry fields."""
+
+    def test_velocitynet_telemetry_accounting_standstill(self) -> None:
+        """Standstill suppression counts as update_rejected with reason STANDSTILL_SUPPRESSED."""
+        from navigation.core import NavigationCore, NavigationCoreConfig
+        from navigation.ins.attitude import rotation_matrix_to_quaternion
+
+        core = NavigationCore(NavigationCoreConfig(
+            velocitynet_enabled=True,
+            velocitynet=VelocityNetConfig(min_speed_threshold_mps=15.0),
+            biasnet_enabled=False,
+            zupt_enabled=False,
+            gnss_enabled=False,
+        ))
+
+        core.initialize(
+            lat0=0.0,
+            lon0=0.0,
+            alt0=0.0,
+            p0_enu=np.zeros(3),
+            v0_enu=np.zeros(3),
+            q0=np.array([1.0, 0.0, 0.0, 0.0]),
+            gyro_bias0=np.zeros(3),
+            timestamp_ns=0,
+        )
+
+        # Feed 40 stationary samples (0 m/s) at 10 Hz
+        for step in range(40):
+            t_ns = int((step + 1) * 1e8)
+            core.step_imu(
+                f_m_v=np.array([0.0, 0.0, 9.81]),
+                omega_m_v=np.zeros(3),
+                dt_s=0.1,
+                timestamp_ns=t_ns,
+            )
+
+
+        telem = core.get_ml_telemetry()["velocitynet"]
+
+        # Telemetry invariants:
+        assert telem["scheduler_due"] >= telem["inference_executed"]
+        assert telem["inference_executed"] >= telem["update_accepted"]
+        assert telem["inference_executed"] == telem["update_accepted"] + telem["update_rejected"]
+        assert telem["buffer_not_ready"] > 0
+        # In stationary data, updates should be suppressed by standstill logic
+        assert telem["update_rejected"] >= 1
+        assert "STANDSTILL_SUPPRESSED" in telem["rejection_reasons"]
+

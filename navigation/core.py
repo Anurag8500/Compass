@@ -128,6 +128,25 @@ class NavigationCore:
             bnet_cfg = BiasNetConfig(enabled=False)
         self.bnet_model = BiasNetMeasurementModel(config=bnet_cfg)
 
+        self._ml_telemetry: dict[str, Any] = {
+            "velocitynet": {
+                "scheduler_due": 0,
+                "buffer_not_ready": 0,
+                "inference_executed": 0,
+                "update_accepted": 0,
+                "update_rejected": 0,
+                "rejection_reasons": {},
+            },
+            "biasnet": {
+                "scheduler_due": 0,
+                "buffer_not_ready": 0,
+                "inference_executed": 0,
+                "update_accepted": 0,
+                "update_rejected": 0,
+                "rejection_reasons": {},
+            },
+        }
+
     def initialize(
         self,
         lat0: float,
@@ -170,6 +189,27 @@ class NavigationCore:
         self.window_buffer.reset()
         self.scheduler.reset()
         self.vnet_model.reset()
+        self._reset_ml_telemetry()
+
+    def _reset_ml_telemetry(self) -> None:
+        self._ml_telemetry = {
+            "velocitynet": {
+                "scheduler_due": 0,
+                "buffer_not_ready": 0,
+                "inference_executed": 0,
+                "update_accepted": 0,
+                "update_rejected": 0,
+                "rejection_reasons": {},
+            },
+            "biasnet": {
+                "scheduler_due": 0,
+                "buffer_not_ready": 0,
+                "inference_executed": 0,
+                "update_accepted": 0,
+                "update_rejected": 0,
+                "rejection_reasons": {},
+            },
+        }
 
     def check_covariance_health(self) -> CovarianceHealthDiagnostics:
         """Verify numerical validity, symmetry, and positive semi-definiteness of covariance P."""
@@ -256,12 +296,22 @@ class NavigationCore:
 
         vnet_diag: Optional[VelocityNetAdapterDiagnostics] = None
         if run_vnet and self.config.velocitynet_enabled:
+            self._ml_telemetry["velocitynet"]["scheduler_due"] += 1
             has_win, raw_feats, win_ts, reason = self.window_buffer.get_causal_window(current_timestamp_ns=t_ns)
             if has_win and raw_feats is not None:
+                self._ml_telemetry["velocitynet"]["inference_executed"] += 1
                 vnet_out = self.model_runner.run_velocitynet(raw_feats, win_ts)
                 self.state, vnet_diag = self.vnet_model.update(self.state, vnet_out, timestamp_ns=t_ns)
                 self.scheduler.mark_velocitynet_executed(t_ns)
+                if vnet_diag.applied:
+                    self._ml_telemetry["velocitynet"]["update_accepted"] += 1
+                else:
+                    self._ml_telemetry["velocitynet"]["update_rejected"] += 1
+                    rej = vnet_diag.reason or "UNKNOWN"
+                    reasons = self._ml_telemetry["velocitynet"]["rejection_reasons"]
+                    reasons[rej] = reasons.get(rej, 0) + 1
             else:
+                self._ml_telemetry["velocitynet"]["buffer_not_ready"] += 1
                 self.scheduler.mark_velocitynet_scheduled(t_ns)
                 vnet_diag = VelocityNetAdapterDiagnostics(
                     applied=False,
@@ -273,12 +323,22 @@ class NavigationCore:
 
         bnet_diag: Optional[BiasNetAdapterDiagnostics] = None
         if run_bnet and self.config.biasnet_enabled:
+            self._ml_telemetry["biasnet"]["scheduler_due"] += 1
             has_win, raw_feats, win_ts, reason = self.window_buffer.get_causal_window(current_timestamp_ns=t_ns)
             if has_win and raw_feats is not None:
+                self._ml_telemetry["biasnet"]["inference_executed"] += 1
                 bnet_out = self.model_runner.run_biasnet(raw_feats, win_ts)
                 self.state, bnet_diag = self.bnet_model.update(self.state, bnet_out, timestamp_ns=t_ns)
                 self.scheduler.mark_biasnet_executed(t_ns)
+                if bnet_diag.applied:
+                    self._ml_telemetry["biasnet"]["update_accepted"] += 1
+                else:
+                    self._ml_telemetry["biasnet"]["update_rejected"] += 1
+                    rej = bnet_diag.reason or "UNKNOWN"
+                    reasons = self._ml_telemetry["biasnet"]["rejection_reasons"]
+                    reasons[rej] = reasons.get(rej, 0) + 1
             else:
+                self._ml_telemetry["biasnet"]["buffer_not_ready"] += 1
                 self.scheduler.mark_biasnet_scheduled(t_ns)
                 bnet_diag = BiasNetAdapterDiagnostics(
                     applied=False,
@@ -358,3 +418,9 @@ class NavigationCore:
             reference_point=ref_pt,
             mode=self.mode,
         )
+
+    def get_ml_telemetry(self) -> dict[str, Any]:
+        """Return standardized ML telemetry counters adhering to Part 4 taxonomy."""
+        import copy
+        return copy.deepcopy(self._ml_telemetry)
+

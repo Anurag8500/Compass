@@ -153,6 +153,14 @@ def test_real_replay_aided_and_outage_handoff(preprocessed_real_trip) -> None:
     # Assertions on execution behavior
     assert gnss_fixes_applied >= 9, f"Expected ~10 GNSS fixes in aided phase, got {gnss_fixes_applied}"
     assert bnet_executed_count > 0, "BiasNet must have executed and applied updates"
+
+    # Verify telemetry accounting invariants
+    ml_telem = core.get_ml_telemetry()
+    for name, telem in ml_telem.items():
+        assert telem["scheduler_due"] >= telem["inference_executed"], f"{name}: scheduler_due < inference_executed"
+        assert telem["inference_executed"] >= telem["update_accepted"], f"{name}: inference_executed < update_accepted"
+        assert telem["inference_executed"] == telem["update_accepted"] + telem["update_rejected"], f"{name}: inference_executed mismatch"
+        assert telem["buffer_not_ready"] > 0, f"{name}: expected warmup buffer_not_ready > 0"
     
     # Final state extraction and sanity
     nav_state = core.get_navigation_state()
