@@ -29,48 +29,48 @@
 ## Training & Supervision Provenance
 - **Dataset**: IO-VNBD (Inertial and Odometry Benchmark Dataset for Ground Vehicles).
 - **Split Invariants**:
-  - **Train**: Driver E (3,914 eligible windows from 25 trips).
-  - **Validation**: Driver B (504 eligible windows across 2 trips).
+  - **Train**: Driver E (4,060 eligible windows across 30 audited trips).
+  - **Validation**: Driver B (480 eligible windows across 2 trips).
   - **Held-Out Test**: Driver A (956 eligible windows across 5 trips).
 - **Teacher Paradigm**: Inverse-problem short-horizon ($H = 1.0\text{ s}$, $K=10$ intervals) damped Levenberg-Marquardt optimization against synchronized Racelogic VBOX RTK GNSS position, velocity, and orientation residuals.
 - **Gating Filter**:
   Windows are accepted for supervised learning only if:
-  1. Jacobian condition number $\kappa \le 50.0$.
-  2. Effective rank $= 6$.
-  3. Residual reduction ratio $\rho \ge 1.20$.
-  4. Physical bounds active flag is False ($|\Delta b_a| \le 2.0\text{ m/s}^2$, $|\Delta b_g| \le 0.15\text{ rad/s}$).
-- **Optimization**: Adam optimizer, learning rate $10^{-3}$, weight decay $10^{-4}$, batch size 64, Smooth L1 loss ($\beta = 0.05$) with component weights ($W_a = 1.0, W_g = 10.0$), early stopping patience 6. Best validation checkpoint restored at Epoch 29.
+  1. Optimizer converges within 15 iterations (`converged == True`, rejected as `SOLVER_FAILURE` otherwise).
+  2. Jacobian condition number $\kappa \le 50.0$.
+  3. Effective rank $= 6$.
+  4. Residual reduction ratio $\rho \ge 1.20$.
+  5. Physical bounds active flag is False ($|\Delta b_a| \le 2.0\text{ m/s}^2$, $|\Delta b_g| \le 0.15\text{ rad/s}$).
+- **Optimization**: Adam optimizer, learning rate $10^{-3}$, weight decay $10^{-4}$, batch size 64, Smooth L1 loss ($\beta = 0.05$) with component weights ($W_a = 1.0, W_g = 10.0$), early stopping patience 6. Best validation checkpoint restored at Epoch 15.
 
 ## Empirical Performance Summary
 
 ### 1. Direct Label-Space Metrics on Driver B (Validation)
 | Metric | Zero Baseline ($\Delta \mathbf{b} = \mathbf{0}$) | Train Mean Baseline | BiasNet v1.0 | Improvement vs Zero |
 | :--- | :--- | :--- | :--- | :--- |
-| **Total Vector RMSE** | $1.0430\text{ m/s}^2$ | $1.0288\text{ m/s}^2$ | **$0.7370\text{ m/s}^2$** | **+29.3%** |
-| **Accel Vector RMSE** | $1.0415\text{ m/s}^2$ | $1.0272\text{ m/s}^2$ | **$0.7362\text{ m/s}^2$** | **+29.3%** |
-| **Gyro Vector RMSE** | $0.0561\text{ rad/s}$ | $0.0569\text{ rad/s}$ | **$0.0350\text{ rad/s}$** | **+37.6%** |
-| **Pearson Correlation $r$** | $0.000$ | $0.000$ | **$0.55\text{ to }0.98$** | Strong tracking |
+| **Total Vector RMSE** | $1.0401\text{ m/s}^2$ | $1.0169\text{ m/s}^2$ | **$0.7372\text{ m/s}^2$** | **+29.1%** |
+| **Accel Vector RMSE** | $1.0387\text{ m/s}^2$ | $1.0153\text{ m/s}^2$ | **$0.7365\text{ m/s}^2$** | **+29.1%** |
+| **Gyro Vector RMSE** | $0.0554\text{ rad/s}$ | $0.0560\text{ rad/s}$ | **$0.0329\text{ rad/s}$** | **+40.6%** |
 
 ### 2. Held-Out Generalization on Driver A (Test)
 Evaluated strictly once post-freeze on 956 eligible test windows:
 | Metric | Zero Baseline | Train Mean Baseline | BiasNet v1.0 | Improvement vs Zero |
 | :--- | :--- | :--- | :--- | :--- |
-| **Total Vector RMSE** | $1.0656\text{ m/s}^2$ | $1.0588\text{ m/s}^2$ | **$0.7164\text{ m/s}^2$** | **+32.8%** |
-| **Accel Vector RMSE** | $1.0633\text{ m/s}^2$ | $1.0564\text{ m/s}^2$ | **$0.7150\text{ m/s}^2$** | **+32.8%** |
-| **Gyro Vector RMSE** | $0.0703\text{ rad/s}$ | $0.0706\text{ rad/s}$ | **$0.0438\text{ rad/s}$** | **+37.7%** |
+| **Total Vector RMSE** | $1.0656\text{ m/s}^2$ | $1.0563\text{ m/s}^2$ | **$0.7153\text{ m/s}^2$** | **+32.9%** |
+| **Accel Vector RMSE** | $1.0633\text{ m/s}^2$ | $1.0539\text{ m/s}^2$ | **$0.7140\text{ m/s}^2$** | **+32.9%** |
+| **Gyro Vector RMSE** | $0.0703\text{ rad/s}$ | $0.0704\text{ rad/s}$ | **$0.0425\text{ rad/s}$** | **+39.5%** |
 
 ### 3. Indirect Navigation Outage Behavior
-Evaluated during synthetic GNSS outages against the authoritative non-NHC Phase 8 baseline:
-- **10s Outage**: Horizontal RMSE $= 0.424\text{ m}$ (vs Pure ESKF $0.426\text{ m}$). Innovation Mean NIS $= 0.037$ (well below $\chi^2$ gate of 25.0).
-- **30s Outage**: Horizontal RMSE $= 10.099\text{ m}$ (vs Pure ESKF $11.289\text{ m}$, 10.5% improvement), Velocity RMSE $= 3.325\text{ m/s}$ (vs Pure ESKF $3.775\text{ m/s}$). Mean NIS $= 1.763$.
-- **60s Outage**: Numerical stability preserved; Velocity RMSE $= 131.138\text{ m/s}$ (vs Pure ESKF $133.082\text{ m/s}$). Mean NIS $= 2.470$.
+Evaluated during synthetic GNSS outages on real driving segment `Categorised_S1.npz`:
+- **10s Outage**: Horizontal RMSE $= 0.424\text{ m}$ (vs Pure ESKF $0.426\text{ m}$). Mean NIS $= 0.049$.
+- **30s Outage**: Horizontal RMSE $= 10.049\text{ m}$ (vs Pure ESKF $11.289\text{ m}$ and +VNet $10.031\text{ m}$), Velocity RMSE $= 3.292\text{ m/s}$ (vs Pure ESKF $3.775\text{ m/s}$ and +VNet $3.361\text{ m/s}$). Mean NIS $= 1.839$.
+- **60s Outage**: Velocity RMSE $= 130.002\text{ m/s}$ (vs Pure ESKF $133.082\text{ m/s}$ and +VNet $131.604\text{ m/s}$). Mean NIS $= 2.543$.
 
 ## Edge Deployment & Numerical Parity
 - **Export Artifacts**:
-  - `models/biasnet_v1.onnx` (`2bd6bdc8...`, $104\text{ KB}$)
-  - `models/biasnet_v1.tflite` (`c678d5db...`, $240\text{ KB}$)
+  - `models/biasnet_v1.onnx` (`d57e6448...`, $104\text{ KB}$)
+  - `models/biasnet_v1.tflite` (`551193b4...`, $240\text{ KB}$)
 - **Deployment Parity (500 Real Windows)**:
-  - ONNX Max Abs Error: **$5.66 \times 10^{-7}$** (Tolerance: $1.0 \times 10^{-4}$) -> **PASSED**
+  - ONNX Max Abs Error: **$6.56 \times 10^{-7}$** (Tolerance: $1.0 \times 10^{-4}$) -> **PASSED**
   - LiteRT Max Abs Error: **$3.58 \times 10^{-7}$** (Tolerance: $1.0 \times 10^{-3}$) -> **PASSED**
 
 ## Operational Constraints & Safety Rules

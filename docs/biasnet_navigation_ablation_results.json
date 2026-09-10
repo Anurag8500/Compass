@@ -19,21 +19,21 @@
       "updates_applied": 0
     },
     "C_eskf_vnet_bnet": {
-      "final_horizontal_error_m": 0.6150949398043758,
-      "horizontal_rmse_m": 0.4244006864107808,
-      "max_horizontal_excursion_m": 0.6150949398043758,
-      "velocity_rmse_mps": 0.011825907468990983,
-      "mean_nis": 0.03703250896609851,
-      "p95_nis": 0.052695837076963334,
+      "final_horizontal_error_m": 0.615093158114377,
+      "horizontal_rmse_m": 0.42439974005101666,
+      "max_horizontal_excursion_m": 0.615093158114377,
+      "velocity_rmse_mps": 0.011968334740632872,
+      "mean_nis": 0.04903812075649026,
+      "p95_nis": 0.09575054601020007,
       "updates_applied": 20
     },
     "D_eskf_bnet": {
-      "final_horizontal_error_m": 0.6150949398043758,
-      "horizontal_rmse_m": 0.4244006864107808,
-      "max_horizontal_excursion_m": 0.6150949398043758,
-      "velocity_rmse_mps": 0.011825907468990983,
-      "mean_nis": 0.03703250896609851,
-      "p95_nis": 0.052695837076963334,
+      "final_horizontal_error_m": 0.615093158114377,
+      "horizontal_rmse_m": 0.42439974005101666,
+      "max_horizontal_excursion_m": 0.615093158114377,
+      "velocity_rmse_mps": 0.011968334740632872,
+      "mean_nis": 0.04903812075649026,
+      "p95_nis": 0.09575054601020007,
       "updates_applied": 20
     }
   },
@@ -57,21 +57,21 @@
       "updates_applied": 5
     },
     "C_eskf_vnet_bnet": {
-      "final_horizontal_error_m": 57.83762765617179,
-      "horizontal_rmse_m": 10.098870051557002,
-      "max_horizontal_excursion_m": 57.83762765617179,
-      "velocity_rmse_mps": 3.325234278851335,
-      "mean_nis": 1.7629896201557247,
-      "p95_nis": 11.04750547490227,
+      "final_horizontal_error_m": 57.54301687634828,
+      "horizontal_rmse_m": 10.04894409886263,
+      "max_horizontal_excursion_m": 57.54301687634828,
+      "velocity_rmse_mps": 3.2923320532589484,
+      "mean_nis": 1.8392514193466867,
+      "p95_nis": 11.013370278731687,
       "updates_applied": 65
     },
     "D_eskf_bnet": {
-      "final_horizontal_error_m": 64.07374274269205,
-      "horizontal_rmse_m": 11.326746803126762,
-      "max_horizontal_excursion_m": 64.07374274269205,
-      "velocity_rmse_mps": 3.735451679255634,
-      "mean_nis": 1.489441095101055,
-      "p95_nis": 10.824287635401271,
+      "final_horizontal_error_m": 63.685386852030405,
+      "horizontal_rmse_m": 11.257993219659292,
+      "max_horizontal_excursion_m": 63.685386852030405,
+      "velocity_rmse_mps": 3.695939814907335,
+      "mean_nis": 1.5822502412228254,
+      "p95_nis": 10.844857013748797,
       "updates_applied": 60
     }
   },
@@ -95,21 +95,21 @@
       "updates_applied": 5
     },
     "C_eskf_vnet_bnet": {
-      "final_horizontal_error_m": 5242.738125329713,
-      "horizontal_rmse_m": 1746.4518903055564,
-      "max_horizontal_excursion_m": 5242.738125329713,
-      "velocity_rmse_mps": 131.13753904367684,
-      "mean_nis": 2.4698726348538536,
-      "p95_nis": 11.1326906216494,
+      "final_horizontal_error_m": 5202.109214961161,
+      "horizontal_rmse_m": 1735.2284713647946,
+      "max_horizontal_excursion_m": 5202.109214961161,
+      "velocity_rmse_mps": 130.00247698900293,
+      "mean_nis": 2.5434357626020065,
+      "p95_nis": 11.018654346998073,
       "updates_applied": 125
     },
     "D_eskf_bnet": {
-      "final_horizontal_error_m": 5325.232050708652,
-      "horizontal_rmse_m": 1778.768175841761,
-      "max_horizontal_excursion_m": 5325.232050708652,
-      "velocity_rmse_mps": 132.82153640937057,
-      "mean_nis": 2.3625279859260995,
-      "p95_nis": 11.10850670472898,
+      "final_horizontal_error_m": 5295.302949824994,
+      "horizontal_rmse_m": 1770.019517514657,
+      "max_horizontal_excursion_m": 5295.302949824994,
+      "velocity_rmse_mps": 132.00410999271264,
+      "mean_nis": 2.444249495982057,
+      "p95_nis": 10.87004762462456,
       "updates_applied": 120
     }
   }

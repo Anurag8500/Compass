@@ -62,13 +62,17 @@ class BiasNetOptimizationConfig:
     weight_position: float = 1.0               # W_p: position residual scale [m^-1]
     weight_velocity: float = 1.0               # W_v: velocity residual scale [(m/s)^-1]
     weight_orientation: float = 10.0           # W_theta: orientation residual scale [rad^-1]
-    bound_accel_mps2: float = 0.3              # Physical clamp limit for delta_ba [m/s^2]
-    bound_gyro_rads: float = 0.05              # Physical clamp limit for delta_bg [rad/s]
-    max_condition_number: float = 1000.0       # Threshold for Jacobian ill-conditioning rejection
+    bound_accel_mps2: float = 2.0              # Post-solve physical eligibility bound for delta_ba [m/s^2]
+    bound_gyro_rads: float = 0.15              # Post-solve physical eligibility bound for delta_bg [rad/s] (~8.6 deg/s)
+    solver_safeguard_accel_mps2: float = 5.0   # Solver iteration numerical safeguard for delta_ba [m/s^2]
+    solver_safeguard_gyro_rads: float = 0.5    # Solver iteration numerical safeguard for delta_bg [rad/s]
+    max_condition_number: float = 50.0         # Threshold for Jacobian ill-conditioning rejection
     min_effective_rank: int = 6                # Minimum required Jacobian effective rank
-    min_residual_reduction: float = 1.05       # Minimum required residual reduction (||r0|| / ||r*||)
-    max_iterations: int = 10                   # Maximum Levenberg-Marquardt iterations
-    convergence_step_tol: float = 1e-6         # Step norm tolerance ||delta||
+    min_residual_reduction: float = 1.20       # Minimum required residual reduction (||r0|| / ||r*||)
+    max_iterations: int = 15                   # Maximum Levenberg-Marquardt iterations
+    convergence_step_tol: float = 1e-4         # Step norm tolerance ||delta|| [m/s^2, rad/s]
+    convergence_grad_tol: float = 1e-3         # Gradient infinity-norm tolerance ||J^T r||_inf
+    convergence_rel_tol: float = 1e-4          # Relative residual improvement tolerance |r_prev - r_curr| / r_prev
     damping_init: float = 1e-4                 # Initial LM diagonal damping lambda
     fd_step_accel: float = 1e-5                # Finite-difference step for accel bias [m/s^2]
     fd_step_gyro: float = 1e-6                 # Finite-difference step for gyro bias [rad/s]
@@ -91,7 +95,7 @@ class BiasOptimizationResult:
     effective_rank: int                 # Count of singular values > 1e-3 * sigma_max
     sensitivities: np.ndarray           # (6,) L2 norm of Jacobian columns
     is_eligible: bool                   # True if window passes ALL identifiability and quality gates
-    reason_code: str                    # "VALID", "ILL_CONDITIONED", "BOUNDS_ACTIVE", etc.
+    reason_code: str                    # "VALID", "SOLVER_FAILURE", "ILL_CONDITIONED", "BOUNDS_ACTIVE", etc.
 
 
 def heading_to_quaternion(heading_deg: float) -> np.ndarray:
@@ -390,38 +394,58 @@ def solve_window_bias_correction(
     damping = cfg.damping_init
     converged = False
     iter_count = 0
+    r_curr_norm = res_before
 
     J = compute_numerical_jacobian(delta_b, p0, v0, q0, f_sub, w_sub, dt_arr, p_ref_traj, v_ref_traj, q_ref_traj, ba0, bg0, cfg)
+    g = J.T @ r_curr
+    if float(np.max(np.abs(g))) < cfg.convergence_grad_tol or res_before < 1e-12:
+        converged = True
 
     # 5. Levenberg-Marquardt Optimization Loop
-    for it in range(cfg.max_iterations):
-        iter_count += 1
-        J = compute_numerical_jacobian(delta_b, p0, v0, q0, f_sub, w_sub, dt_arr, p_ref_traj, v_ref_traj, q_ref_traj, ba0, bg0, cfg)
-        JtJ = J.T @ J
-        g = J.T @ r_curr
+    if not converged:
+        for it in range(cfg.max_iterations):
+            iter_count += 1
+            J = compute_numerical_jacobian(delta_b, p0, v0, q0, f_sub, w_sub, dt_arr, p_ref_traj, v_ref_traj, q_ref_traj, ba0, bg0, cfg)
+            JtJ = J.T @ J
+            g = J.T @ r_curr
 
-        # Damped normal equations: (J^T J + lambda I) step = -g
-        A = JtJ + damping * np.eye(6, dtype=np.float64)
-        try:
-            step = np.linalg.solve(A, -g)
-        except np.linalg.LinAlgError:
-            step = -np.linalg.pinv(A) @ g
-
-        step_norm = float(np.linalg.norm(step))
-        cand_db = delta_b + step
-
-        r_cand = evaluate_residual(cand_db, p0, v0, q0, f_sub, w_sub, dt_arr, p_ref_traj, v_ref_traj, q_ref_traj, ba0, bg0, cfg)
-        res_cand = float(np.linalg.norm(r_cand))
-
-        if res_cand < np.linalg.norm(r_curr):
-            delta_b = cand_db
-            r_curr = r_cand
-            damping = max(damping / 5.0, 1e-7)
-            if step_norm < cfg.convergence_step_tol:
+            if float(np.max(np.abs(g))) < cfg.convergence_grad_tol:
                 converged = True
                 break
-        else:
-            damping = min(damping * 10.0, 1e4)
+
+            # Damped normal equations: (J^T J + lambda I) step = -g
+            A = JtJ + damping * np.eye(6, dtype=np.float64)
+            try:
+                step = np.linalg.solve(A, -g)
+            except np.linalg.LinAlgError:
+                step = -np.linalg.pinv(A) @ g
+
+            cand_db = delta_b + step
+
+            # Numerical solver safeguard: reject steps that blow up beyond physical safeguard limits
+            if (np.abs(cand_db[0:3]) > cfg.solver_safeguard_accel_mps2).any() or (np.abs(cand_db[3:6]) > cfg.solver_safeguard_gyro_rads).any():
+                damping = min(damping * 10.0, 1e4)
+                continue
+
+            r_cand = evaluate_residual(cand_db, p0, v0, q0, f_sub, w_sub, dt_arr, p_ref_traj, v_ref_traj, q_ref_traj, ba0, bg0, cfg)
+            res_cand = float(np.linalg.norm(r_cand))
+
+            if res_cand < r_curr_norm:
+                step_norm = float(np.linalg.norm(step))
+                grad_norm = float(np.max(np.abs(g)))
+                rel_improvement = (r_curr_norm - res_cand) / max(r_curr_norm, 1e-12)
+
+                delta_b = cand_db
+                r_curr = r_cand
+                r_curr_norm = res_cand
+                damping = max(damping / 5.0, 1e-7)
+
+                # Explicit convergence criteria: step norm, gradient infinity norm, or relative improvement
+                if step_norm < cfg.convergence_step_tol or grad_norm < cfg.convergence_grad_tol or (rel_improvement < cfg.convergence_rel_tol and it > 0):
+                    converged = True
+                    break
+            else:
+                damping = min(damping * 10.0, 1e4)
 
     res_after = float(np.linalg.norm(r_curr))
     reduction_ratio = res_before / max(res_after, 1e-12)
@@ -435,7 +459,7 @@ def solve_window_bias_correction(
     eff_rank = int(np.sum(S > (1e-3 * sigma_max)))
     sensitivities = np.linalg.norm(J, axis=0)
 
-    # 7. Clamping & Physical Bound Check
+    # 7. Physical Bound Violation Check
     unconstrained = delta_b.copy()
     b_acc = cfg.bound_accel_mps2
     b_gyr = cfg.bound_gyro_rads
@@ -449,25 +473,36 @@ def solve_window_bias_correction(
     constrained[0:3] = np.clip(constrained[0:3], -b_acc, b_acc)
     constrained[3:6] = np.clip(constrained[3:6], -b_gyr, b_gyr)
 
-    # 8. Identifiability Eligibility Decision Gate
+    # 8. Deterministic Identifiability Eligibility Decision Gate
+    # Precedence:
+    # 1. NON_FINITE_SOLUTION
+    # 2. SOLVER_FAILURE
+    # 3. DEFICIENT_RANK
+    # 4. ILL_CONDITIONED
+    # 5. BOUNDS_ACTIVE
+    # 6. POOR_RESIDUAL_REDUCTION
+    # 7. VALID
     is_eligible = True
     reason = "VALID"
 
-    if cond_num > cfg.max_condition_number:
+    if not np.isfinite(unconstrained).all():
         is_eligible = False
-        reason = "ILL_CONDITIONED"
+        reason = "NON_FINITE_SOLUTION"
+    elif not converged:
+        is_eligible = False
+        reason = "SOLVER_FAILURE"
     elif eff_rank < cfg.min_effective_rank:
         is_eligible = False
         reason = "DEFICIENT_RANK"
+    elif cond_num > cfg.max_condition_number:
+        is_eligible = False
+        reason = "ILL_CONDITIONED"
     elif bounds_violated:
         is_eligible = False
         reason = "BOUNDS_ACTIVE"
     elif reduction_ratio < cfg.min_residual_reduction:
         is_eligible = False
         reason = "POOR_RESIDUAL_REDUCTION"
-    elif not np.isfinite(unconstrained).all():
-        is_eligible = False
-        reason = "NON_FINITE_SOLUTION"
 
     return BiasOptimizationResult(
         delta_b_unconstrained=unconstrained,

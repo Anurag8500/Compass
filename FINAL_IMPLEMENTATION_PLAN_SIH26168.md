@@ -583,27 +583,29 @@ Phase 4/5 strapdown mechanization, Phase 2 synchronized reference trajectories (
      $$r(\Delta \mathbf{b}) = \begin{bmatrix} W_p (\mathbf{p}_{\text{prop}} - \mathbf{p}_{\text{ref}}) \\ W_v (\mathbf{v}_{\text{prop}} - \mathbf{v}_{\text{ref}}) \\ W_\theta \delta \boldsymbol{\theta}(\mathbf{q}_{\text{prop}}, \mathbf{q}_{\text{ref}}) \end{bmatrix}$$
    - Residual scaling is explicitly documented so position errors ($W_p$) do not numerically overpower velocity ($W_v$) or orientation ($W_\theta$) errors.
    - Orientation residuals respect the project's quaternion conventions and rotation utilities.
-   - Solve via linearized Gauss-Newton / damped least-squares with explicit convergence criteria.
-   - Enforce physical optimization bounds ($|\Delta \mathbf{b}_a| \le 0.3\text{ m/s}^2$, $|\Delta \mathbf{b}_g| \le 0.05\text{ rad/s}$) as safeguards against numerical divergence, while recording unconstrained vs constrained solutions and bound activation flags.
-   - Evaluate horizon length (e.g., 0.5 s, 1.0 s, 2.0 s) on a methodology audit to select the most identifiable horizon.
+   - Solve via linearized Gauss-Newton / damped least-squares with multi-criteria convergence stopping criteria (step norm $< 10^{-4}$, relative residual improvement $< 10^{-4}$, gradient infinity norm $< 10^{-3}$). Rejects non-converged windows with reason code `SOLVER_FAILURE`.
+   - Three-tier bound taxonomy:
+     1. Solver Safeguard Bounds ($|\Delta \mathbf{b}_a| \le 5.0\text{ m/s}^2, |\Delta \mathbf{b}_g| \le 0.5\text{ rad/s}$): In-loop optimization boundaries preventing divergence.
+     2. Post-Solve Physical Eligibility Bounds ($|\Delta \mathbf{b}_a| \le 2.0\text{ m/s}^2, |\Delta \mathbf{b}_g| \le 0.15\text{ rad/s}$): Post-convergence physical plausibility filter.
+     3. Neural Output In-Graph Clamps ($[-2.0, 2.0]\text{ m/s}^2, [-0.15, 0.15]\text{ rad/s}$): In-graph bounding of neural inferences.
+   - Evaluate horizon length (0.5 s, 1.0 s, 2.0 s) on a methodology audit; $H = 1.0\text{ s}$ selected based on conditioning ($\kappa \approx 10.5$), full rank 6, high convergence, and causal stability.
 2. **Label Identifiability & Conditioning Gate**:
    - Compute Jacobian singular values, condition number $\kappa(J)$, and residual reduction ratio $\|r_{\text{before}}\| / \|r_{\text{after}}\|$.
-   - Establish an empirical conditioning threshold that rejects ill-conditioned or unobservable windows.
-   - Record explicit rejection reason codes (e.g., ill-conditioned, solver failure, bound activation, insufficient residual reduction).
+   - Enforce deterministic reason-code precedence: `NON_FINITE_INPUT` $\to$ `TIMESTEP_ANOMALY` $\to$ `WINDOW_TOO_SHORT` $\to$ `HORIZON_TOO_SHORT` $\to$ `NON_FINITE_SOLUTION` $\to$ `SOLVER_FAILURE` $\to$ `DEFICIENT_RANK` $\to$ `ILL_CONDITIONED` $\to$ `BOUNDS_ACTIVE` $\to$ `POOR_RESIDUAL_REDUCTION` $\to$ `VALID`.
 3. **Label Stability Report (`docs/biasnet_label_stability_report.md`)**:
-   - Document candidate window count, rejection statistics, component distributions ($\Delta b_a$, $\Delta b_g$), temporal smoothness, correlation, and physical plausibility.
+   - Document candidate window count, rejection statistics, component distributions ($\Delta b_a$, $\Delta b_g$), temporal smoothness, truthful autocorrelation ($r \approx 0.55-0.75$ accel, $0.25-0.45$ gyro), and physical plausibility.
    - **Mandatory Decision Gate**: Must decide whether labels are sufficiently stable to proceed to training (PASS / CONDITIONAL) or too unstable (FAIL $\to$ trigger decoupled fallback).
 4. **Model Architecture (`ml/models/biasnet.py`)**:
-   - Stage A (Mean Model): Recurrent network (e.g., 2-layer GRU or 1D-CNN) predicting 6 bias corrections with internal hard physical clamps ($|\Delta \mathbf{b}_a| \le 0.3\text{ m/s}^2, |\Delta \mathbf{b}_g| \le 0.05\text{ rad/s}$).
-   - Stage B (Uncertainty Head): Only trained if Stage A and label quality are accepted and gradients flow to both heads.
-5. **Model Training (`ml/training/train_biasnet.py`, `configs/biasnet_v1.yaml`)**:
-   - Train on Driver E using robust loss (Huber/SmoothL1) on identifiable windows. Early stopping on Driver B validation.
+   - Stage A (Mean Model): Recurrent network (2-layer GRU, 48 hidden units, 23,934 parameters) predicting 6 bias corrections with internal hard physical clamps ($[-2.0, 2.0]\text{ m/s}^2, [-0.15, 0.15]\text{ rad/s}$).
+   - Stage B (Uncertainty Head): Deferred to Phase 9 covariance calibration; hand-specified diagonal measurement noise $R_b$ used in Phase 8 navigation ablation.
+5. **Model Training (`ml/training/train_biasnet.py`, `ml/training/configs/biasnet_v1.yaml`)**:
+   - Train on Driver E (4,060 eligible windows across 30 trips) using weighted Smooth L1 loss. Early stopping on Driver B validation (480 eligible windows).
    - Driver A strictly held out.
 6. **Baselines & Direct Validation on Driver B**:
    - Evaluate BiasNet against Zero Correction Baseline ($\Delta \mathbf{b} = \mathbf{0}$) and Training Set Mean Baseline ($\Delta \mathbf{b} = \bar{\mathbf{b}}_{\text{train}}$).
    - Report component-wise MAE, RMSE, bias, and vector norms $\|\Delta \mathbf{b}_{\text{pred}} - \Delta \mathbf{b}_{\text{target}}\|$.
 7. **Indirect ESKF Navigation Validation**:
-   - Evaluate through the ESKF on controlled synthetic GNSS outages (10 s, 30 s, 60 s) on held-out segments.
+   - Evaluate through the ESKF on controlled synthetic GNSS outages (10 s, 30 s, 60 s) on held-out segments (`Categorised_S1.npz`).
    - Navigation Baseline: `Classical ESKF + GNSS + Gated ZUPT + frozen VelocityNet v1.1` (NO NHC).
    - Compare Baseline vs Baseline + BiasNet across horizontal RMSE, max horizontal drift, velocity RMSE, attitude error, NIS statistics, and filter divergence count.
 8. **Filter Authority & Safety Verification**:
@@ -612,7 +614,7 @@ Phase 4/5 strapdown mechanization, Phase 2 synchronized reference trajectories (
    - Verify disabling BiasNet (`biasnet_enabled = false`) leaves the baseline navigation system fully operational.
 9. **Dual Export & Numerical Parity**:
    - Export PyTorch $\to$ ONNX $\to$ LiteRT ($B=1, [1, 20, 9]$).
-   - Verify numerical parity on real held-out test windows.
+   - Verify numerical parity on 500 real held-out test windows.
 10. **Evidence-Based Acceptance Gate**:
     - If BiasNet improves outage navigation without filter instability $\to$ ACCEPTED.
     - If BiasNet fails to improve or destabilizes the filter $\to$ REJECTED / DECOUPLED FALLBACK (`biasnet_enabled: false`).
@@ -642,11 +644,11 @@ Phase 4/5 strapdown mechanization, Phase 2 synchronized reference trajectories (
 
 #### Definition of Done — Acceptance Gate Status
 **STATUS**: **ACCEPTED AS EXPERIMENTAL ESKF AIDING CANDIDATE (STAGE A)**.
-- **Label Quality Gate**: PASSED (CONDITIONAL). 3,914 eligible train windows, 504 eligible val windows under documented physical bounds ($|\Delta b_a| \le 2.0\text{ m/s}^2, |\Delta b_g| \le 0.15\text{ rad/s}$) and conditioning gate ($\kappa \le 50.0, \rho \ge 1.20$).
-- **Direct Validation Gate**: PASSED. On Driver B, BiasNet achieves Total Vector RMSE of $0.7370\text{ m/s}^2$ vs Zero Baseline $1.0430\text{ m/s}^2$ (+29.3% reduction). On held-out Driver A, BiasNet achieves $0.7164\text{ m/s}^2$ vs Zero Baseline $1.0656\text{ m/s}^2$ (+32.8% reduction).
-- **Indirect Navigation Gate**: PASSED. Evaluated on synthetic outages (10s, 30s, 60s); maintains filter stability with bounded innovations (Mean NIS $< 2.5$) and achieves lowest velocity tracking RMSE ($3.325\text{ m/s}$ on 30s outage vs Pure ESKF $3.775\text{ m/s}$).
+- **Label Quality Gate**: PASSED (CONDITIONAL). 4,060 eligible train windows (52.4%), 480 eligible val windows (68.6%) under documented physical bounds ($|\Delta b_a| \le 2.0\text{ m/s}^2, |\Delta b_g| \le 0.15\text{ rad/s}$), LM convergence gate (`converged == True`), and conditioning gate ($\kappa \le 50.0, \rho \ge 1.20$).
+- **Direct Validation Gate**: PASSED. On Driver B, BiasNet achieves Total Vector RMSE of $0.7372\text{ m/s}^2$ vs Zero Baseline $1.0401\text{ m/s}^2$ (+29.1% reduction). On held-out Driver A (single post-freeze pass), BiasNet achieves $0.7153\text{ m/s}^2$ vs Zero Baseline $1.0656\text{ m/s}^2$ (+32.9% reduction).
+- **Indirect Navigation Gate**: PASSED (MODEST/DIAGNOSTIC). Evaluated on synthetic outages (10s, 30s, 60s); maintains filter stability with bounded innovations (Mean NIS $< 2.5$) and achieves lowest velocity tracking RMSE ($3.292\text{ m/s}$ on 30s outage vs Pure ESKF $3.775\text{ m/s}$, +VNet $3.361\text{ m/s}$). Does not consistently alter horizontal position drift relative to VelocityNet ($10.049\text{ m}$ vs $10.031\text{ m}$).
 - **Filter Authority & Safety Gate**: PASSED. In-graph physical clamps bound activations; no direct state overwrites; updates enter solely through Kalman gain; `biasnet_enabled = false` decouples cleanly.
-- **Export & Parity Gate**: PASSED. ONNX max error $5.66 \times 10^{-7}$, LiteRT max error $3.58 \times 10^{-7}$ across 500 real driving windows.
+- **Export & Parity Gate**: PASSED. ONNX max error $6.56 \times 10^{-7}$, LiteRT max error $3.58 \times 10^{-7}$ across 500 real driving windows.
 
 ---
 

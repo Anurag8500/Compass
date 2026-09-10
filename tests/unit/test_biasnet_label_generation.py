@@ -285,3 +285,84 @@ class TestBiasNetLabelGeneration:
         assert not res.is_eligible
         assert res.reason_code == "NON_FINITE_INPUT"
         assert not np.isfinite(res.delta_b_unconstrained).any()
+
+    def test_solver_failure_rejection(self) -> None:
+        """A window where the optimizer fails to converge must be rejected with SOLVER_FAILURE."""
+        true_ba = np.array([0.5, -0.4, 0.3])
+        true_bg = np.array([0.02, -0.01, 0.03])
+        data = generate_synthetic_curved_window(
+            duration_s=2.0, accel_bias_true=true_ba, gyro_bias_true=true_bg
+        )
+        # Force solver failure by setting max_iterations=1 with impossible convergence tolerances
+        cfg = BiasNetOptimizationConfig(
+            horizon_s=1.0,
+            max_iterations=1,
+            convergence_step_tol=1e-15,
+            convergence_grad_tol=1e-15,
+            convergence_rel_tol=1e-15,
+        )
+        res = solve_window_bias_correction(
+            data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], config=cfg
+        )
+
+        assert not res.converged
+        assert not res.is_eligible
+        assert res.reason_code == "SOLVER_FAILURE"
+
+    def test_reason_code_deterministic_precedence(self) -> None:
+        """Test deterministic reason-code precedence ordering."""
+        # 1. Non-finite input takes highest precedence
+        data = list(generate_synthetic_curved_window(duration_s=2.0))
+        data[0][0, 0] = np.nan
+        res = solve_window_bias_correction(
+            data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]
+        )
+        assert res.reason_code == "NON_FINITE_INPUT"
+
+        # 2. Solver failure takes precedence over subsequent gates
+        data_clean = generate_synthetic_curved_window(
+            duration_s=2.0, accel_bias_true=np.array([3.0, 0.0, 0.0])  # Also exceeds bounds
+        )
+        cfg_fail = BiasNetOptimizationConfig(
+            max_iterations=1,
+            convergence_step_tol=1e-15,
+            convergence_grad_tol=1e-15,
+            convergence_rel_tol=1e-15,
+        )
+        res_fail = solve_window_bias_correction(
+            data_clean[0], data_clean[1], data_clean[2], data_clean[3],
+            data_clean[4], data_clean[5], data_clean[6], data_clean[7],
+            config=cfg_fail,
+        )
+        assert res_fail.reason_code == "SOLVER_FAILURE"
+
+    def test_physical_bounds_safeguard_vs_eligibility(self) -> None:
+        """Verify distinct roles of solver safeguards and physical eligibility bounds."""
+        # Bias within physical bounds (|dba| <= 2.0, |dbg| <= 0.15)
+        data_ok = generate_synthetic_curved_window(
+            duration_s=2.0, accel_bias_true=np.array([0.5, -0.3, 0.2]), gyro_bias_true=np.array([0.01, -0.02, 0.01])
+        )
+        cfg = BiasNetOptimizationConfig(horizon_s=1.0, bound_accel_mps2=2.0, bound_gyro_rads=0.15)
+        res_ok = solve_window_bias_correction(
+            data_ok[0], data_ok[1], data_ok[2], data_ok[3],
+            data_ok[4], data_ok[5], data_ok[6], data_ok[7],
+            config=cfg,
+        )
+        assert not res_ok.bounds_active
+        assert res_ok.converged
+        assert res_ok.is_eligible
+        assert res_ok.reason_code == "VALID"
+
+        # Bias exceeding physical eligibility bounds (|dba| = 2.5 > 2.0)
+        data_violation = generate_synthetic_curved_window(
+            duration_s=2.0, accel_bias_true=np.array([2.5, 0.0, 0.0])
+        )
+        res_viol = solve_window_bias_correction(
+            data_violation[0], data_violation[1], data_violation[2], data_violation[3],
+            data_violation[4], data_violation[5], data_violation[6], data_violation[7],
+            config=cfg,
+        )
+        assert res_viol.bounds_active
+        assert not res_viol.is_eligible
+        assert res_viol.reason_code == "BOUNDS_ACTIVE"
+        assert abs(res_viol.delta_b_constrained[0]) <= 2.0
