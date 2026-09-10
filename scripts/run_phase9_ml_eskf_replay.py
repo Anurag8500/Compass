@@ -7,6 +7,12 @@ across continuous GNSS and controlled outages (10s, 30s, 60s) for 4 conditions:
     Condition C: ESKF + BiasNet v1.0
     Condition D: ESKF + VelocityNet v1.1 + BiasNet v1.0
 
+FRAME CONVENTION INVARIANT:
+All replay positions, initial states, GNSS measurements, and evaluation reference vectors
+for a given segment are expressed in ONE consistent segment-local ENU tangent plane frame,
+anchored at the segment's starting geodetic position (lat0, lon0, alt0).
+No mixing of trip-global and segment-local coordinates is permitted.
+
 Outputs:
     docs/ml_eskf_integration_results.json
     docs/ml_eskf_integration_report.md
@@ -47,19 +53,29 @@ def compute_file_sha256(filepath: str | Path) -> str:
     return h.hexdigest()
 
 
+def compute_compass_heading_deg(fwd_enu: np.ndarray) -> float:
+    """Compute compass heading in degrees clockwise from True North [0, 360).
+    
+    Args:
+        fwd_enu: (3,) unit vector pointing vehicle-forward in ENU tangent plane.
+                 fwd_enu[0] is East, fwd_enu[1] is North, fwd_enu[2] is Up.
+    """
+    fwd_e = float(fwd_enu[0])
+    fwd_n = float(fwd_enu[1])
+    hdg_deg = math.degrees(math.atan2(fwd_e, fwd_n))
+    return (hdg_deg + 360.0) % 360.0
+
+
 def run_single_simulation(
     core_config: NavigationCoreConfig,
     ts_10hz: np.ndarray,
     f_10hz: np.ndarray,
     w_10hz: np.ndarray,
-    gt_e: np.ndarray,
-    gt_n: np.ndarray,
-    gt_u: np.ndarray,
-    gt_spd: np.ndarray,
-    gt_hdg: np.ndarray,
     lat_10hz: np.ndarray,
     lon_10hz: np.ndarray,
     alt_10hz: np.ndarray,
+    gt_spd: np.ndarray,
+    gt_hdg: np.ndarray,
     calib_gyro_bias: np.ndarray,
     start_idx: int,
     end_idx: int,
@@ -68,7 +84,28 @@ def run_single_simulation(
     """Execute chronological, causal replay on a single segment under specified configuration."""
     core = NavigationCore(config=core_config)
 
-    # 1. Controlled Initialization at start_idx
+    # -------------------------------------------------------------------------
+    # 1. Consistent Segment-Local ENU Frame Setup
+    # -------------------------------------------------------------------------
+    # All replay positions and GNSS measurements for a segment are expressed in
+    # one segment-local ENU frame anchored at the segment's starting geodetic fix.
+    seg_lat0 = float(lat_10hz[start_idx])
+    seg_lon0 = float(lon_10hz[start_idx])
+    seg_alt0 = float(alt_10hz[start_idx])
+    seg_geo_ref = GeoReference(lat_ref=seg_lat0, lon_ref=seg_lon0, alt_ref=seg_alt0)
+
+    # Convert entire segment ground truth into the segment-local ENU frame
+    seg_gt_e, seg_gt_n, seg_gt_u = seg_geo_ref.geodetic_to_enu(
+        lat_10hz[start_idx : end_idx + 1],
+        lon_10hz[start_idx : end_idx + 1],
+        alt_10hz[start_idx : end_idx + 1],
+    )
+    # Strict verification: segment-start GT position must be exactly [0, 0, 0] within numerical tolerance
+    assert np.allclose([seg_gt_e[0], seg_gt_n[0], seg_gt_u[0]], [0.0, 0.0, 0.0], atol=1e-5), (
+        f"Segment-start GT position is not [0,0,0]: [{seg_gt_e[0]}, {seg_gt_n[0]}, {seg_gt_u[0]}]"
+    )
+
+    # Initial kinematic states
     psi0 = math.radians(float(gt_hdg[start_idx]))
     spd0 = float(gt_spd[start_idx])
     v_init = np.array([spd0 * math.sin(psi0), spd0 * math.cos(psi0), 0.0], dtype=np.float64)
@@ -78,7 +115,7 @@ def run_single_simulation(
         [0.0,             0.0,            1.0],
     ], dtype=np.float64)
     q0 = rotation_matrix_to_quaternion(R0)
-    p0 = np.array([float(gt_e[start_idx]), float(gt_n[start_idx]), float(gt_u[start_idx])], dtype=np.float64)
+    p0 = np.array([0.0, 0.0, 0.0], dtype=np.float64)
 
     P0 = np.diag([
         1.0, 1.0, 4.0,           # Position (m^2)
@@ -88,10 +125,11 @@ def run_single_simulation(
         0.005, 0.005, 0.005,     # Gyro bias (rad/s)^2
     ]) ** 2
 
+    # Initialize core with segment-local origin and p0 = [0,0,0]
     core.initialize(
-        lat0=float(lat_10hz[start_idx]),
-        lon0=float(lon_10hz[start_idx]),
-        alt0=float(alt_10hz[start_idx]),
+        lat0=seg_lat0,
+        lon0=seg_lon0,
+        alt0=seg_alt0,
         p0_enu=p0,
         v0_enu=v_init,
         q0=q0,
@@ -103,28 +141,34 @@ def run_single_simulation(
 
     pos_history = [core.state.nominal.position_enu.copy()]
     vel_history = [core.state.nominal.velocity_enu.copy()]
-    att_history = [quaternion_to_euler_deg(core.state.nominal.q)]
+    fwd_enu_history = [core.state.nominal.R_v_n[:, 0].copy()]
     ba_history = [core.state.nominal.accel_bias.copy()]
     bg_history = [core.state.nominal.gyro_bias.copy()]
 
     nis_vnet_list: List[float] = []
     nis_bnet_list: List[float] = []
+    
+    # Telemetry counters distinguishing due vs buffer_not_ready vs executed vs accepted vs rejected
+    vnet_due_count = 0
+    vnet_buffer_not_ready = 0
+    vnet_executed = 0
     vnet_accepted = 0
     vnet_rejected = 0
     vnet_reasons: Dict[str, int] = {}
+
+    bnet_due_count = 0
+    bnet_buffer_not_ready = 0
+    bnet_executed = 0
     bnet_accepted = 0
     bnet_rejected = 0
     bnet_reasons: Dict[str, int] = {}
+
     zupt_applied_count = 0
 
     cov_healthy = True
     min_eig_recorded = float("inf")
     filter_diverged = False
 
-    # Timing metrics
-    prop_times_ns: List[int] = []
-    vnet_times_ns: List[int] = []
-    bnet_times_ns: List[int] = []
     cycle_times_ns: List[int] = []
 
     # Chronological loop
@@ -159,26 +203,40 @@ def run_single_simulation(
         if out.zupt_applied:
             zupt_applied_count += 1
 
-        # Track VelocityNet diagnostics
+        # Track VelocityNet diagnostics cleanly
         if out.velocitynet_diagnostics is not None:
             diag_v = out.velocitynet_diagnostics
+            vnet_due_count += 1
             if diag_v.applied:
+                vnet_executed += 1
                 vnet_accepted += 1
                 if diag_v.update_diagnostics and diag_v.update_diagnostics.gating:
                     nis_vnet_list.append(float(diag_v.update_diagnostics.gating.mahalanobis_sq))
+            elif diag_v.reason is not None and "BUFFER_INSUFFICIENT_HISTORY" in diag_v.reason:
+                vnet_buffer_not_ready += 1
+            elif diag_v.reason == "MODEL_DISABLED":
+                pass
             else:
+                vnet_executed += 1
                 vnet_rejected += 1
                 reason = diag_v.reason or "UNKNOWN"
                 vnet_reasons[reason] = vnet_reasons.get(reason, 0) + 1
 
-        # Track BiasNet diagnostics
+        # Track BiasNet diagnostics cleanly
         if out.biasnet_diagnostics is not None:
             diag_b = out.biasnet_diagnostics
+            bnet_due_count += 1
             if diag_b.applied:
+                bnet_executed += 1
                 bnet_accepted += 1
                 if diag_b.update_diagnostics and diag_b.update_diagnostics.gating:
                     nis_bnet_list.append(float(diag_b.update_diagnostics.gating.mahalanobis_sq))
+            elif diag_b.reason is not None and "BUFFER_INSUFFICIENT_HISTORY" in diag_b.reason:
+                bnet_buffer_not_ready += 1
+            elif diag_b.reason == "MODEL_DISABLED":
+                pass
             else:
+                bnet_executed += 1
                 bnet_rejected += 1
                 reason = diag_b.reason or "UNKNOWN"
                 bnet_reasons[reason] = bnet_reasons.get(reason, 0) + 1
@@ -196,17 +254,19 @@ def run_single_simulation(
 
         pos_history.append(core.state.nominal.position_enu.copy())
         vel_history.append(core.state.nominal.velocity_enu.copy())
-        att_history.append(quaternion_to_euler_deg(core.state.nominal.q))
+        fwd_enu_history.append(core.state.nominal.R_v_n[:, 0].copy())
         ba_history.append(core.state.nominal.accel_bias.copy())
         bg_history.append(core.state.nominal.gyro_bias.copy())
 
-    # Calculate Evaluation Metrics vs Ground Truth Reference
+    # -------------------------------------------------------------------------
+    # 2. Evaluation Metrics vs Segment-Local Ground Truth Reference
+    # -------------------------------------------------------------------------
     pos_arr = np.array(pos_history)
     n_pts = len(pos_arr)
     gt_pts = np.column_stack([
-        gt_e[start_idx : start_idx + n_pts],
-        gt_n[start_idx : start_idx + n_pts],
-        gt_u[start_idx : start_idx + n_pts],
+        seg_gt_e[:n_pts],
+        seg_gt_n[:n_pts],
+        seg_gt_u[:n_pts],
     ])
 
     h_err = np.linalg.norm(pos_arr[:, 0:2] - gt_pts[:, 0:2], axis=1)
@@ -219,12 +279,12 @@ def run_single_simulation(
     pred_spd = np.linalg.norm(np.array(vel_history)[:, 0:2], axis=1)
     rmse_vel = float(math.sqrt(np.mean((pred_spd - gt_spd_seg) ** 2)))
 
-    # Attitude errors
-    pred_yaw = np.array([a[2] for a in att_history])
-    gt_yaw = gt_hdg[start_idx : start_idx + n_pts]
-    # Smallest angular difference modulo 360
-    yaw_diff = np.abs((pred_yaw - gt_yaw + 180.0) % 360.0 - 180.0)
-    mean_yaw_err_deg = float(np.mean(yaw_diff))
+    # Compass heading comparison
+    pred_compass_hdg = np.array([compute_compass_heading_deg(fwd) for fwd in fwd_enu_history])
+    gt_compass_hdg = gt_hdg[start_idx : start_idx + n_pts]
+    # Circular difference in [-180, 180]
+    hdg_diff = (pred_compass_hdg - gt_compass_hdg + 180.0) % 360.0 - 180.0
+    mean_yaw_err_deg = float(np.mean(np.abs(hdg_diff)))
 
     # Bias statistics
     ba_arr = np.array(ba_history)
@@ -248,6 +308,9 @@ def run_single_simulation(
         "filter_diverged": filter_diverged,
         "zupt_updates_applied": zupt_applied_count,
         "velocitynet": {
+            "scheduler_due": vnet_due_count,
+            "buffer_not_ready": vnet_buffer_not_ready,
+            "executed": vnet_executed,
             "accepted": vnet_accepted,
             "rejected": vnet_rejected,
             "rejection_reasons": vnet_reasons,
@@ -255,6 +318,9 @@ def run_single_simulation(
             "p95_nis": float(np.percentile(nis_vnet_list, 95)) if nis_vnet_list else 0.0,
         },
         "biasnet": {
+            "scheduler_due": bnet_due_count,
+            "buffer_not_ready": bnet_buffer_not_ready,
+            "executed": bnet_executed,
             "accepted": bnet_accepted,
             "rejected": bnet_rejected,
             "rejection_reasons": bnet_reasons,
@@ -316,10 +382,6 @@ def main() -> None:
     spd_10hz = res.aux_signals["v_ref_speed_mps"]
     hdg_10hz = res.aux_signals["v_ref_heading_deg"]
 
-    # Ground truth reference ENU
-    geo_ref = GeoReference(lat_ref=float(lat_10hz[0]), lon_ref=float(lon_10hz[0]), alt_ref=float(alt_10hz[0]))
-    gt_e, gt_n, gt_u = geo_ref.geodetic_to_enu(lat_10hz, lon_10hz, alt_10hz)
-
     # Evaluated scenarios
     scenarios = [
         ("continuous_gnss", 25.0, 60.0, False),
@@ -354,6 +416,7 @@ def main() -> None:
             "title": "ML -> ESKF Integration and Real GNSS-Denied Offline Replay",
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
             "dataset": "Categorised_S1.npz",
+            "frame_convention": "One segment-local ENU frame per segment anchored at segment initial fix",
             "models": {
                 "velocitynet": {
                     "version": "v1.1",
@@ -390,21 +453,18 @@ def main() -> None:
                 ts_10hz=ts_10hz,
                 f_10hz=f_10hz,
                 w_10hz=w_10hz,
-                gt_e=gt_e,
-                gt_n=gt_n,
-                gt_u=gt_u,
-                gt_spd=spd_10hz,
-                gt_hdg=hdg_10hz,
                 lat_10hz=lat_10hz,
                 lon_10hz=lon_10hz,
                 alt_10hz=alt_10hz,
+                gt_spd=spd_10hz,
+                gt_hdg=hdg_10hz,
                 calib_gyro_bias=preprocessed.calibration.gyro_bias,
                 start_idx=start_idx,
                 end_idx=end_idx,
                 is_outage=is_outage,
             )
             scen_results[cond_name] = res_dict
-            print(f"    RMSE H: {res_dict['horizontal_rmse_m']:.3f} m | Final H: {res_dict['final_horizontal_error_m']:.3f} m | Vel RMSE: {res_dict['velocity_rmse_mps']:.3f} m/s | Cov PSD: {res_dict['covariance_healthy']}")
+            print(f"    RMSE H: {res_dict['horizontal_rmse_m']:.3f} m | Final H: {res_dict['final_horizontal_error_m']:.3f} m | Vel RMSE: {res_dict['velocity_rmse_mps']:.3f} m/s | Yaw Err: {res_dict['mean_yaw_error_deg']:.2f} deg | Cov PSD: {res_dict['covariance_healthy']}")
 
         all_results["scenarios"][scen_name] = scen_results
 
@@ -415,17 +475,17 @@ def main() -> None:
     print(f"\nSaved machine-readable results to {json_path}")
 
     # Print clean summary table
-    print("\n" + "=" * 105)
-    print(f"{'Scenario':<16} | {'Condition':<18} | {'RMSE H (m)':<11} | {'Final H (m)':<12} | {'Vel RMSE':<10} | {'VNet Acc/Rej':<13} | {'BNet Acc/Rej':<13} | {'Cov'}")
-    print("=" * 105)
+    print("\n" + "=" * 115)
+    print(f"{'Scenario':<16} | {'Condition':<18} | {'RMSE H (m)':<11} | {'Final H (m)':<12} | {'Vel RMSE':<10} | {'Yaw Err':<9} | {'VNet Acc/Rej':<13} | {'BNet Acc/Rej':<13} | {'Cov'}")
+    print("=" * 115)
 
     for scen_name, scen_data in all_results["scenarios"].items():
         for cond_name, d in scen_data.items():
             v_acc = f"{d['velocitynet']['accepted']}/{d['velocitynet']['rejected']}"
             b_acc = f"{d['biasnet']['accepted']}/{d['biasnet']['rejected']}"
             cov_str = "PASS" if d["covariance_healthy"] else "FAIL"
-            print(f"{scen_name:<16} | {cond_name:<18} | {d['horizontal_rmse_m']:<11.3f} | {d['final_horizontal_error_m']:<12.3f} | {d['velocity_rmse_mps']:<10.3f} | {v_acc:<13} | {b_acc:<13} | {cov_str}")
-        print("-" * 105)
+            print(f"{scen_name:<16} | {cond_name:<18} | {d['horizontal_rmse_m']:<11.3f} | {d['final_horizontal_error_m']:<12.3f} | {d['velocity_rmse_mps']:<10.3f} | {d['mean_yaw_error_deg']:<9.2f} | {v_acc:<13} | {b_acc:<13} | {cov_str}")
+        print("-" * 115)
 
     # Generate Markdown Report
     report_path = root / "docs" / "ml_eskf_integration_report.md"
@@ -443,6 +503,7 @@ def generate_markdown_report(data: Dict[str, Any], out_path: Path) -> None:
         "",
         f"**Date/Timestamp**: {meta['timestamp']}  ",
         f"**Replay Dataset**: `{meta['dataset']}`  ",
+        f"**Frame Convention**: `{meta['frame_convention']}`  ",
         f"**VelocityNet Hash**: `{meta['models']['velocitynet']['onnx_sha256']}`  ",
         f"**BiasNet Hash**: `{meta['models']['biasnet']['onnx_sha256']}`  ",
         f"**Normalization Hash**: `{meta['models']['normalization']['sha256']}`  ",
@@ -499,6 +560,7 @@ def generate_markdown_report(data: Dict[str, Any], out_path: Path) -> None:
         "",
         "## 5. Update Cadence & 6. Causal Window Policy",
         "- **Cadence Scheduling**: Explicit time-aware scheduling: VelocityNet executes at $\\Delta t \\ge 0.5\\text{ s}$ (~2 Hz); BiasNet executes at $\\Delta t \\ge 1.0\\text{ s}$ (~1 Hz).",
+        "- **Scheduler Warm-Up Policy**: If a model is due before the 20-sample causal history is populated, the scheduler advances its due schedule rather than repeating attempts on every 10 Hz IMU sample. Diagnostic counters distinguish `scheduler_due`, `buffer_not_ready`, `model_executed`, `model_accepted`, and `model_rejected`.",
         "- **Causal Window**: Rolling buffer of strictly past/current samples ($t_i \\le t_{\\text{update}}$). No lookahead or future information enters the estimator.",
         "",
         "## 7. Gating & 8. OOD Rejection Rules",
@@ -507,8 +569,9 @@ def generate_markdown_report(data: Dict[str, Any], out_path: Path) -> None:
         "- **Motion Gating**: VelocityNet updates are suppressed when smoothed speed $< 0.5\\text{ m/s}$ to avoid conflicting with classical ZUPT.",
         "- **OOD Checks**: Windows containing NaNs/Infs, step gaps $> 0.5\\text{ s}$, or extreme kinematics ($|f| > 100\\text{ m/s}^2, |\\omega| > 30\\text{ rad/s}$) are rejected with zero filter state modification.",
         "",
-        "## 9. Initialization Protocol",
-        "- Position initialized to segment tangent origin ($p_0 = [0, 0, 0]$).",
+        "## 9. Initialization Protocol & Frame Alignment",
+        "- **Segment-Local ENU Frame**: All replay positions, GNSS measurements, and evaluation ground truth for a segment are expressed in one segment-local ENU frame anchored at the segment's initial geodetic sample.",
+        "- Position initialized to $p_0 = [0, 0, 0]$.",
         "- Velocity seeded from initial course heading and speed.",
         "- Attitude initialized from reference yaw with zero roll/pitch.",
         "- Gyro bias initialized from preprocessed stationary calibration.",
@@ -556,7 +619,7 @@ def generate_markdown_report(data: Dict[str, Any], out_path: Path) -> None:
         "",
         "## 14. Full A/B/C/D Ablation Analysis",
         "- **Condition A (Pure ESKF)**: Serves as the authoritative classical dead-reckoning baseline.",
-        "- **Condition B (ESKF + VelocityNet)**: Adds forward speed pseudo-measurements along vehicle heading. Significantly reduces velocity estimation error and constrains along-track drift during outages.",
+        "- **Condition B (ESKF + VelocityNet)**: Adds forward speed pseudo-measurements along vehicle heading. Constrains along-track velocity errors during outages.",
         "- **Condition C (ESKF + BiasNet)**: Evaluates learned bias updates independently. Verifies filter stability and bias correction behavior without VelocityNet aiding.",
         "- **Condition D (ESKF + VelocityNet + BiasNet)**: Full multi-model aiding integration. Evaluates the combined interaction of both neural models within the ESKF.",
         "",
@@ -574,7 +637,7 @@ def generate_markdown_report(data: Dict[str, Any], out_path: Path) -> None:
     lines.extend([
         "",
         "## 16. Update Acceptance & Rejection Statistics",
-        "During all replay runs, zero invalid updates bypassed the innovation gate. All accepted updates passed through the configured Mahalanobis gates, and rejected updates were logged with reason codes (e.g. `STANDSTILL_SUPPRESSED` near rest).",
+        "During all replay runs, zero invalid updates bypassed the innovation gate. All accepted updates passed through the configured Mahalanobis gates, and rejected updates were logged with reason codes (e.g. `STANDSTILL_SUPPRESSED` near rest). Warm-up samples before the 20-sample causal history is populated are cleanly recorded as buffer-not-ready without generating spurious model rejections.",
         "",
         "## 17. Covariance Health",
         "Across all scenarios and all 4 conditions:",
@@ -602,6 +665,7 @@ def generate_markdown_report(data: Dict[str, Any], out_path: Path) -> None:
         "1. **Integration Correctness**: FULLY PASSED. The ModelRunner, measurement adapters, cadence scheduling, causal windowing, and gating operate strictly according to the mathematical specification. ML models never overwrite state directly.",
         "2. **Filter Authority & Safety**: FULLY PASSED. Deliberately absurd inputs are gated out, leaving state and covariance unmodified. Decoupled fallbacks work cleanly.",
         "3. **GNSS-Denied Performance**: The architecture successfully continues dead-reckoning throughout complete GNSS blackouts. VelocityNet reliably reduces velocity tracking error across all outage durations. As expected from the physical observability principles established in Phase 8, BiasNet provides modest aiding without destabilizing the filter.",
+        "4. **Phase 13 Scope Distinction**: Phase 9 confirms architectural fusion validity; final system-level accuracy benchmarks under production constraints belong to Phase 13.",
     ])
 
     with open(out_path, "w", encoding="utf-8") as f:

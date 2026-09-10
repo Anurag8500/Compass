@@ -260,8 +260,9 @@ class NavigationCore:
             if has_win and raw_feats is not None:
                 vnet_out = self.model_runner.run_velocitynet(raw_feats, win_ts)
                 self.state, vnet_diag = self.vnet_model.update(self.state, vnet_out, timestamp_ns=t_ns)
-                self.scheduler.record_velocitynet_execution(t_ns)
+                self.scheduler.mark_velocitynet_executed(t_ns)
             else:
+                self.scheduler.mark_velocitynet_scheduled(t_ns)
                 vnet_diag = VelocityNetAdapterDiagnostics(
                     applied=False,
                     reason=f"BUFFER_{reason}",
@@ -276,8 +277,9 @@ class NavigationCore:
             if has_win and raw_feats is not None:
                 bnet_out = self.model_runner.run_biasnet(raw_feats, win_ts)
                 self.state, bnet_diag = self.bnet_model.update(self.state, bnet_out, timestamp_ns=t_ns)
-                self.scheduler.record_biasnet_execution(t_ns)
+                self.scheduler.mark_biasnet_executed(t_ns)
             else:
+                self.scheduler.mark_biasnet_scheduled(t_ns)
                 bnet_diag = BiasNetAdapterDiagnostics(
                     applied=False,
                     reason=f"BUFFER_{reason}",

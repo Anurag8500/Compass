@@ -228,6 +228,58 @@ class TestMLCadenceScheduler:
         assert v_dup is False
         assert b_dup is False
 
+    def test_no_repeated_warmup_execution_attempts(self) -> None:
+        """Proves that when buffer is not ready, schedule advances rather than repeating every 10 Hz sample."""
+        sched = MLCadenceScheduler(CadenceConfig(velocitynet_interval_s=0.5, biasnet_interval_s=1.0))
+        due_vnet_count = 0
+        due_bnet_count = 0
+
+        # Simulate 20 samples at 10 Hz (0.0s to 1.9s)
+        for step in range(20):
+            t_ns = int(step * 1e8)
+            v_due, b_due = sched.evaluate_cycle(t_ns)
+            if v_due:
+                due_vnet_count += 1
+                # Mark scheduled because buffer was warming up
+                sched.mark_velocitynet_scheduled(t_ns)
+            if b_due:
+                due_bnet_count += 1
+                # Mark scheduled because buffer was warming up
+                sched.mark_biasnet_scheduled(t_ns)
+
+        # Over 2.0s:
+        # VNet due at 0.0s, 0.5s, 1.0s, 1.5s -> exactly 4 times, NOT 20 times!
+        assert due_vnet_count == 4, f"Expected 4 VNet due checks over 2.0s, got {due_vnet_count}"
+        # BNet due at 0.0s, 1.0s -> exactly 2 times, NOT 20 times!
+        assert due_bnet_count == 2, f"Expected 2 BNet due checks over 2.0s, got {due_bnet_count}"
+
+    def test_cadence_intervals_strictly_spaced(self) -> None:
+        """Proves that successful executions enforce minimum 0.5s and 1.0s spacing."""
+        sched = MLCadenceScheduler(CadenceConfig(velocitynet_interval_s=0.5, biasnet_interval_s=1.0))
+        vnet_exec_times_s: list[float] = []
+        bnet_exec_times_s: list[float] = []
+
+        # Run 50 samples at 10 Hz (5.0s)
+        for step in range(50):
+            t_ns = int(step * 1e8)
+            v_due, b_due = sched.evaluate_cycle(t_ns)
+            if v_due:
+                sched.mark_velocitynet_executed(t_ns)
+                vnet_exec_times_s.append(step * 0.1)
+            if b_due:
+                sched.mark_biasnet_executed(t_ns)
+                bnet_exec_times_s.append(step * 0.1)
+
+        # Check all intervals between consecutive VNet executions >= 0.5s
+        v_diffs = np.diff(vnet_exec_times_s)
+        assert len(v_diffs) > 0
+        assert np.all(v_diffs >= 0.499), f"VNet cadence violated: diffs={v_diffs}"
+
+        # Check all intervals between consecutive BNet executions >= 1.0s
+        b_diffs = np.diff(bnet_exec_times_s)
+        assert len(b_diffs) > 0
+        assert np.all(b_diffs >= 0.999), f"BNet cadence violated: diffs={b_diffs}"
+
 
 # ==============================================================================
 # 4. VelocityNet Measurement Adapter Tests

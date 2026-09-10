@@ -702,15 +702,17 @@ The two dedicated authority/always-active tests (steps 6-7) are the most importa
 - **ModelRunner & Export Contract**: `ONNXModelRunner` loads frozen `velocitynet_v1_1.onnx` and `biasnet_v1.onnx` with training-only normalizer (`normalization.json`). Rejects non-finite, out-of-bounds, or discontinuous windows with reason codes.
 - **VelocityNet Adapter**: Evaluates attitude-dependent forward projection $fwd_n = R_v^n[:, 0]$, 15D Jacobian $H_v[0, 3:6] = fwd_n^T$, bounded heteroscedastic uncertainty $R_v \in [1.0, 25.0]\text{ m}^2/\text{s}^2$, causal EMA smoothing ($\alpha=0.2$), and standstill motion suppression ($< 0.5\text{ m/s}$).
 - **BiasNet Adapter**: Implements pseudo-measurement $z_b = b_{\text{nom}} + \Delta b_{\text{pred}}$, $h_b(x) = b_{\text{nom}}$, error-state Jacobian $H_b[0:3, 9:12] = I_3$, $H_b[3:6, 12:15] = I_3$, and frozen Phase 8 covariance $R_b = \text{diag}([1.21, 1.21, 1.21, 0.0025, 0.0025, 0.0025])$.
-- **Cadence & Causality**: Explicit time-aware scheduler enforces ~2 Hz VelocityNet ($\Delta t \ge 0.5\text{ s}$) and ~1 Hz BiasNet ($\Delta t \ge 1.0\text{ s}$). `CausalWindowBuffer` strictly prevents lookahead ($t_i \le t_{\text{update}}$).
+- **Cadence & Causality**: Explicit time-aware scheduler enforces ~2 Hz VelocityNet ($\Delta t \ge 0.5\text{ s}$) and ~1 Hz BiasNet ($\Delta t \ge 1.0\text{ s}$). Diagnostic counters cleanly separate `scheduler_due`, `buffer_not_ready`, `model_executed`, `model_accepted`, and `model_rejected`. `CausalWindowBuffer` strictly prevents lookahead ($t_i \le t_{\text{update}}$).
 - **Filter Authority & Safety**: PASSED (`test_ml_eskf_authority.py`). Deliberately absurd speed ($1000\text{ m/s}$) and bias ($50\text{ m/s}^2$) predictions are rejected by the Mahalanobis gate, leaving nominal state and covariance strictly unmodified.
 - **GNSS-Denied Aiding**: PASSED (`test_ml_active_without_gnss.py`). When GNSS is withheld, VelocityNet and BiasNet continue firing and aiding the ESKF.
-- **Full Real-Data Offline Replay (`Categorised_S1.npz`)**:
+- **Full Real-Data Offline Replay (`Categorised_S1.npz`, Segment-Local ENU Frame)**:
+  - **Frame Consistency**: All replay positions, GNSS measurements, and evaluation ground truth are expressed in one consistent segment-local ENU coordinate frame anchored at the segment initial fix ($p_0 = [0, 0, 0]$).
   - **10s Outage**: Standstill motion gate active. Pure ESKF RMSE $0.426\text{ m}$, +VNet $0.426\text{ m}$, +BNet $0.426\text{ m}$, +VNet+BNet $0.426\text{ m}$.
-  - **30s Outage**: Pure ESKF RMSE $11.288\text{ m}$, +VNet $10.394\text{ m}$ (-7.9% drift reduction), +BNet $11.272\text{ m}$, +VNet+BNet $10.389\text{ m}$ (-8.0% drift reduction). Velocity RMSE reduced from $3.775\text{ m/s}$ to $3.388\text{ m/s}$.
-  - **60s Outage**: Pure ESKF RMSE $1771.216\text{ m}$, +VNet $1746.078\text{ m}$ (-25.1 m drift reduction), +BNet $1771.102\text{ m}$, +VNet+BNet $1743.021\text{ m}$ (-28.2 m drift reduction). Final horizontal error reduced from $5308.950\text{ m}$ to $5227.814\text{ m}$ (-81.1 m).
+  - **30s Outage**: Pure ESKF RMSE $11.288\text{ m}$, +VNet $10.394\text{ m}$ (-7.9% drift reduction), +BNet $11.272\text{ m}$, +VNet+BNet $10.390\text{ m}$ (-8.0% drift reduction). Velocity RMSE reduced from $3.775\text{ m/s}$ to $3.388\text{ m/s}$. Final horizontal error reduced from $63.875\text{ m}$ to $58.754\text{ m}$.
+  - **60s Outage**: Pure ESKF RMSE $1771.216\text{ m}$, +VNet $1746.078\text{ m}$ (-25.1 m drift reduction), +BNet $1771.128\text{ m}$, +VNet+BNet $1743.046\text{ m}$ (-28.2 m drift reduction). Final horizontal error reduced from $5308.950\text{ m}$ to $5227.860\text{ m}$ (-81.1 m).
+  - **Continuous GNSS Replay**: Evaluates at identical segment-local coordinate origin; drift during sharp unobserved turn at $t \approx 51.5\text{ s}$ causes GNSS Mahalanobis gate rejection, highlighting the architectural necessity of downstream Phase 10 (GNSS Reacquisition FSM) and Phase 11 (Non-Holonomic Constraints).
 - **Covariance Health**: 100% PASS across all scenarios and conditions (strictly finite, symmetric, PSD, normalized quaternion).
-- **Test Suite**: 334 tests passing cleanly (`uv run pytest`).
+- **Test Suite**: 337 tests passing cleanly (`uv run pytest`).
 - **Artifacts Generated**: `docs/ml_eskf_integration_results.json`, `docs/ml_eskf_integration_report.md`.
 
 #### Next-Phase Gate
