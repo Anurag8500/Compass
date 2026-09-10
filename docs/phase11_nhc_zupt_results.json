@@ -1,0 +1,469 @@
+{
+  "metadata": {
+    "dataset": "IO-VNBD Categorised_S1.npz",
+    "imu_rate_hz": 10.0,
+    "gnss_rate_hz": 1.0,
+    "conditions": {
+      "phase9_baseline": "Phase-9-compatible NHC/ZUPT-off baseline",
+      "phase11_full": "Phase 11 Full (ML + NHC + ZUPT)",
+      "nhc_only": "Ablation: NHC Only (ML + NHC)",
+      "zupt_only": "Ablation: ZUPT Only (ML + ZUPT)"
+    }
+  },
+  "scenario_a_continuous_gnss": {
+    "phase9_baseline": {
+      "pos_rmse_2d_m": 0.6873282496964658,
+      "max_pos_err_2d_m": 1.9346370573654519,
+      "vel_rmse_2d_mps": 0.716305018525937,
+      "nhc_telemetry": {
+        "attempts": 0,
+        "accepted": 0,
+        "relaxed": 0,
+        "skipped": 0,
+        "skipped_stationary": 0,
+        "skipped_low_speed": 0,
+        "rejection_reasons": {}
+      },
+      "zupt_telemetry": {
+        "standstill_evaluations": 0,
+        "standstill_confirmed": 0,
+        "updates_attempted": 0,
+        "updates_accepted": 0,
+        "updates_rejected": 0
+      }
+    },
+    "phase11_full": {
+      "pos_rmse_2d_m": 1.4380778732115995,
+      "max_pos_err_2d_m": 6.030983059183102,
+      "vel_rmse_2d_mps": 1.010936835556587,
+      "nhc_telemetry": {
+        "attempts": 600,
+        "accepted": 454,
+        "relaxed": 18,
+        "skipped": 144,
+        "skipped_stationary": 2,
+        "skipped_low_speed": 0,
+        "rejection_reasons": {
+          "SKIPPED_SEVERE_INNOVATION": 143,
+          "SKIPPED_DYNAMIC_CORNERING_INCONSISTENCY": 1
+        }
+      },
+      "zupt_telemetry": {
+        "standstill_evaluations": 600,
+        "standstill_confirmed": 2,
+        "updates_attempted": 2,
+        "updates_accepted": 0,
+        "updates_rejected": 2
+      }
+    },
+    "nhc_only": {
+      "pos_rmse_2d_m": 1.4380778732115995,
+      "max_pos_err_2d_m": 6.030983059183102,
+      "vel_rmse_2d_mps": 1.010936835556587,
+      "nhc_telemetry": {
+        "attempts": 600,
+        "accepted": 454,
+        "relaxed": 18,
+        "skipped": 146,
+        "skipped_stationary": 0,
+        "skipped_low_speed": 0,
+        "rejection_reasons": {
+          "SKIPPED_SEVERE_INNOVATION": 145,
+          "SKIPPED_DYNAMIC_CORNERING_INCONSISTENCY": 1
+        }
+      },
+      "zupt_telemetry": {
+        "standstill_evaluations": 0,
+        "standstill_confirmed": 0,
+        "updates_attempted": 0,
+        "updates_accepted": 0,
+        "updates_rejected": 0
+      }
+    },
+    "zupt_only": {
+      "pos_rmse_2d_m": 0.6873282496964658,
+      "max_pos_err_2d_m": 1.9346370573654519,
+      "vel_rmse_2d_mps": 0.716305018525937,
+      "nhc_telemetry": {
+        "attempts": 0,
+        "accepted": 0,
+        "relaxed": 0,
+        "skipped": 0,
+        "skipped_stationary": 0,
+        "skipped_low_speed": 0,
+        "rejection_reasons": {}
+      },
+      "zupt_telemetry": {
+        "standstill_evaluations": 600,
+        "standstill_confirmed": 2,
+        "updates_attempted": 2,
+        "updates_accepted": 0,
+        "updates_rejected": 2
+      }
+    }
+  },
+  "scenario_b_outages": {
+    "outage_10s": {
+      "phase9_baseline": {
+        "outage_duration_s": 10.0,
+        "outage_max_drift_m": 17.615519934570095,
+        "outage_final_drift_m": 19.318797057641902,
+        "outage_drift_pct": 13.715472193471795,
+        "vel_rmse_2d_mps": 1.701213744442641,
+        "nhc_telemetry": {
+          "attempts": 0,
+          "accepted": 0,
+          "relaxed": 0,
+          "skipped": 0,
+          "skipped_stationary": 0,
+          "skipped_low_speed": 0,
+          "rejection_reasons": {}
+        }
+      },
+      "phase11_full": {
+        "outage_duration_s": 10.0,
+        "outage_max_drift_m": 51.76899771206067,
+        "outage_final_drift_m": 50.00281259177245,
+        "outage_drift_pct": 35.49973549862158,
+        "vel_rmse_2d_mps": 7.976665929271011,
+        "nhc_telemetry": {
+          "attempts": 300,
+          "accepted": 232,
+          "relaxed": 5,
+          "skipped": 68,
+          "skipped_stationary": 0,
+          "skipped_low_speed": 0,
+          "rejection_reasons": {
+            "SKIPPED_SEVERE_INNOVATION": 68
+          }
+        }
+      },
+      "nhc_only": {
+        "outage_duration_s": 10.0,
+        "outage_max_drift_m": 51.76899771206067,
+        "outage_final_drift_m": 50.00281259177245,
+        "outage_drift_pct": 35.49973549862158,
+        "vel_rmse_2d_mps": 7.976665929271011,
+        "nhc_telemetry": {
+          "attempts": 300,
+          "accepted": 232,
+          "relaxed": 5,
+          "skipped": 68,
+          "skipped_stationary": 0,
+          "skipped_low_speed": 0,
+          "rejection_reasons": {
+            "SKIPPED_SEVERE_INNOVATION": 68
+          }
+        }
+      },
+      "zupt_only": {
+        "outage_duration_s": 10.0,
+        "outage_max_drift_m": 17.615519934570095,
+        "outage_final_drift_m": 19.318797057641902,
+        "outage_drift_pct": 13.715472193471795,
+        "vel_rmse_2d_mps": 1.701213744442641,
+        "nhc_telemetry": {
+          "attempts": 0,
+          "accepted": 0,
+          "relaxed": 0,
+          "skipped": 0,
+          "skipped_stationary": 0,
+          "skipped_low_speed": 0,
+          "rejection_reasons": {}
+        }
+      }
+    },
+    "outage_30s": {
+      "phase9_baseline": {
+        "outage_duration_s": 30.0,
+        "outage_max_drift_m": 250.38240028886278,
+        "outage_final_drift_m": 105.24584740642418,
+        "outage_drift_pct": 24.752023370244444,
+        "vel_rmse_2d_mps": 9.967118693908978,
+        "nhc_telemetry": {
+          "attempts": 0,
+          "accepted": 0,
+          "relaxed": 0,
+          "skipped": 0,
+          "skipped_stationary": 0,
+          "skipped_low_speed": 0,
+          "rejection_reasons": {}
+        }
+      },
+      "phase11_full": {
+        "outage_duration_s": 30.0,
+        "outage_max_drift_m": 247.66141516639024,
+        "outage_final_drift_m": 248.32698177759625,
+        "outage_drift_pct": 58.40225916643759,
+        "vel_rmse_2d_mps": 9.97673549301768,
+        "nhc_telemetry": {
+          "attempts": 500,
+          "accepted": 430,
+          "relaxed": 14,
+          "skipped": 68,
+          "skipped_stationary": 2,
+          "skipped_low_speed": 0,
+          "rejection_reasons": {
+            "SKIPPED_SEVERE_INNOVATION": 68
+          }
+        }
+      },
+      "nhc_only": {
+        "outage_duration_s": 30.0,
+        "outage_max_drift_m": 247.66141516639024,
+        "outage_final_drift_m": 248.32698177759625,
+        "outage_drift_pct": 58.40225916643759,
+        "vel_rmse_2d_mps": 9.97373405611076,
+        "nhc_telemetry": {
+          "attempts": 500,
+          "accepted": 432,
+          "relaxed": 15,
+          "skipped": 68,
+          "skipped_stationary": 0,
+          "skipped_low_speed": 0,
+          "rejection_reasons": {
+            "SKIPPED_SEVERE_INNOVATION": 68
+          }
+        }
+      },
+      "zupt_only": {
+        "outage_duration_s": 30.0,
+        "outage_max_drift_m": 250.38240028886278,
+        "outage_final_drift_m": 105.24584740642418,
+        "outage_drift_pct": 24.752023370244444,
+        "vel_rmse_2d_mps": 9.967118693908978,
+        "nhc_telemetry": {
+          "attempts": 0,
+          "accepted": 0,
+          "relaxed": 0,
+          "skipped": 0,
+          "skipped_stationary": 0,
+          "skipped_low_speed": 0,
+          "rejection_reasons": {}
+        }
+      }
+    },
+    "outage_60s": {
+      "phase9_baseline": {
+        "outage_duration_s": 60.0,
+        "outage_max_drift_m": 585.8273333374342,
+        "outage_final_drift_m": 594.9816141439107,
+        "outage_drift_pct": 70.98190660243398,
+        "vel_rmse_2d_mps": 21.959500778979116,
+        "nhc_telemetry": {
+          "attempts": 0,
+          "accepted": 0,
+          "relaxed": 0,
+          "skipped": 0,
+          "skipped_stationary": 0,
+          "skipped_low_speed": 0,
+          "rejection_reasons": {}
+        }
+      },
+      "phase11_full": {
+        "outage_duration_s": 60.0,
+        "outage_max_drift_m": 605.2478275116592,
+        "outage_final_drift_m": 607.0083220032004,
+        "outage_drift_pct": 72.41670497890344,
+        "vel_rmse_2d_mps": 11.746175575017222,
+        "nhc_telemetry": {
+          "attempts": 800,
+          "accepted": 730,
+          "relaxed": 17,
+          "skipped": 68,
+          "skipped_stationary": 2,
+          "skipped_low_speed": 0,
+          "rejection_reasons": {
+            "SKIPPED_SEVERE_INNOVATION": 68
+          }
+        }
+      },
+      "nhc_only": {
+        "outage_duration_s": 60.0,
+        "outage_max_drift_m": 605.2978763597483,
+        "outage_final_drift_m": 607.0575438495063,
+        "outage_drift_pct": 72.42257719480763,
+        "vel_rmse_2d_mps": 11.74487927766671,
+        "nhc_telemetry": {
+          "attempts": 800,
+          "accepted": 732,
+          "relaxed": 18,
+          "skipped": 68,
+          "skipped_stationary": 0,
+          "skipped_low_speed": 0,
+          "rejection_reasons": {
+            "SKIPPED_SEVERE_INNOVATION": 68
+          }
+        }
+      },
+      "zupt_only": {
+        "outage_duration_s": 60.0,
+        "outage_max_drift_m": 585.8273333374342,
+        "outage_final_drift_m": 594.9816141439107,
+        "outage_drift_pct": 70.98190660243398,
+        "vel_rmse_2d_mps": 21.959500778979116,
+        "nhc_telemetry": {
+          "attempts": 0,
+          "accepted": 0,
+          "relaxed": 0,
+          "skipped": 0,
+          "skipped_stationary": 0,
+          "skipped_low_speed": 0,
+          "rejection_reasons": {}
+        }
+      }
+    }
+  },
+  "scenario_c_sharp_turn": {
+    "phase9_baseline": {
+      "pos_rmse_2d_m": 1120.831003986208,
+      "max_pos_err_2d_m": 2170.2444165242314,
+      "outage_final_drift_m": 1566.4814441475012,
+      "nhc_telemetry": {
+        "attempts": 0,
+        "accepted": 0,
+        "relaxed": 0,
+        "skipped": 0,
+        "skipped_stationary": 0,
+        "skipped_low_speed": 0,
+        "rejection_reasons": {}
+      }
+    },
+    "phase11_full": {
+      "pos_rmse_2d_m": 761.9282273282818,
+      "max_pos_err_2d_m": 1161.018277488538,
+      "outage_final_drift_m": 982.4556673379027,
+      "nhc_telemetry": {
+        "attempts": 350,
+        "accepted": 12,
+        "relaxed": 8,
+        "skipped": 286,
+        "skipped_stationary": 0,
+        "skipped_low_speed": 52,
+        "rejection_reasons": {
+          "SKIPPED_SEVERE_INNOVATION": 286
+        }
+      }
+    },
+    "nhc_only": {
+      "pos_rmse_2d_m": 761.9282273282818,
+      "max_pos_err_2d_m": 1161.018277488538,
+      "outage_final_drift_m": 982.4556673379027,
+      "nhc_telemetry": {
+        "attempts": 350,
+        "accepted": 12,
+        "relaxed": 8,
+        "skipped": 286,
+        "skipped_stationary": 0,
+        "skipped_low_speed": 52,
+        "rejection_reasons": {
+          "SKIPPED_SEVERE_INNOVATION": 286
+        }
+      }
+    },
+    "zupt_only": {
+      "pos_rmse_2d_m": 1120.831003986208,
+      "max_pos_err_2d_m": 2170.2444165242314,
+      "outage_final_drift_m": 1566.4814441475012,
+      "nhc_telemetry": {
+        "attempts": 0,
+        "accepted": 0,
+        "relaxed": 0,
+        "skipped": 0,
+        "skipped_stationary": 0,
+        "skipped_low_speed": 0,
+        "rejection_reasons": {}
+      }
+    }
+  },
+  "scenario_d_stop_and_go": {
+    "phase9_baseline": {
+      "pos_rmse_2d_m": 175.67493423554365,
+      "max_pos_err_2d_m": 747.7764323132485,
+      "final_pos_err_2d_m": 747.7764323132485,
+      "nhc_telemetry": {
+        "attempts": 0,
+        "accepted": 0,
+        "relaxed": 0,
+        "skipped": 0,
+        "skipped_stationary": 0,
+        "skipped_low_speed": 0,
+        "rejection_reasons": {}
+      },
+      "zupt_telemetry": {
+        "standstill_evaluations": 0,
+        "standstill_confirmed": 0,
+        "updates_attempted": 0,
+        "updates_accepted": 0,
+        "updates_rejected": 0
+      }
+    },
+    "phase11_full": {
+      "pos_rmse_2d_m": 42.18803947963121,
+      "max_pos_err_2d_m": 101.1590473915347,
+      "final_pos_err_2d_m": 101.1590473915347,
+      "nhc_telemetry": {
+        "attempts": 400,
+        "accepted": 73,
+        "relaxed": 5,
+        "skipped": 149,
+        "skipped_stationary": 158,
+        "skipped_low_speed": 20,
+        "rejection_reasons": {
+          "SKIPPED_SEVERE_INNOVATION": 149
+        }
+      },
+      "zupt_telemetry": {
+        "standstill_evaluations": 400,
+        "standstill_confirmed": 158,
+        "updates_attempted": 158,
+        "updates_accepted": 84,
+        "updates_rejected": 74
+      }
+    },
+    "nhc_only": {
+      "pos_rmse_2d_m": 86.74949215032126,
+      "max_pos_err_2d_m": 289.16136961274987,
+      "final_pos_err_2d_m": 289.16136961274987,
+      "nhc_telemetry": {
+        "attempts": 400,
+        "accepted": 206,
+        "relaxed": 10,
+        "skipped": 127,
+        "skipped_stationary": 0,
+        "skipped_low_speed": 67,
+        "rejection_reasons": {
+          "SKIPPED_SEVERE_INNOVATION": 127
+        }
+      },
+      "zupt_telemetry": {
+        "standstill_evaluations": 0,
+        "standstill_confirmed": 0,
+        "updates_attempted": 0,
+        "updates_accepted": 0,
+        "updates_rejected": 0
+      }
+    },
+    "zupt_only": {
+      "pos_rmse_2d_m": 58.37319940582123,
+      "max_pos_err_2d_m": 127.05988159622751,
+      "final_pos_err_2d_m": 120.12917010801829,
+      "nhc_telemetry": {
+        "attempts": 0,
+        "accepted": 0,
+        "relaxed": 0,
+        "skipped": 0,
+        "skipped_stationary": 0,
+        "skipped_low_speed": 0,
+        "rejection_reasons": {}
+      },
+      "zupt_telemetry": {
+        "standstill_evaluations": 400,
+        "standstill_confirmed": 158,
+        "updates_attempted": 158,
+        "updates_accepted": 83,
+        "updates_rejected": 75
+      }
+    }
+  }
+}

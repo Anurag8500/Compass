@@ -62,6 +62,12 @@ from navigation.gnss import (
     RecoveryConfig,
     TrustScoreConfig,
 )
+from navigation.nhc import (
+    NHCConfig,
+    NHCDiagnostics,
+    NHCMeasurementModel,
+    NHCStatus,
+)
 
 
 @dataclass(frozen=True)
@@ -72,6 +78,7 @@ class NavigationCoreConfig:
     biasnet_enabled: bool = True
     zupt_enabled: bool = True
     gnss_enabled: bool = True
+    nhc_enabled: bool = True
 
     # Sub-component configurations
     process_noise: ProcessNoiseConfig = field(default_factory=ProcessNoiseConfig)
@@ -79,6 +86,7 @@ class NavigationCoreConfig:
     gnss: GNSSUpdateConfig = field(default_factory=GNSSUpdateConfig)
     zupt_detector: ZUPTDetectorConfig = field(default_factory=ZUPTDetectorConfig)
     zupt_measurement: ZUPTMeasurementConfig = field(default_factory=ZUPTMeasurementConfig)
+    nhc: NHCConfig = field(default_factory=NHCConfig)
     velocitynet: VelocityNetConfig = field(default_factory=VelocityNetConfig)
     biasnet: BiasNetConfig = field(default_factory=BiasNetConfig)
     model_runner: ModelRunnerConfig = field(default_factory=ModelRunnerConfig)
@@ -110,6 +118,9 @@ class NavigationCoreCycleOutput:
     zupt_applied: bool = False
     velocitynet_diagnostics: Optional[VelocityNetAdapterDiagnostics] = None
     biasnet_diagnostics: Optional[BiasNetAdapterDiagnostics] = None
+    nhc_diagnostics: Optional[NHCDiagnostics] = None
+    nhc_applied: bool = False
+    zupt_update_diagnostics: Optional[UpdateDiagnostics] = None
 
 
 class NavigationCore:
@@ -146,6 +157,12 @@ class NavigationCore:
             bnet_cfg = BiasNetConfig(enabled=False)
         self.bnet_model = BiasNetMeasurementModel(config=bnet_cfg)
 
+        # Non-Holonomic Constraints (Phase 11)
+        nhc_cfg = self.config.nhc
+        if not self.config.nhc_enabled:
+            nhc_cfg = NHCConfig(enabled=False)
+        self.nhc_model = NHCMeasurementModel(config=nhc_cfg)
+
         # GNSS Supervisory Subsystem (Phase 10)
         self.gnss_trust_calculator = GNSSTrustScoreCalculator(config=self.config.trust_score)
         self.gnss_outage_detector = GNSSOutageDetector(config=self.config.outage_detector)
@@ -177,6 +194,24 @@ class NavigationCore:
             },
         }
 
+        self._nhc_telemetry: dict[str, Any] = {
+            "attempts": 0,
+            "accepted": 0,
+            "relaxed": 0,
+            "skipped": 0,
+            "skipped_stationary": 0,
+            "skipped_low_speed": 0,
+            "rejection_reasons": {},
+        }
+
+        self._zupt_telemetry: dict[str, Any] = {
+            "standstill_evaluations": 0,
+            "standstill_confirmed": 0,
+            "updates_attempted": 0,
+            "updates_accepted": 0,
+            "updates_rejected": 0,
+        }
+
     def initialize(
         self,
         lat0: float,
@@ -199,6 +234,7 @@ class NavigationCore:
         self.gnss_outage_detector.reset(session_start_timestamp_ns=timestamp_ns)
         self.gnss_trust_calculator.reset()
         self.gnss_recovery_manager.reset()
+        self.zupt_detector.reset()
         self._last_gnss_timestamp_ns = None
         self._last_gnss_quality = None
         self._last_recovery_step = None
@@ -320,16 +356,7 @@ class NavigationCore:
             process_noise=self.config.process_noise,
         )
 
-        # 3. Classical Gated ZUPT check (zero-ML dependency)
-        zupt_diag: Optional[ZUPTDetectorDiagnostics] = None
-        zupt_applied = False
-        if self.config.zupt_enabled:
-            zupt_diag = self.zupt_detector.push(omega_v=w_arr, f_v=f_arr)
-            if zupt_diag.is_stationary:
-                self.state, d_z = self.zupt_model.update(self.state, timestamp_ns=t_ns)
-                zupt_applied = d_z.applied
-
-        # 4. Evaluate time-based cadence for neural models
+        # 3. Evaluate time-based cadence for neural models (VelocityNet, BiasNet)
         run_vnet, run_bnet = self.scheduler.evaluate_cycle(t_ns)
 
         vnet_diag: Optional[VelocityNetAdapterDiagnostics] = None
@@ -385,7 +412,58 @@ class NavigationCore:
                     covariance_diag=self.bnet_model.R_diag,
                 )
 
-        # 5. GNSS Outage and FSM Mode Evaluation (Phase 10)
+        # 4. Standstill / Stationarity detection (Phase 5 Classical Zero-ML Detector)
+        zupt_diag: Optional[ZUPTDetectorDiagnostics] = None
+        is_stationary = False
+        if self.config.zupt_enabled:
+            self._zupt_telemetry["standstill_evaluations"] += 1
+            zupt_diag = self.zupt_detector.push(omega_v=w_arr, f_v=f_arr)
+            is_stationary = zupt_diag.is_stationary
+            if is_stationary:
+                self._zupt_telemetry["standstill_confirmed"] += 1
+
+        # 5. Non-Holonomic Constraints (NHC) Measurement Update (Phase 11)
+        # Evaluated after main ML updates. Suppressed at standstill to allow ZUPT precedence.
+        nhc_diag: Optional[NHCDiagnostics] = None
+        nhc_applied = False
+        if self.config.nhc_enabled:
+            self._nhc_telemetry["attempts"] += 1
+            self.state, nhc_diag = self.nhc_model.update(
+                state=self.state,
+                is_stationary=is_stationary,
+                omega_v=w_arr,
+                f_v=f_arr,
+                timestamp_ns=t_ns,
+            )
+            nhc_applied = nhc_diag.applied
+            if nhc_diag.status == NHCStatus.NORMAL:
+                self._nhc_telemetry["accepted"] += 1
+            elif nhc_diag.status == NHCStatus.RELAXED:
+                self._nhc_telemetry["accepted"] += 1
+                self._nhc_telemetry["relaxed"] += 1
+            elif nhc_diag.status == NHCStatus.SKIPPED:
+                self._nhc_telemetry["skipped"] += 1
+                rej = nhc_diag.reason
+                self._nhc_telemetry["rejection_reasons"][rej] = self._nhc_telemetry["rejection_reasons"].get(rej, 0) + 1
+            elif nhc_diag.status == NHCStatus.SKIPPED_STATIONARY:
+                self._nhc_telemetry["skipped_stationary"] += 1
+            elif nhc_diag.status == NHCStatus.SKIPPED_LOW_SPEED:
+                self._nhc_telemetry["skipped_low_speed"] += 1
+
+        # 6. Classical Gated ZUPT Update (Phase 5 / Phase 11)
+        # Authoritative 3D zero-velocity constraint applied strictly when standstill confirmed.
+        zupt_applied = False
+        zupt_update_diag: Optional[UpdateDiagnostics] = None
+        if self.config.zupt_enabled and is_stationary:
+            self._zupt_telemetry["updates_attempted"] += 1
+            self.state, zupt_update_diag = self.zupt_model.update(self.state, timestamp_ns=t_ns)
+            zupt_applied = zupt_update_diag.applied
+            if zupt_applied:
+                self._zupt_telemetry["updates_accepted"] += 1
+            else:
+                self._zupt_telemetry["updates_rejected"] += 1
+
+        # 7. GNSS Outage and FSM Mode Evaluation (Phase 10)
         outage_status = self.gnss_outage_detector.evaluate_outage(t_ns)
         prev_mode = self.mode
         self.gnss_fsm.evaluate_transition(
@@ -397,7 +475,7 @@ class NavigationCore:
         if prev_mode == GNSSMode.REACQUIRING and self.mode == GNSSMode.DR_ONLY:
             self.gnss_recovery_manager.reset()
 
-        # 6. Covariance health check
+        # 8. Covariance health check
         health = self.check_covariance_health()
 
         return NavigationCoreCycleOutput(
@@ -408,6 +486,9 @@ class NavigationCore:
             zupt_applied=zupt_applied,
             velocitynet_diagnostics=vnet_diag,
             biasnet_diagnostics=bnet_diag,
+            nhc_diagnostics=nhc_diag,
+            nhc_applied=nhc_applied,
+            zupt_update_diagnostics=zupt_update_diag,
         )
 
     def step_gnss_fix(
@@ -681,3 +762,13 @@ class NavigationCore:
             "maximum_recovery_correction_m": self.gnss_recovery_manager.maximum_correction_applied_m,
             "consecutive_valid_recovery_fixes": self.gnss_recovery_manager.consecutive_valid_fixes,
         }
+
+    def get_nhc_telemetry(self) -> dict[str, Any]:
+        """Return standardized Phase 11 NHC telemetry counters."""
+        import copy
+        return copy.deepcopy(self._nhc_telemetry)
+
+    def get_zupt_telemetry(self) -> dict[str, Any]:
+        """Return standardized Phase 11 ZUPT supervisory telemetry counters."""
+        import copy
+        return copy.deepcopy(self._zupt_telemetry)
