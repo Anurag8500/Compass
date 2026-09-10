@@ -2,7 +2,7 @@
   "metadata": {
     "phase": "Phase 9",
     "title": "ML -> ESKF Integration and Real GNSS-Denied Offline Replay",
-    "timestamp": "2026-09-10 13:32:28 UTC",
+    "timestamp": "2026-09-10 14:01:10 UTC",
     "dataset": "Categorised_S1.npz",
     "frame_convention": "One segment-local ENU frame per segment anchored at segment initial fix",
     "models": {
@@ -54,6 +54,10 @@
           "first_rejection_timestamp_s": null
         },
         "velocitynet": {
+          "expected_due_epochs": 0,
+          "actual_due_epochs": 0,
+          "expected_min_executions_after_warmup": 0,
+          "actual_inference_executions": 0,
           "scheduler_due": 0,
           "buffer_not_ready": 0,
           "inference_executed": 0,
@@ -64,6 +68,10 @@
           "p95_nis": 0.0
         },
         "biasnet": {
+          "expected_due_epochs": 0,
+          "actual_due_epochs": 0,
+          "expected_min_executions_after_warmup": 0,
+          "actual_inference_executions": 0,
           "scheduler_due": 0,
           "buffer_not_ready": 0,
           "inference_executed": 0,
@@ -79,9 +87,10 @@
           "total_ml_updates": 0
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.19827233333333333,
-          "max_cycle_latency_ms": 0.5251
-        }
+          "mean_cycle_latency_ms": 0.21532766666666664,
+          "max_cycle_latency_ms": 0.6651
+        },
+        "divergence_records": []
       },
       "B_eskf_vnet": {
         "final_horizontal_error_m": 1.1088331936959466,
@@ -104,6 +113,10 @@
           "first_rejection_timestamp_s": null
         },
         "velocitynet": {
+          "expected_due_epochs": 121,
+          "actual_due_epochs": 113,
+          "expected_min_executions_after_warmup": 117,
+          "actual_inference_executions": 109,
           "scheduler_due": 113,
           "buffer_not_ready": 4,
           "inference_executed": 109,
@@ -114,6 +127,10 @@
           "p95_nis": 3.3871308945394007
         },
         "biasnet": {
+          "expected_due_epochs": 0,
+          "actual_due_epochs": 0,
+          "expected_min_executions_after_warmup": 0,
+          "actual_inference_executions": 0,
           "scheduler_due": 0,
           "buffer_not_ready": 0,
           "inference_executed": 0,
@@ -129,9 +146,10 @@
           "total_ml_updates": 109
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.2806143333333333,
-          "max_cycle_latency_ms": 1.2137
-        }
+          "mean_cycle_latency_ms": 0.2992026666666667,
+          "max_cycle_latency_ms": 1.3566
+        },
+        "divergence_records": []
       },
       "C_eskf_bnet": {
         "final_horizontal_error_m": 0.0987977863684499,
@@ -154,6 +172,10 @@
           "first_rejection_timestamp_s": null
         },
         "velocitynet": {
+          "expected_due_epochs": 0,
+          "actual_due_epochs": 0,
+          "expected_min_executions_after_warmup": 0,
+          "actual_inference_executions": 0,
           "scheduler_due": 0,
           "buffer_not_ready": 0,
           "inference_executed": 0,
@@ -164,6 +186,10 @@
           "p95_nis": 0.0
         },
         "biasnet": {
+          "expected_due_epochs": 61,
+          "actual_due_epochs": 59,
+          "expected_min_executions_after_warmup": 59,
+          "actual_inference_executions": 57,
           "scheduler_due": 59,
           "buffer_not_ready": 2,
           "inference_executed": 57,
@@ -179,9 +205,10 @@
           "total_ml_updates": 57
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.24085033333333333,
-          "max_cycle_latency_ms": 0.8522
-        }
+          "mean_cycle_latency_ms": 0.2563358333333333,
+          "max_cycle_latency_ms": 1.1931
+        },
+        "divergence_records": []
       },
       "D_eskf_vnet_bnet": {
         "final_horizontal_error_m": 0.8568690177964465,
@@ -204,6 +231,10 @@
           "first_rejection_timestamp_s": null
         },
         "velocitynet": {
+          "expected_due_epochs": 121,
+          "actual_due_epochs": 113,
+          "expected_min_executions_after_warmup": 117,
+          "actual_inference_executions": 109,
           "scheduler_due": 113,
           "buffer_not_ready": 4,
           "inference_executed": 109,
@@ -214,6 +245,10 @@
           "p95_nis": 2.088930158901792
         },
         "biasnet": {
+          "expected_due_epochs": 61,
+          "actual_due_epochs": 59,
+          "expected_min_executions_after_warmup": 59,
+          "actual_inference_executions": 57,
           "scheduler_due": 59,
           "buffer_not_ready": 2,
           "inference_executed": 57,
@@ -229,9 +264,10 @@
           "total_ml_updates": 166
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.31419216666666666,
-          "max_cycle_latency_ms": 1.9212
-        }
+          "mean_cycle_latency_ms": 0.3403426666666667,
+          "max_cycle_latency_ms": 1.6156
+        },
+        "divergence_records": []
       }
     },
     "moving_outage_10s": {
@@ -265,6 +301,10 @@
           "first_rejection_timestamp_s": null
         },
         "velocitynet": {
+          "expected_due_epochs": 0,
+          "actual_due_epochs": 0,
+          "expected_min_executions_after_warmup": 0,
+          "actual_inference_executions": 0,
           "scheduler_due": 0,
           "buffer_not_ready": 0,
           "inference_executed": 0,
@@ -275,6 +315,10 @@
           "p95_nis": 0.0
         },
         "biasnet": {
+          "expected_due_epochs": 0,
+          "actual_due_epochs": 0,
+          "expected_min_executions_after_warmup": 0,
+          "actual_inference_executions": 0,
           "scheduler_due": 0,
           "buffer_not_ready": 0,
           "inference_executed": 0,
@@ -290,9 +334,10 @@
           "total_ml_updates": 0
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.190164,
-          "max_cycle_latency_ms": 0.38789999999999997
-        }
+          "mean_cycle_latency_ms": 0.213449,
+          "max_cycle_latency_ms": 0.6985
+        },
+        "divergence_records": []
       },
       "B_eskf_vnet": {
         "final_horizontal_error_m": 20.686515344108827,
@@ -315,6 +360,10 @@
           "first_rejection_timestamp_s": null
         },
         "velocitynet": {
+          "expected_due_epochs": 20,
+          "actual_due_epochs": 19,
+          "expected_min_executions_after_warmup": 16,
+          "actual_inference_executions": 15,
           "scheduler_due": 19,
           "buffer_not_ready": 4,
           "inference_executed": 15,
@@ -325,6 +374,10 @@
           "p95_nis": 0.2624060079810143
         },
         "biasnet": {
+          "expected_due_epochs": 0,
+          "actual_due_epochs": 0,
+          "expected_min_executions_after_warmup": 0,
+          "actual_inference_executions": 0,
           "scheduler_due": 0,
           "buffer_not_ready": 0,
           "inference_executed": 0,
@@ -340,9 +393,10 @@
           "total_ml_updates": 15
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.26051199999999997,
-          "max_cycle_latency_ms": 0.7226
-        }
+          "mean_cycle_latency_ms": 0.31139,
+          "max_cycle_latency_ms": 1.1227
+        },
+        "divergence_records": []
       },
       "C_eskf_bnet": {
         "final_horizontal_error_m": 13.153270979912689,
@@ -365,6 +419,10 @@
           "first_rejection_timestamp_s": null
         },
         "velocitynet": {
+          "expected_due_epochs": 0,
+          "actual_due_epochs": 0,
+          "expected_min_executions_after_warmup": 0,
+          "actual_inference_executions": 0,
           "scheduler_due": 0,
           "buffer_not_ready": 0,
           "inference_executed": 0,
@@ -375,6 +433,10 @@
           "p95_nis": 0.0
         },
         "biasnet": {
+          "expected_due_epochs": 10,
+          "actual_due_epochs": 10,
+          "expected_min_executions_after_warmup": 8,
+          "actual_inference_executions": 8,
           "scheduler_due": 10,
           "buffer_not_ready": 2,
           "inference_executed": 8,
@@ -390,9 +452,10 @@
           "total_ml_updates": 8
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.22791399999999998,
-          "max_cycle_latency_ms": 0.7291
-        }
+          "mean_cycle_latency_ms": 0.25809299999999996,
+          "max_cycle_latency_ms": 1.3236999999999999
+        },
+        "divergence_records": []
       },
       "D_eskf_vnet_bnet": {
         "final_horizontal_error_m": 20.53358951097751,
@@ -415,6 +478,10 @@
           "first_rejection_timestamp_s": null
         },
         "velocitynet": {
+          "expected_due_epochs": 20,
+          "actual_due_epochs": 19,
+          "expected_min_executions_after_warmup": 16,
+          "actual_inference_executions": 15,
           "scheduler_due": 19,
           "buffer_not_ready": 4,
           "inference_executed": 15,
@@ -425,6 +492,10 @@
           "p95_nis": 0.2688978544850973
         },
         "biasnet": {
+          "expected_due_epochs": 10,
+          "actual_due_epochs": 10,
+          "expected_min_executions_after_warmup": 8,
+          "actual_inference_executions": 8,
           "scheduler_due": 10,
           "buffer_not_ready": 2,
           "inference_executed": 8,
@@ -440,9 +511,10 @@
           "total_ml_updates": 23
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.289756,
-          "max_cycle_latency_ms": 1.0937
-        }
+          "mean_cycle_latency_ms": 0.312623,
+          "max_cycle_latency_ms": 1.1462999999999999
+        },
+        "divergence_records": []
       }
     },
     "moving_outage_30s": {
@@ -476,6 +548,10 @@
           "first_rejection_timestamp_s": null
         },
         "velocitynet": {
+          "expected_due_epochs": 0,
+          "actual_due_epochs": 0,
+          "expected_min_executions_after_warmup": 0,
+          "actual_inference_executions": 0,
           "scheduler_due": 0,
           "buffer_not_ready": 0,
           "inference_executed": 0,
@@ -486,6 +562,10 @@
           "p95_nis": 0.0
         },
         "biasnet": {
+          "expected_due_epochs": 0,
+          "actual_due_epochs": 0,
+          "expected_min_executions_after_warmup": 0,
+          "actual_inference_executions": 0,
           "scheduler_due": 0,
           "buffer_not_ready": 0,
           "inference_executed": 0,
@@ -501,9 +581,10 @@
           "total_ml_updates": 0
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.19254433333333335,
-          "max_cycle_latency_ms": 0.488
-        }
+          "mean_cycle_latency_ms": 0.21369633333333332,
+          "max_cycle_latency_ms": 0.773
+        },
+        "divergence_records": []
       },
       "B_eskf_vnet": {
         "final_horizontal_error_m": 345.6758947895635,
@@ -526,6 +607,10 @@
           "first_rejection_timestamp_s": null
         },
         "velocitynet": {
+          "expected_due_epochs": 60,
+          "actual_due_epochs": 57,
+          "expected_min_executions_after_warmup": 56,
+          "actual_inference_executions": 53,
           "scheduler_due": 57,
           "buffer_not_ready": 4,
           "inference_executed": 53,
@@ -536,6 +621,10 @@
           "p95_nis": 0.6314246324566054
         },
         "biasnet": {
+          "expected_due_epochs": 0,
+          "actual_due_epochs": 0,
+          "expected_min_executions_after_warmup": 0,
+          "actual_inference_executions": 0,
           "scheduler_due": 0,
           "buffer_not_ready": 0,
           "inference_executed": 0,
@@ -551,9 +640,10 @@
           "total_ml_updates": 53
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.2655993333333333,
-          "max_cycle_latency_ms": 0.9349999999999999
-        }
+          "mean_cycle_latency_ms": 0.28379566666666667,
+          "max_cycle_latency_ms": 0.8834
+        },
+        "divergence_records": []
       },
       "C_eskf_bnet": {
         "final_horizontal_error_m": 149.8353649180453,
@@ -576,6 +666,10 @@
           "first_rejection_timestamp_s": null
         },
         "velocitynet": {
+          "expected_due_epochs": 0,
+          "actual_due_epochs": 0,
+          "expected_min_executions_after_warmup": 0,
+          "actual_inference_executions": 0,
           "scheduler_due": 0,
           "buffer_not_ready": 0,
           "inference_executed": 0,
@@ -586,6 +680,10 @@
           "p95_nis": 0.0
         },
         "biasnet": {
+          "expected_due_epochs": 30,
+          "actual_due_epochs": 30,
+          "expected_min_executions_after_warmup": 28,
+          "actual_inference_executions": 28,
           "scheduler_due": 30,
           "buffer_not_ready": 2,
           "inference_executed": 28,
@@ -601,9 +699,10 @@
           "total_ml_updates": 28
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.23613633333333334,
-          "max_cycle_latency_ms": 0.846
-        }
+          "mean_cycle_latency_ms": 0.2597696666666666,
+          "max_cycle_latency_ms": 1.3683999999999998
+        },
+        "divergence_records": []
       },
       "D_eskf_vnet_bnet": {
         "final_horizontal_error_m": 287.40952739683223,
@@ -626,6 +725,10 @@
           "first_rejection_timestamp_s": null
         },
         "velocitynet": {
+          "expected_due_epochs": 60,
+          "actual_due_epochs": 57,
+          "expected_min_executions_after_warmup": 56,
+          "actual_inference_executions": 53,
           "scheduler_due": 57,
           "buffer_not_ready": 4,
           "inference_executed": 53,
@@ -636,6 +739,10 @@
           "p95_nis": 0.6666945254074137
         },
         "biasnet": {
+          "expected_due_epochs": 30,
+          "actual_due_epochs": 30,
+          "expected_min_executions_after_warmup": 28,
+          "actual_inference_executions": 28,
           "scheduler_due": 30,
           "buffer_not_ready": 2,
           "inference_executed": 28,
@@ -651,9 +758,10 @@
           "total_ml_updates": 81
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.31194866666666665,
-          "max_cycle_latency_ms": 1.1801
-        }
+          "mean_cycle_latency_ms": 0.33806766666666666,
+          "max_cycle_latency_ms": 1.557
+        },
+        "divergence_records": []
       }
     },
     "moving_outage_60s": {
@@ -687,6 +795,10 @@
           "first_rejection_timestamp_s": null
         },
         "velocitynet": {
+          "expected_due_epochs": 0,
+          "actual_due_epochs": 0,
+          "expected_min_executions_after_warmup": 0,
+          "actual_inference_executions": 0,
           "scheduler_due": 0,
           "buffer_not_ready": 0,
           "inference_executed": 0,
@@ -697,6 +809,10 @@
           "p95_nis": 0.0
         },
         "biasnet": {
+          "expected_due_epochs": 0,
+          "actual_due_epochs": 0,
+          "expected_min_executions_after_warmup": 0,
+          "actual_inference_executions": 0,
           "scheduler_due": 0,
           "buffer_not_ready": 0,
           "inference_executed": 0,
@@ -712,9 +828,10 @@
           "total_ml_updates": 0
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.19433266666666665,
-          "max_cycle_latency_ms": 0.8857999999999999
-        }
+          "mean_cycle_latency_ms": 0.212334,
+          "max_cycle_latency_ms": 1.0198
+        },
+        "divergence_records": []
       },
       "B_eskf_vnet": {
         "final_horizontal_error_m": 731.901241493847,
@@ -737,6 +854,10 @@
           "first_rejection_timestamp_s": null
         },
         "velocitynet": {
+          "expected_due_epochs": 121,
+          "actual_due_epochs": 113,
+          "expected_min_executions_after_warmup": 117,
+          "actual_inference_executions": 109,
           "scheduler_due": 113,
           "buffer_not_ready": 4,
           "inference_executed": 109,
@@ -747,6 +868,10 @@
           "p95_nis": 1.2523804661437565
         },
         "biasnet": {
+          "expected_due_epochs": 0,
+          "actual_due_epochs": 0,
+          "expected_min_executions_after_warmup": 0,
+          "actual_inference_executions": 0,
           "scheduler_due": 0,
           "buffer_not_ready": 0,
           "inference_executed": 0,
@@ -762,9 +887,10 @@
           "total_ml_updates": 109
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.269993,
-          "max_cycle_latency_ms": 0.8821
-        }
+          "mean_cycle_latency_ms": 0.2915248333333333,
+          "max_cycle_latency_ms": 1.3321999999999998
+        },
+        "divergence_records": []
       },
       "C_eskf_bnet": {
         "final_horizontal_error_m": 764.0237094069894,
@@ -787,6 +913,10 @@
           "first_rejection_timestamp_s": null
         },
         "velocitynet": {
+          "expected_due_epochs": 0,
+          "actual_due_epochs": 0,
+          "expected_min_executions_after_warmup": 0,
+          "actual_inference_executions": 0,
           "scheduler_due": 0,
           "buffer_not_ready": 0,
           "inference_executed": 0,
@@ -797,6 +927,10 @@
           "p95_nis": 0.0
         },
         "biasnet": {
+          "expected_due_epochs": 61,
+          "actual_due_epochs": 59,
+          "expected_min_executions_after_warmup": 59,
+          "actual_inference_executions": 57,
           "scheduler_due": 59,
           "buffer_not_ready": 2,
           "inference_executed": 57,
@@ -812,9 +946,10 @@
           "total_ml_updates": 57
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.23498383333333334,
-          "max_cycle_latency_ms": 0.9240999999999999
-        }
+          "mean_cycle_latency_ms": 0.26224816666666667,
+          "max_cycle_latency_ms": 1.2896999999999998
+        },
+        "divergence_records": []
       },
       "D_eskf_vnet_bnet": {
         "final_horizontal_error_m": 500.23514875020015,
@@ -837,6 +972,10 @@
           "first_rejection_timestamp_s": null
         },
         "velocitynet": {
+          "expected_due_epochs": 121,
+          "actual_due_epochs": 113,
+          "expected_min_executions_after_warmup": 117,
+          "actual_inference_executions": 109,
           "scheduler_due": 113,
           "buffer_not_ready": 4,
           "inference_executed": 109,
@@ -847,6 +986,10 @@
           "p95_nis": 1.0930160851253394
         },
         "biasnet": {
+          "expected_due_epochs": 61,
+          "actual_due_epochs": 59,
+          "expected_min_executions_after_warmup": 59,
+          "actual_inference_executions": 57,
           "scheduler_due": 59,
           "buffer_not_ready": 2,
           "inference_executed": 57,
@@ -862,9 +1005,10 @@
           "total_ml_updates": 166
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.33754466666666666,
-          "max_cycle_latency_ms": 1.5754
-        }
+          "mean_cycle_latency_ms": 0.3338978333333333,
+          "max_cycle_latency_ms": 1.3858
+        },
+        "divergence_records": []
       }
     },
     "sharp_turn_stress": {
@@ -898,6 +1042,10 @@
           "first_rejection_timestamp_s": 27.999000000000002
         },
         "velocitynet": {
+          "expected_due_epochs": 0,
+          "actual_due_epochs": 0,
+          "expected_min_executions_after_warmup": 0,
+          "actual_inference_executions": 0,
           "scheduler_due": 0,
           "buffer_not_ready": 0,
           "inference_executed": 0,
@@ -908,6 +1056,10 @@
           "p95_nis": 0.0
         },
         "biasnet": {
+          "expected_due_epochs": 0,
+          "actual_due_epochs": 0,
+          "expected_min_executions_after_warmup": 0,
+          "actual_inference_executions": 0,
           "scheduler_due": 0,
           "buffer_not_ready": 0,
           "inference_executed": 0,
@@ -923,9 +1075,372 @@
           "total_ml_updates": 0
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.2574146666666666,
-          "max_cycle_latency_ms": 0.7302
-        }
+          "mean_cycle_latency_ms": 0.2828723333333333,
+          "max_cycle_latency_ms": 1.007
+        },
+        "divergence_records": [
+          {
+            "t_rel_s": 24.0,
+            "t_trip_s": 49.0,
+            "gt_heading_deg": 240.91,
+            "est_heading_deg": 242.3,
+            "heading_error_deg": 1.39,
+            "gyro_norm_rads": 0.0163,
+            "gyro_y_deg_s": -0.4,
+            "gyro_z_deg_s": 0.84,
+            "accel_norm_mps2": 9.944,
+            "est_gyro_bias_norm": 0.00188,
+            "est_accel_bias_norm": 0.0506,
+            "pos_innov_norm_m": 0.265,
+            "gnss_nis": 0.004,
+            "gnss_status": "APPLIED",
+            "pos_cov_trace": 3.09,
+            "vel_cov_trace": 0.002,
+            "att_cov_trace": 0.02102
+          },
+          {
+            "t_rel_s": 24.5,
+            "t_trip_s": 49.5,
+            "gt_heading_deg": 239.18,
+            "est_heading_deg": 241.77,
+            "heading_error_deg": 2.59,
+            "gyro_norm_rads": 0.0306,
+            "gyro_y_deg_s": -0.35,
+            "gyro_z_deg_s": 1.72,
+            "accel_norm_mps2": 10.065,
+            "est_gyro_bias_norm": 0.00292,
+            "est_accel_bias_norm": 0.0522,
+            "pos_innov_norm_m": 0.265,
+            "gnss_nis": 0.004,
+            "gnss_status": "APPLIED",
+            "pos_cov_trace": 3.09,
+            "vel_cov_trace": 0.002,
+            "att_cov_trace": 0.015591
+          },
+          {
+            "t_rel_s": 25.0,
+            "t_trip_s": 50.0,
+            "gt_heading_deg": 239.0,
+            "est_heading_deg": 240.0,
+            "heading_error_deg": 0.99,
+            "gyro_norm_rads": 0.0383,
+            "gyro_y_deg_s": -0.57,
+            "gyro_z_deg_s": 1.85,
+            "accel_norm_mps2": 10.134,
+            "est_gyro_bias_norm": 0.00362,
+            "est_accel_bias_norm": 0.0535,
+            "pos_innov_norm_m": 0.736,
+            "gnss_nis": 0.032,
+            "gnss_status": "APPLIED",
+            "pos_cov_trace": 2.993,
+            "vel_cov_trace": 0.028,
+            "att_cov_trace": 0.014826
+          },
+          {
+            "t_rel_s": 25.5,
+            "t_trip_s": 50.5,
+            "gt_heading_deg": 238.95,
+            "est_heading_deg": 239.06,
+            "heading_error_deg": 0.12,
+            "gyro_norm_rads": 0.0378,
+            "gyro_y_deg_s": -1.66,
+            "gyro_z_deg_s": 1.34,
+            "accel_norm_mps2": 10.243,
+            "est_gyro_bias_norm": 0.00362,
+            "est_accel_bias_norm": 0.0535,
+            "pos_innov_norm_m": 0.736,
+            "gnss_nis": 0.032,
+            "gnss_status": "APPLIED",
+            "pos_cov_trace": 3.011,
+            "vel_cov_trace": 0.101,
+            "att_cov_trace": 0.015567
+          },
+          {
+            "t_rel_s": 26.0,
+            "t_trip_s": 51.0,
+            "gt_heading_deg": 239.71,
+            "est_heading_deg": 239.97,
+            "heading_error_deg": 0.26,
+            "gyro_norm_rads": 0.0957,
+            "gyro_y_deg_s": -5.43,
+            "gyro_z_deg_s": -0.5,
+            "accel_norm_mps2": 9.928,
+            "est_gyro_bias_norm": 0.00364,
+            "est_accel_bias_norm": 0.0535,
+            "pos_innov_norm_m": 3.532,
+            "gnss_nis": 0.751,
+            "gnss_status": "APPLIED",
+            "pos_cov_trace": 2.997,
+            "vel_cov_trace": 0.22,
+            "att_cov_trace": 0.016322
+          },
+          {
+            "t_rel_s": 26.5,
+            "t_trip_s": 51.5,
+            "gt_heading_deg": 242.04,
+            "est_heading_deg": 240.35,
+            "heading_error_deg": 1.69,
+            "gyro_norm_rads": 0.2199,
+            "gyro_y_deg_s": -12.21,
+            "gyro_z_deg_s": -2.85,
+            "accel_norm_mps2": 10.038,
+            "est_gyro_bias_norm": 0.00364,
+            "est_accel_bias_norm": 0.0535,
+            "pos_innov_norm_m": 3.532,
+            "gnss_nis": 0.751,
+            "gnss_status": "APPLIED",
+            "pos_cov_trace": 3.223,
+            "vel_cov_trace": 0.411,
+            "att_cov_trace": 0.017114
+          },
+          {
+            "t_rel_s": 27.0,
+            "t_trip_s": 52.0,
+            "gt_heading_deg": 249.56,
+            "est_heading_deg": 239.7,
+            "heading_error_deg": 9.86,
+            "gyro_norm_rads": 0.395,
+            "gyro_y_deg_s": -22.17,
+            "gyro_z_deg_s": 0.49,
+            "accel_norm_mps2": 10.147,
+            "est_gyro_bias_norm": 0.00376,
+            "est_accel_bias_norm": 0.0535,
+            "pos_innov_norm_m": 8.906,
+            "gnss_nis": 4.717,
+            "gnss_status": "APPLIED",
+            "pos_cov_trace": 3.595,
+            "vel_cov_trace": 0.755,
+            "att_cov_trace": 0.01793
+          },
+          {
+            "t_rel_s": 27.5,
+            "t_trip_s": 52.5,
+            "gt_heading_deg": 259.51,
+            "est_heading_deg": 239.58,
+            "heading_error_deg": 19.94,
+            "gyro_norm_rads": 0.4663,
+            "gyro_y_deg_s": -26.23,
+            "gyro_z_deg_s": -1.89,
+            "accel_norm_mps2": 10.391,
+            "est_gyro_bias_norm": 0.00376,
+            "est_accel_bias_norm": 0.0535,
+            "pos_innov_norm_m": 8.906,
+            "gnss_nis": 4.717,
+            "gnss_status": "APPLIED",
+            "pos_cov_trace": 4.635,
+            "vel_cov_trace": 1.471,
+            "att_cov_trace": 0.018857
+          },
+          {
+            "t_rel_s": 28.0,
+            "t_trip_s": 53.0,
+            "gt_heading_deg": 273.26,
+            "est_heading_deg": 240.47,
+            "heading_error_deg": 32.79,
+            "gyro_norm_rads": 0.4043,
+            "gyro_y_deg_s": -23.13,
+            "gyro_z_deg_s": 1.07,
+            "accel_norm_mps2": 11.045,
+            "est_gyro_bias_norm": 0.00376,
+            "est_accel_bias_norm": 0.0535,
+            "pos_innov_norm_m": 18.727,
+            "gnss_nis": 19.759,
+            "gnss_status": "REJECTED",
+            "pos_cov_trace": 6.793,
+            "vel_cov_trace": 2.761,
+            "att_cov_trace": 0.019765
+          },
+          {
+            "t_rel_s": 28.5,
+            "t_trip_s": 53.5,
+            "gt_heading_deg": 285.44,
+            "est_heading_deg": 240.71,
+            "heading_error_deg": 44.74,
+            "gyro_norm_rads": 0.4148,
+            "gyro_y_deg_s": -23.17,
+            "gyro_z_deg_s": -1.21,
+            "accel_norm_mps2": 10.766,
+            "est_gyro_bias_norm": 0.00376,
+            "est_accel_bias_norm": 0.0535,
+            "pos_innov_norm_m": 18.727,
+            "gnss_nis": 19.759,
+            "gnss_status": "REJECTED",
+            "pos_cov_trace": 11.102,
+            "vel_cov_trace": 4.881,
+            "att_cov_trace": 0.020626
+          },
+          {
+            "t_rel_s": 29.0,
+            "t_trip_s": 54.0,
+            "gt_heading_deg": 295.41,
+            "est_heading_deg": 247.54,
+            "heading_error_deg": 47.86,
+            "gyro_norm_rads": 0.387,
+            "gyro_y_deg_s": -21.18,
+            "gyro_z_deg_s": -5.61,
+            "accel_norm_mps2": 10.162,
+            "est_gyro_bias_norm": 0.00376,
+            "est_accel_bias_norm": 0.0535,
+            "pos_innov_norm_m": 36.506,
+            "gnss_nis": 64.96,
+            "gnss_status": "REJECTED",
+            "pos_cov_trace": 19.143,
+            "vel_cov_trace": 7.869,
+            "att_cov_trace": 0.021419
+          },
+          {
+            "t_rel_s": 29.5,
+            "t_trip_s": 54.5,
+            "gt_heading_deg": 306.2,
+            "est_heading_deg": 256.95,
+            "heading_error_deg": 49.25,
+            "gyro_norm_rads": 0.3852,
+            "gyro_y_deg_s": -21.58,
+            "gyro_z_deg_s": -1.64,
+            "accel_norm_mps2": 10.265,
+            "est_gyro_bias_norm": 0.00376,
+            "est_accel_bias_norm": 0.0535,
+            "pos_innov_norm_m": 36.506,
+            "gnss_nis": 64.96,
+            "gnss_status": "REJECTED",
+            "pos_cov_trace": 33.249,
+            "vel_cov_trace": 11.858,
+            "att_cov_trace": 0.022143
+          },
+          {
+            "t_rel_s": 30.0,
+            "t_trip_s": 55.0,
+            "gt_heading_deg": 314.85,
+            "est_heading_deg": 281.54,
+            "heading_error_deg": 33.31,
+            "gyro_norm_rads": 0.3248,
+            "gyro_y_deg_s": -17.22,
+            "gyro_z_deg_s": -3.93,
+            "accel_norm_mps2": 10.328,
+            "est_gyro_bias_norm": 0.00376,
+            "est_accel_bias_norm": 0.0535,
+            "pos_innov_norm_m": 63.64,
+            "gnss_nis": 154.907,
+            "gnss_status": "REJECTED",
+            "pos_cov_trace": 56.326,
+            "vel_cov_trace": 16.785,
+            "att_cov_trace": 0.022754
+          },
+          {
+            "t_rel_s": 30.5,
+            "t_trip_s": 55.5,
+            "gt_heading_deg": 324.46,
+            "est_heading_deg": 325.96,
+            "heading_error_deg": 1.5,
+            "gyro_norm_rads": 0.2283,
+            "gyro_y_deg_s": -12.92,
+            "gyro_z_deg_s": 0.59,
+            "accel_norm_mps2": 10.12,
+            "est_gyro_bias_norm": 0.00376,
+            "est_accel_bias_norm": 0.0535,
+            "pos_innov_norm_m": 63.64,
+            "gnss_nis": 154.907,
+            "gnss_status": "REJECTED",
+            "pos_cov_trace": 92.08,
+            "vel_cov_trace": 22.873,
+            "att_cov_trace": 0.023293
+          },
+          {
+            "t_rel_s": 31.0,
+            "t_trip_s": 56.0,
+            "gt_heading_deg": 330.47,
+            "est_heading_deg": 2.2,
+            "heading_error_deg": 31.73,
+            "gyro_norm_rads": 0.1708,
+            "gyro_y_deg_s": -9.48,
+            "gyro_z_deg_s": -2.4,
+            "accel_norm_mps2": 10.217,
+            "est_gyro_bias_norm": 0.00376,
+            "est_accel_bias_norm": 0.0535,
+            "pos_innov_norm_m": 101.053,
+            "gnss_nis": 289.305,
+            "gnss_status": "REJECTED",
+            "pos_cov_trace": 145.183,
+            "vel_cov_trace": 30.031,
+            "att_cov_trace": 0.023769
+          },
+          {
+            "t_rel_s": 31.5,
+            "t_trip_s": 56.5,
+            "gt_heading_deg": 334.87,
+            "est_heading_deg": 13.2,
+            "heading_error_deg": 38.33,
+            "gyro_norm_rads": 0.1386,
+            "gyro_y_deg_s": -7.12,
+            "gyro_z_deg_s": 1.33,
+            "accel_norm_mps2": 9.871,
+            "est_gyro_bias_norm": 0.00376,
+            "est_accel_bias_norm": 0.0535,
+            "pos_innov_norm_m": 101.053,
+            "gnss_nis": 289.305,
+            "gnss_status": "REJECTED",
+            "pos_cov_trace": 220.873,
+            "vel_cov_trace": 38.129,
+            "att_cov_trace": 0.024203
+          },
+          {
+            "t_rel_s": 32.0,
+            "t_trip_s": 57.0,
+            "gt_heading_deg": 338.48,
+            "est_heading_deg": 21.69,
+            "heading_error_deg": 43.21,
+            "gyro_norm_rads": 0.0903,
+            "gyro_y_deg_s": -5.02,
+            "gyro_z_deg_s": 0.35,
+            "accel_norm_mps2": 9.894,
+            "est_gyro_bias_norm": 0.00376,
+            "est_accel_bias_norm": 0.0535,
+            "pos_innov_norm_m": 150.605,
+            "gnss_nis": 469.907,
+            "gnss_status": "REJECTED",
+            "pos_cov_trace": 325.092,
+            "vel_cov_trace": 47.268,
+            "att_cov_trace": 0.024617
+          },
+          {
+            "t_rel_s": 32.5,
+            "t_trip_s": 57.5,
+            "gt_heading_deg": 338.97,
+            "est_heading_deg": 27.01,
+            "heading_error_deg": 48.05,
+            "gyro_norm_rads": 0.0401,
+            "gyro_y_deg_s": -1.6,
+            "gyro_z_deg_s": 0.89,
+            "accel_norm_mps2": 10.106,
+            "est_gyro_bias_norm": 0.00376,
+            "est_accel_bias_norm": 0.0535,
+            "pos_innov_norm_m": 150.605,
+            "gnss_nis": 469.907,
+            "gnss_status": "REJECTED",
+            "pos_cov_trace": 465.043,
+            "vel_cov_trace": 57.641,
+            "att_cov_trace": 0.025029
+          },
+          {
+            "t_rel_s": 33.0,
+            "t_trip_s": 58.0,
+            "gt_heading_deg": 340.11,
+            "est_heading_deg": 31.5,
+            "heading_error_deg": 51.39,
+            "gyro_norm_rads": 0.0936,
+            "gyro_y_deg_s": -1.7,
+            "gyro_z_deg_s": 3.72,
+            "accel_norm_mps2": 9.845,
+            "est_gyro_bias_norm": 0.00376,
+            "est_accel_bias_norm": 0.0535,
+            "pos_innov_norm_m": 214.039,
+            "gnss_nis": 708.265,
+            "gnss_status": "REJECTED",
+            "pos_cov_trace": 647.498,
+            "vel_cov_trace": 68.973,
+            "att_cov_trace": 0.025446
+          }
+        ]
       },
       "B_eskf_vnet": {
         "final_horizontal_error_m": 5219.013452368463,
@@ -948,6 +1463,10 @@
           "first_rejection_timestamp_s": 27.999000000000002
         },
         "velocitynet": {
+          "expected_due_epochs": 121,
+          "actual_due_epochs": 114,
+          "expected_min_executions_after_warmup": 117,
+          "actual_inference_executions": 110,
           "scheduler_due": 114,
           "buffer_not_ready": 4,
           "inference_executed": 110,
@@ -961,6 +1480,10 @@
           "p95_nis": 13.28016797264159
         },
         "biasnet": {
+          "expected_due_epochs": 0,
+          "actual_due_epochs": 0,
+          "expected_min_executions_after_warmup": 0,
+          "actual_inference_executions": 0,
           "scheduler_due": 0,
           "buffer_not_ready": 0,
           "inference_executed": 0,
@@ -976,9 +1499,10 @@
           "total_ml_updates": 8
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.321588,
-          "max_cycle_latency_ms": 1.2197
-        }
+          "mean_cycle_latency_ms": 0.3455968333333333,
+          "max_cycle_latency_ms": 1.4404
+        },
+        "divergence_records": []
       },
       "C_eskf_bnet": {
         "final_horizontal_error_m": 5278.919689103609,
@@ -1001,6 +1525,10 @@
           "first_rejection_timestamp_s": 27.999000000000002
         },
         "velocitynet": {
+          "expected_due_epochs": 0,
+          "actual_due_epochs": 0,
+          "expected_min_executions_after_warmup": 0,
+          "actual_inference_executions": 0,
           "scheduler_due": 0,
           "buffer_not_ready": 0,
           "inference_executed": 0,
@@ -1011,6 +1539,10 @@
           "p95_nis": 0.0
         },
         "biasnet": {
+          "expected_due_epochs": 61,
+          "actual_due_epochs": 59,
+          "expected_min_executions_after_warmup": 59,
+          "actual_inference_executions": 57,
           "scheduler_due": 59,
           "buffer_not_ready": 2,
           "inference_executed": 57,
@@ -1026,9 +1558,10 @@
           "total_ml_updates": 57
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.3067106666666667,
-          "max_cycle_latency_ms": 0.9935999999999999
-        }
+          "mean_cycle_latency_ms": 0.3293773333333333,
+          "max_cycle_latency_ms": 1.4482
+        },
+        "divergence_records": []
       },
       "D_eskf_vnet_bnet": {
         "final_horizontal_error_m": 5202.3726235109925,
@@ -1051,6 +1584,10 @@
           "first_rejection_timestamp_s": 27.999000000000002
         },
         "velocitynet": {
+          "expected_due_epochs": 121,
+          "actual_due_epochs": 114,
+          "expected_min_executions_after_warmup": 117,
+          "actual_inference_executions": 110,
           "scheduler_due": 114,
           "buffer_not_ready": 4,
           "inference_executed": 110,
@@ -1064,6 +1601,10 @@
           "p95_nis": 13.16713566071857
         },
         "biasnet": {
+          "expected_due_epochs": 61,
+          "actual_due_epochs": 59,
+          "expected_min_executions_after_warmup": 59,
+          "actual_inference_executions": 57,
           "scheduler_due": 59,
           "buffer_not_ready": 2,
           "inference_executed": 57,
@@ -1079,10 +1620,374 @@
           "total_ml_updates": 65
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.3604575,
-          "max_cycle_latency_ms": 1.4830999999999999
-        }
+          "mean_cycle_latency_ms": 0.389395,
+          "max_cycle_latency_ms": 1.4923
+        },
+        "divergence_records": []
       }
     }
-  }
+  },
+  "sharp_turn_divergence_diagnostics": [
+    {
+      "t_rel_s": 24.0,
+      "t_trip_s": 49.0,
+      "gt_heading_deg": 240.91,
+      "est_heading_deg": 242.3,
+      "heading_error_deg": 1.39,
+      "gyro_norm_rads": 0.0163,
+      "gyro_y_deg_s": -0.4,
+      "gyro_z_deg_s": 0.84,
+      "accel_norm_mps2": 9.944,
+      "est_gyro_bias_norm": 0.00188,
+      "est_accel_bias_norm": 0.0506,
+      "pos_innov_norm_m": 0.265,
+      "gnss_nis": 0.004,
+      "gnss_status": "APPLIED",
+      "pos_cov_trace": 3.09,
+      "vel_cov_trace": 0.002,
+      "att_cov_trace": 0.02102
+    },
+    {
+      "t_rel_s": 24.5,
+      "t_trip_s": 49.5,
+      "gt_heading_deg": 239.18,
+      "est_heading_deg": 241.77,
+      "heading_error_deg": 2.59,
+      "gyro_norm_rads": 0.0306,
+      "gyro_y_deg_s": -0.35,
+      "gyro_z_deg_s": 1.72,
+      "accel_norm_mps2": 10.065,
+      "est_gyro_bias_norm": 0.00292,
+      "est_accel_bias_norm": 0.0522,
+      "pos_innov_norm_m": 0.265,
+      "gnss_nis": 0.004,
+      "gnss_status": "APPLIED",
+      "pos_cov_trace": 3.09,
+      "vel_cov_trace": 0.002,
+      "att_cov_trace": 0.015591
+    },
+    {
+      "t_rel_s": 25.0,
+      "t_trip_s": 50.0,
+      "gt_heading_deg": 239.0,
+      "est_heading_deg": 240.0,
+      "heading_error_deg": 0.99,
+      "gyro_norm_rads": 0.0383,
+      "gyro_y_deg_s": -0.57,
+      "gyro_z_deg_s": 1.85,
+      "accel_norm_mps2": 10.134,
+      "est_gyro_bias_norm": 0.00362,
+      "est_accel_bias_norm": 0.0535,
+      "pos_innov_norm_m": 0.736,
+      "gnss_nis": 0.032,
+      "gnss_status": "APPLIED",
+      "pos_cov_trace": 2.993,
+      "vel_cov_trace": 0.028,
+      "att_cov_trace": 0.014826
+    },
+    {
+      "t_rel_s": 25.5,
+      "t_trip_s": 50.5,
+      "gt_heading_deg": 238.95,
+      "est_heading_deg": 239.06,
+      "heading_error_deg": 0.12,
+      "gyro_norm_rads": 0.0378,
+      "gyro_y_deg_s": -1.66,
+      "gyro_z_deg_s": 1.34,
+      "accel_norm_mps2": 10.243,
+      "est_gyro_bias_norm": 0.00362,
+      "est_accel_bias_norm": 0.0535,
+      "pos_innov_norm_m": 0.736,
+      "gnss_nis": 0.032,
+      "gnss_status": "APPLIED",
+      "pos_cov_trace": 3.011,
+      "vel_cov_trace": 0.101,
+      "att_cov_trace": 0.015567
+    },
+    {
+      "t_rel_s": 26.0,
+      "t_trip_s": 51.0,
+      "gt_heading_deg": 239.71,
+      "est_heading_deg": 239.97,
+      "heading_error_deg": 0.26,
+      "gyro_norm_rads": 0.0957,
+      "gyro_y_deg_s": -5.43,
+      "gyro_z_deg_s": -0.5,
+      "accel_norm_mps2": 9.928,
+      "est_gyro_bias_norm": 0.00364,
+      "est_accel_bias_norm": 0.0535,
+      "pos_innov_norm_m": 3.532,
+      "gnss_nis": 0.751,
+      "gnss_status": "APPLIED",
+      "pos_cov_trace": 2.997,
+      "vel_cov_trace": 0.22,
+      "att_cov_trace": 0.016322
+    },
+    {
+      "t_rel_s": 26.5,
+      "t_trip_s": 51.5,
+      "gt_heading_deg": 242.04,
+      "est_heading_deg": 240.35,
+      "heading_error_deg": 1.69,
+      "gyro_norm_rads": 0.2199,
+      "gyro_y_deg_s": -12.21,
+      "gyro_z_deg_s": -2.85,
+      "accel_norm_mps2": 10.038,
+      "est_gyro_bias_norm": 0.00364,
+      "est_accel_bias_norm": 0.0535,
+      "pos_innov_norm_m": 3.532,
+      "gnss_nis": 0.751,
+      "gnss_status": "APPLIED",
+      "pos_cov_trace": 3.223,
+      "vel_cov_trace": 0.411,
+      "att_cov_trace": 0.017114
+    },
+    {
+      "t_rel_s": 27.0,
+      "t_trip_s": 52.0,
+      "gt_heading_deg": 249.56,
+      "est_heading_deg": 239.7,
+      "heading_error_deg": 9.86,
+      "gyro_norm_rads": 0.395,
+      "gyro_y_deg_s": -22.17,
+      "gyro_z_deg_s": 0.49,
+      "accel_norm_mps2": 10.147,
+      "est_gyro_bias_norm": 0.00376,
+      "est_accel_bias_norm": 0.0535,
+      "pos_innov_norm_m": 8.906,
+      "gnss_nis": 4.717,
+      "gnss_status": "APPLIED",
+      "pos_cov_trace": 3.595,
+      "vel_cov_trace": 0.755,
+      "att_cov_trace": 0.01793
+    },
+    {
+      "t_rel_s": 27.5,
+      "t_trip_s": 52.5,
+      "gt_heading_deg": 259.51,
+      "est_heading_deg": 239.58,
+      "heading_error_deg": 19.94,
+      "gyro_norm_rads": 0.4663,
+      "gyro_y_deg_s": -26.23,
+      "gyro_z_deg_s": -1.89,
+      "accel_norm_mps2": 10.391,
+      "est_gyro_bias_norm": 0.00376,
+      "est_accel_bias_norm": 0.0535,
+      "pos_innov_norm_m": 8.906,
+      "gnss_nis": 4.717,
+      "gnss_status": "APPLIED",
+      "pos_cov_trace": 4.635,
+      "vel_cov_trace": 1.471,
+      "att_cov_trace": 0.018857
+    },
+    {
+      "t_rel_s": 28.0,
+      "t_trip_s": 53.0,
+      "gt_heading_deg": 273.26,
+      "est_heading_deg": 240.47,
+      "heading_error_deg": 32.79,
+      "gyro_norm_rads": 0.4043,
+      "gyro_y_deg_s": -23.13,
+      "gyro_z_deg_s": 1.07,
+      "accel_norm_mps2": 11.045,
+      "est_gyro_bias_norm": 0.00376,
+      "est_accel_bias_norm": 0.0535,
+      "pos_innov_norm_m": 18.727,
+      "gnss_nis": 19.759,
+      "gnss_status": "REJECTED",
+      "pos_cov_trace": 6.793,
+      "vel_cov_trace": 2.761,
+      "att_cov_trace": 0.019765
+    },
+    {
+      "t_rel_s": 28.5,
+      "t_trip_s": 53.5,
+      "gt_heading_deg": 285.44,
+      "est_heading_deg": 240.71,
+      "heading_error_deg": 44.74,
+      "gyro_norm_rads": 0.4148,
+      "gyro_y_deg_s": -23.17,
+      "gyro_z_deg_s": -1.21,
+      "accel_norm_mps2": 10.766,
+      "est_gyro_bias_norm": 0.00376,
+      "est_accel_bias_norm": 0.0535,
+      "pos_innov_norm_m": 18.727,
+      "gnss_nis": 19.759,
+      "gnss_status": "REJECTED",
+      "pos_cov_trace": 11.102,
+      "vel_cov_trace": 4.881,
+      "att_cov_trace": 0.020626
+    },
+    {
+      "t_rel_s": 29.0,
+      "t_trip_s": 54.0,
+      "gt_heading_deg": 295.41,
+      "est_heading_deg": 247.54,
+      "heading_error_deg": 47.86,
+      "gyro_norm_rads": 0.387,
+      "gyro_y_deg_s": -21.18,
+      "gyro_z_deg_s": -5.61,
+      "accel_norm_mps2": 10.162,
+      "est_gyro_bias_norm": 0.00376,
+      "est_accel_bias_norm": 0.0535,
+      "pos_innov_norm_m": 36.506,
+      "gnss_nis": 64.96,
+      "gnss_status": "REJECTED",
+      "pos_cov_trace": 19.143,
+      "vel_cov_trace": 7.869,
+      "att_cov_trace": 0.021419
+    },
+    {
+      "t_rel_s": 29.5,
+      "t_trip_s": 54.5,
+      "gt_heading_deg": 306.2,
+      "est_heading_deg": 256.95,
+      "heading_error_deg": 49.25,
+      "gyro_norm_rads": 0.3852,
+      "gyro_y_deg_s": -21.58,
+      "gyro_z_deg_s": -1.64,
+      "accel_norm_mps2": 10.265,
+      "est_gyro_bias_norm": 0.00376,
+      "est_accel_bias_norm": 0.0535,
+      "pos_innov_norm_m": 36.506,
+      "gnss_nis": 64.96,
+      "gnss_status": "REJECTED",
+      "pos_cov_trace": 33.249,
+      "vel_cov_trace": 11.858,
+      "att_cov_trace": 0.022143
+    },
+    {
+      "t_rel_s": 30.0,
+      "t_trip_s": 55.0,
+      "gt_heading_deg": 314.85,
+      "est_heading_deg": 281.54,
+      "heading_error_deg": 33.31,
+      "gyro_norm_rads": 0.3248,
+      "gyro_y_deg_s": -17.22,
+      "gyro_z_deg_s": -3.93,
+      "accel_norm_mps2": 10.328,
+      "est_gyro_bias_norm": 0.00376,
+      "est_accel_bias_norm": 0.0535,
+      "pos_innov_norm_m": 63.64,
+      "gnss_nis": 154.907,
+      "gnss_status": "REJECTED",
+      "pos_cov_trace": 56.326,
+      "vel_cov_trace": 16.785,
+      "att_cov_trace": 0.022754
+    },
+    {
+      "t_rel_s": 30.5,
+      "t_trip_s": 55.5,
+      "gt_heading_deg": 324.46,
+      "est_heading_deg": 325.96,
+      "heading_error_deg": 1.5,
+      "gyro_norm_rads": 0.2283,
+      "gyro_y_deg_s": -12.92,
+      "gyro_z_deg_s": 0.59,
+      "accel_norm_mps2": 10.12,
+      "est_gyro_bias_norm": 0.00376,
+      "est_accel_bias_norm": 0.0535,
+      "pos_innov_norm_m": 63.64,
+      "gnss_nis": 154.907,
+      "gnss_status": "REJECTED",
+      "pos_cov_trace": 92.08,
+      "vel_cov_trace": 22.873,
+      "att_cov_trace": 0.023293
+    },
+    {
+      "t_rel_s": 31.0,
+      "t_trip_s": 56.0,
+      "gt_heading_deg": 330.47,
+      "est_heading_deg": 2.2,
+      "heading_error_deg": 31.73,
+      "gyro_norm_rads": 0.1708,
+      "gyro_y_deg_s": -9.48,
+      "gyro_z_deg_s": -2.4,
+      "accel_norm_mps2": 10.217,
+      "est_gyro_bias_norm": 0.00376,
+      "est_accel_bias_norm": 0.0535,
+      "pos_innov_norm_m": 101.053,
+      "gnss_nis": 289.305,
+      "gnss_status": "REJECTED",
+      "pos_cov_trace": 145.183,
+      "vel_cov_trace": 30.031,
+      "att_cov_trace": 0.023769
+    },
+    {
+      "t_rel_s": 31.5,
+      "t_trip_s": 56.5,
+      "gt_heading_deg": 334.87,
+      "est_heading_deg": 13.2,
+      "heading_error_deg": 38.33,
+      "gyro_norm_rads": 0.1386,
+      "gyro_y_deg_s": -7.12,
+      "gyro_z_deg_s": 1.33,
+      "accel_norm_mps2": 9.871,
+      "est_gyro_bias_norm": 0.00376,
+      "est_accel_bias_norm": 0.0535,
+      "pos_innov_norm_m": 101.053,
+      "gnss_nis": 289.305,
+      "gnss_status": "REJECTED",
+      "pos_cov_trace": 220.873,
+      "vel_cov_trace": 38.129,
+      "att_cov_trace": 0.024203
+    },
+    {
+      "t_rel_s": 32.0,
+      "t_trip_s": 57.0,
+      "gt_heading_deg": 338.48,
+      "est_heading_deg": 21.69,
+      "heading_error_deg": 43.21,
+      "gyro_norm_rads": 0.0903,
+      "gyro_y_deg_s": -5.02,
+      "gyro_z_deg_s": 0.35,
+      "accel_norm_mps2": 9.894,
+      "est_gyro_bias_norm": 0.00376,
+      "est_accel_bias_norm": 0.0535,
+      "pos_innov_norm_m": 150.605,
+      "gnss_nis": 469.907,
+      "gnss_status": "REJECTED",
+      "pos_cov_trace": 325.092,
+      "vel_cov_trace": 47.268,
+      "att_cov_trace": 0.024617
+    },
+    {
+      "t_rel_s": 32.5,
+      "t_trip_s": 57.5,
+      "gt_heading_deg": 338.97,
+      "est_heading_deg": 27.01,
+      "heading_error_deg": 48.05,
+      "gyro_norm_rads": 0.0401,
+      "gyro_y_deg_s": -1.6,
+      "gyro_z_deg_s": 0.89,
+      "accel_norm_mps2": 10.106,
+      "est_gyro_bias_norm": 0.00376,
+      "est_accel_bias_norm": 0.0535,
+      "pos_innov_norm_m": 150.605,
+      "gnss_nis": 469.907,
+      "gnss_status": "REJECTED",
+      "pos_cov_trace": 465.043,
+      "vel_cov_trace": 57.641,
+      "att_cov_trace": 0.025029
+    },
+    {
+      "t_rel_s": 33.0,
+      "t_trip_s": 58.0,
+      "gt_heading_deg": 340.11,
+      "est_heading_deg": 31.5,
+      "heading_error_deg": 51.39,
+      "gyro_norm_rads": 0.0936,
+      "gyro_y_deg_s": -1.7,
+      "gyro_z_deg_s": 3.72,
+      "accel_norm_mps2": 9.845,
+      "est_gyro_bias_norm": 0.00376,
+      "est_accel_bias_norm": 0.0535,
+      "pos_innov_norm_m": 214.039,
+      "gnss_nis": 708.265,
+      "gnss_status": "REJECTED",
+      "pos_cov_trace": 647.498,
+      "vel_cov_trace": 68.973,
+      "att_cov_trace": 0.025446
+    }
+  ]
 }

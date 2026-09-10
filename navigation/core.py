@@ -22,6 +22,7 @@ from navigation.frames.local_geo import GeoReference
 from navigation.eskf.gating import MahalanobisGating
 from navigation.eskf.predict import ProcessNoiseConfig, predict_eskf
 from navigation.eskf.state import ESKFNominalState, ESKFState
+from navigation.eskf.update import UpdateDiagnostics
 from navigation.eskf.scheduling import CadenceConfig, MLCadenceScheduler
 from navigation.eskf.measurements.gnss import GNSSMeasurementModel, GNSSUpdateConfig
 from navigation.eskf.measurements.zupt import (
@@ -117,6 +118,7 @@ class NavigationCore:
         self.zupt_detector = ClassicalZUPTDetector(config=self.config.zupt_detector)
         self.zupt_model = ZUPTMeasurementModel(config=self.config.zupt_measurement)
         self.gnss_model: Optional[GNSSMeasurementModel] = None
+        self.last_gnss_diagnostics: Optional[Tuple[UpdateDiagnostics, Optional[UpdateDiagnostics]]] = None
         
         vnet_cfg = self.config.velocitynet
         if not self.config.velocitynet_enabled:
@@ -393,6 +395,7 @@ class NavigationCore:
         )
 
         # 2. Velocity update (if provided)
+        diag_v: Optional[UpdateDiagnostics] = None
         if v_east is not None and v_north is not None:
             v_u = 0.0 if v_up is None else float(v_up)
             self.state, diag_v = self.gnss_model.update_velocity(
@@ -405,7 +408,9 @@ class NavigationCore:
                 timestamp_ns=t_ns,
             )
 
+        self.last_gnss_diagnostics = (diag_p, diag_v)
         return diag_p.applied
+
 
     def get_navigation_state(self) -> NavigationState:
         """Serialize current state into canonical Phase 1 NavigationState schema."""

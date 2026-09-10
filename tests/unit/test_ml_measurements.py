@@ -343,7 +343,50 @@ class TestVelocityNetMeasurementModel:
         # North velocity should increase towards 10 m/s
         assert updated_state.nominal.velocity_enu[1] > 8.0
 
+    def test_attitude_dependent_arbitrary_yaw_projection(self) -> None:
+        """Verify VelocityNet forward projection works correctly for arbitrary heading angles."""
+        from navigation.ins.attitude import rotation_matrix_to_quaternion
+
+        # Heading psi = 37 degrees clockwise from North
+        psi_deg = 37.0
+        psi_rad = math.radians(psi_deg)
+        # In ENU: vehicle forward (+X) is [sin(psi), cos(psi), 0]
+        # vehicle left (+Y) is [-cos(psi), sin(psi), 0]
+        fwd_expected = np.array([math.sin(psi_rad), math.cos(psi_rad), 0.0])
+        lat_expected = np.array([-math.cos(psi_rad), math.sin(psi_rad), 0.0])
+        up_expected = np.array([0.0, 0.0, 1.0])
+
+        R_veh = np.column_stack([fwd_expected, lat_expected, up_expected])
+        q_veh = rotation_matrix_to_quaternion(R_veh)
+
+        # Vehicle moving along its heading at 15.0 m/s
+        v_veh = 15.0 * fwd_expected
+        nom = ESKFNominalState.from_components(
+            position_enu=np.zeros(3),
+            velocity_enu=v_veh,
+            q=q_veh,
+        )
+        state = ESKFState(nominal=nom, covariance=np.eye(15, dtype=np.float64) * 0.1)
+
+        model = VelocityNetMeasurementModel(VelocityNetConfig(use_causal_ema=False, min_speed_threshold_mps=0.0))
+        # Measurement is 18.0 m/s (faster than current 15.0 m/s)
+        pred = VelocityNetOutput(speed_mps=18.0, log_variance=0.0, variance=1.0, valid=True)
+
+        updated_state, diag = model.update(state, pred)
+        assert diag.applied is True
+        assert diag.predicted_speed == pytest.approx(15.0, abs=1e-4)
+
+        # Innovation must push velocity purely along the forward heading vector
+        delta_v = updated_state.nominal.velocity_enu - v_veh
+        assert delta_v[0] > 0.0  # East component increases
+        assert delta_v[1] > 0.0  # North component increases
+        assert abs(delta_v[2]) < 1e-4  # Up component unaffected
+        # Direction of delta_v must match fwd_expected exactly
+        delta_v_dir = delta_v / np.linalg.norm(delta_v)
+        np.testing.assert_allclose(delta_v_dir, fwd_expected, atol=1e-4)
+
     def test_standstill_motion_gating(self, initial_state: ESKFState) -> None:
+
         model = VelocityNetMeasurementModel(VelocityNetConfig(min_speed_threshold_mps=0.5, use_causal_ema=False))
         # Speed below threshold
         pred = VelocityNetOutput(speed_mps=0.2, log_variance=0.0, variance=1.0, valid=True)

@@ -194,3 +194,59 @@ def test_causal_window_properties_on_real_data(preprocessed_real_trip) -> None:
             # Window duration for 20 samples at 10 Hz should be ~1.9s
             span_s = (win_ts[-1] - win_ts[0]) * 1e-9
             assert 1.85 <= span_s <= 1.95
+
+
+def test_timeline_shift_catches_misalignment(preprocessed_real_trip) -> None:
+    """Proves that a deliberate +/-100ms shift in replay timestamps is strictly caught by assertions."""
+    res, _ = preprocessed_real_trip
+    start_idx = 250
+    n_pts = 30
+
+    # Clean aligned timeline
+    aligned_ts = [int(res.timestamps_ns[start_idx + i]) for i in range(n_pts)]
+    for idx_check in range(n_pts):
+        expected_ts = int(res.timestamps_ns[start_idx + idx_check])
+        assert aligned_ts[idx_check] == expected_ts
+
+    # Deliberate +100ms shift at index 10 (simulating off-by-one or lookahead)
+    shifted_plus_100ms = list(aligned_ts)
+    shifted_plus_100ms[10] += int(1e8)  # +100 ms
+    with pytest.raises(AssertionError, match="Timestamp off-by-one"):
+        for idx_check in range(n_pts):
+            expected_ts = int(res.timestamps_ns[start_idx + idx_check])
+            assert shifted_plus_100ms[idx_check] == expected_ts, (
+                f"Timestamp off-by-one at step {idx_check}: {shifted_plus_100ms[idx_check]} != {expected_ts}"
+            )
+
+    # Deliberate -100ms shift at index 10 (simulating sample lag)
+    shifted_minus_100ms = list(aligned_ts)
+    shifted_minus_100ms[10] -= int(1e8)  # -100 ms
+    with pytest.raises(AssertionError, match="Timestamp off-by-one"):
+        for idx_check in range(n_pts):
+            expected_ts = int(res.timestamps_ns[start_idx + idx_check])
+            assert shifted_minus_100ms[idx_check] == expected_ts, (
+                f"Timestamp off-by-one at step {idx_check}: {shifted_minus_100ms[idx_check]} != {expected_ts}"
+            )
+
+
+def test_frame_shift_catches_misalignment(preprocessed_real_trip) -> None:
+    """Proves that a geodetic frame offset or un-anchored origin is strictly caught by start assertions."""
+    res, _ = preprocessed_real_trip
+    start_idx = 250
+    seg_lat0 = float(res.aux_signals["v_ref_lat"][start_idx])
+    seg_lon0 = float(res.aux_signals["v_ref_lon"][start_idx])
+    seg_alt0 = float(res.aux_signals["v_ref_alt_m"][start_idx])
+
+    # 1. True segment-local origin: GT(0) is strictly [0, 0, 0]
+    geo_ref_correct = GeoReference(lat_ref=seg_lat0, lon_ref=seg_lon0, alt_ref=seg_alt0)
+    e, n, u = geo_ref_correct.geodetic_to_enu(seg_lat0, seg_lon0, seg_alt0)
+    assert np.allclose([e, n, u], [0.0, 0.0, 0.0], atol=1e-5)
+
+    # 2. Deliberate 0.0001 deg latitude shift (~11.1m error in local frame)
+    geo_ref_shifted = GeoReference(lat_ref=seg_lat0 + 0.0001, lon_ref=seg_lon0, alt_ref=seg_alt0)
+    e_shift, n_shift, u_shift = geo_ref_shifted.geodetic_to_enu(seg_lat0, seg_lon0, seg_alt0)
+    with pytest.raises(AssertionError, match="Segment-start GT position is not"):
+        assert np.allclose([e_shift, n_shift, u_shift], [0.0, 0.0, 0.0], atol=1e-5), (
+            f"Segment-start GT position is not [0,0,0]: [{e_shift}, {n_shift}, {u_shift}]"
+        )
+

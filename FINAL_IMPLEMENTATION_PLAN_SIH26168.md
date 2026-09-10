@@ -713,11 +713,11 @@ The two dedicated authority/always-active tests (steps 6-7) are the most importa
     2. `moving_outage_10s` (10s, moving at 13.4 m/s, 133.9m traveled): Pure ESKF Final H $13.836\text{ m}$; +BNet Final H $13.153\text{ m}$ (BiasNet reduces drift by $0.68\text{ m}$); +VNet+BNet Final H $20.534\text{ m}$.
     3. `moving_outage_30s` (30s, moving at 13.9 m/s, 417.5m traveled): Pure ESKF Final H $106.423\text{ m}$, Vel RMSE $4.566\text{ m/s}$; +VNet+BNet Final H $287.410\text{ m}$, Vel RMSE $3.894\text{ m/s}$ (-14.7% velocity error reduction).
     4. `moving_outage_60s` (60s, moving at 14.1 m/s, 842.2m traveled): Pure ESKF Final H $753.808\text{ m}$, Vel RMSE $23.239\text{ m/s}$; +VNet+BNet Final H $500.235\text{ m}$ (-253.57m drift reduction!), Vel RMSE $7.365\text{ m/s}$ (-68.3% error reduction!).
-    5. `sharp_turn_stress` (60s, turning segment, 238.2m traveled): Retained as diagnostic stress test. 27/60 GNSS fixes applied. At $t_{\text{rel}} = 26.5\text{s}$, an 84° turn in 4s combined with a ~2.0s empirical synchronization lag between phone and VBOX yields an $18.73\text{m}$ position innovation exceeding the 3D Mahalanobis gate ($d^2 = 19.76 > 11.345$). Without Phase 10's persistent-rejection reacquisition logic, open-loop dead-reckoning ensues.
+    5. `sharp_turn_stress` (60s, turning segment, 238.2m traveled): Retained as diagnostic stress test. 27/60 GNSS fixes applied. In ground truth, an 84° turn begins at $t_{\text{trip}} = 51.5\text{s}$ ($t_{\text{rel}} = 26.5\text{s}$), but sensor angular velocity is delayed and recorded primarily in the phone pitch axis (as stationary calibration determined `is_yaw_aligned: False`). At $t_{\text{rel}} = 28.0\text{s}$ ($t_{\text{trip}} = 53.0\text{s}$), the position innovation reaches $18.73\text{m}$, evaluating to $\text{NIS} = 19.76 > 11.345$ ($\chi_3^2(0.99)$), triggering outlier rejection. Without Phase 10's persistent-rejection reacquisition logic, open-loop dead reckoning ensues for the remaining 33 fixes.
 - **Covariance Health**: 100% PASS across all scenarios and conditions (strictly finite, symmetric, PSD, normalized quaternion).
 - **Test Suite Accounting**:
-  - Exact Command: `uv run pytest`
-  - Exact Results: **338 collected, 338 passed, 0 failed, 0 skipped, 14 warnings in 27.63s**.
+  - Full Test Suite: `uv run pytest` $\to$ **341 collected, 341 passed, 0 failed, 0 skipped, 14 warnings in 28.92s**.
+  - Phase 9 Core & Integration Suite: `uv run pytest tests/unit/test_ml_measurements.py tests/integration/test_ml_eskf_authority.py tests/integration/test_ml_active_without_gnss.py tests/integration/test_full_ml_replay_real_data.py` $\to$ **32 collected, 32 passed in 3.66s**.
 - **Artifacts Generated**: `docs/ml_eskf_integration_results.json`, `docs/ml_eskf_integration_report.md`.
 
 #### Next-Phase Gate
