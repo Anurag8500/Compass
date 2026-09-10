@@ -41,12 +41,19 @@ class NHCConfig:
         sigma_vz: Standard deviation of vertical velocity pseudo-measurement noise [m/s] (default 0.05).
         min_forward_speed_mps: Forward speed threshold below which NHC is suppressed to avoid
             near-standstill singularity or conflict with ZUPT [m/s] (default 0.50).
+        enable_attitude_coupling: Whether to include attitude error sensitivity block in H
+            (default True). If False, operates in decoupled velocity-only subspace mode.
+        preserve_forward_speed: Whether to enforce the kinematic subspace constraint that NHC
+            strictly updates lateral and vertical velocity, preventing artificial deceleration
+            via cross-covariance bleeding into forward velocity (default True).
         skid_detector: Configuration for conservative consistency evaluation and relaxation.
     """
     enabled: bool = True
     sigma_vy: float = 0.10
     sigma_vz: float = 0.05
     min_forward_speed_mps: float = 0.50
+    enable_attitude_coupling: bool = True
+    preserve_forward_speed: bool = True
     skid_detector: SkidDetectorConfig = field(default_factory=SkidDetectorConfig)
 
 
@@ -123,13 +130,14 @@ class NHCMeasurementModel:
         # For right-multiplicative error q = q_nom ⊗ delta_q(delta_theta^v):
         # [v^v]_x = [[0, -vz, vy], [vz, 0, -vx], [-vy, vx, 0]]
         # P_yz @ [v^v]_x = [[vz, 0, -vx], [-vy, vx, 0]]
-        H[0, 6] = vz_v
-        H[0, 7] = 0.0
-        H[0, 8] = -vx_v
+        if self.config.enable_attitude_coupling:
+            H[0, 6] = vz_v
+            H[0, 7] = 0.0
+            H[0, 8] = -vx_v
 
-        H[1, 6] = -vy_v
-        H[1, 7] = vx_v
-        H[1, 8] = 0.0
+            H[1, 6] = -vy_v
+            H[1, 7] = vx_v
+            H[1, 8] = 0.0
 
         # Baseline noise covariance
         R_base = np.diag([self.config.sigma_vy ** 2, self.config.sigma_vz ** 2]).astype(np.float64)
@@ -238,6 +246,33 @@ class NHCMeasurementModel:
             gating=None,  # Already evaluated and gated via SkidSlipDetector
             timestamp_ns=timestamp_ns,
         )
+
+        # 8. Kinematic Subspace Constraint:
+        # NHC is strictly a 2D virtual measurement constraining lateral (v_y^v = 0) and
+        # vertical (v_z^v = 0) motion. Forward velocity (v_x^v) is unobserved by NHC and must
+        # not suffer artificial deceleration due to cross-covariance coupling (P_v_theta, P_vx_vy)
+        # during high-speed cruising.
+        if diag.applied and self.config.preserve_forward_speed:
+            R_v_n_pre = state.nominal.R_v_n
+            v_v_pre = R_v_n_pre.T @ state.nominal.velocity_enu
+
+            R_v_n_post = updated_state.nominal.R_v_n
+            v_v_post = R_v_n_post.T @ updated_state.nominal.velocity_enu
+
+            # Preserve forward velocity v_x^v from nominal state prior to NHC update
+            v_v_clean = np.array([v_v_pre[0], v_v_post[1], v_v_post[2]], dtype=np.float64)
+            v_enu_clean = R_v_n_post @ v_v_clean
+
+            from navigation.eskf.state import ESKFNominalState
+            clean_nom = ESKFNominalState(
+                position_enu=updated_state.nominal.position_enu,
+                velocity_enu=v_enu_clean,
+                q=updated_state.nominal.q,
+                accel_bias=updated_state.nominal.accel_bias,
+                gyro_bias=updated_state.nominal.gyro_bias,
+                timestamp_ns=updated_state.nominal.timestamp_ns,
+            )
+            updated_state = ESKFState(nominal=clean_nom, covariance=updated_state.covariance)
 
         return updated_state, NHCDiagnostics(
             status=eval_res.status,

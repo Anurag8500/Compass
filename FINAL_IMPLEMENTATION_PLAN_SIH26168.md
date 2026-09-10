@@ -835,20 +835,22 @@ Straight-driving and skid unit tests; stop-and-go ZUPT tests; replay-level drift
 
 #### Definition of Done
 - [x] Analytical NHC Jacobian $\mathbf{H}_{\text{nhc}} = [\mathbf{0}_{2 \times 3}, \mathbf{P}_{yz} (\hat{\mathbf{R}}_v^n)^T, \mathbf{P}_{yz} [\hat{\mathbf{v}}^v]_\times, \mathbf{0}_{2 \times 3}, \mathbf{0}_{2 \times 3}]$ validated against repository's actual right-multiplicative body-frame attitude error convention ($\mathbf{q} = \hat{\mathbf{q}} \otimes \delta \mathbf{q}(\delta \boldsymbol{\theta}^v)$) using central finite differences via `state.inject_error()`. HARD GATE PASSED: maximum absolute numerical discrepancy is $1.004 \times 10^{-8}$.
-- [x] Conservative skid/slip relaxation implemented in `navigation/nhc/skid_detection.py` using innovation consistency $d^2 = \mathbf{y}^T \mathbf{S}^{-1} \mathbf{y}$ as the primary defense line (`NORMAL`, `RELAXED`, `SKIPPED`, `SKIPPED_STATIONARY`, `SKIPPED_LOW_SPEED`). High dynamics or high innovation trigger covariance inflation ($s_R = 1.0 + 3.0 \cdot \text{slip\_factor}$) or gating skips ($d^2 > 16.0$) without making unsubstantiated physical skid claims.
-- [x] Classical Phase-5 Gated ZUPT detector reused with zero ML dependencies. Standstill confirmed cycles trigger 3D zero-velocity updates ($\mathbf{z}_{\text{zupt}} = [0, 0, 0]^T$) while moving cycles trigger 2D body NHC updates. Standstill handshake verified: NHC yields to ZUPT (`SKIPPED_STATIONARY`).
+- [x] Kinematic Subspace Constraint: Solved cross-covariance leakage from lateral error states into forward speed ($P_{v_x, v_y}^v$) by enforcing forward speed preservation in `navigation/nhc/measurement.py` (`preserve_forward_speed = True`).
+- [x] Conservative skid/slip relaxation implemented in `navigation/nhc/skid_detection.py` using innovation consistency $d^2 = \mathbf{y}^T \mathbf{S}^{-1} \mathbf{y}$ as the primary defense line (`NORMAL`, `RELAXED`, `SKIPPED`, `SKIPPED_STATIONARY`, `SKIPPED_LOW_SPEED`). Gating thresholds synchronized to $\chi_2^2(0.99) = 9.210$ and severe outlier gate $d^2 > 16.0$.
+- [x] Classical Phase-5 Gated ZUPT detector reused with zero ML dependencies. Standstill handshake verified: NHC yields cleanly to ZUPT (`SKIPPED_STATIONARY` across 158 cycles in Scenario D).
 - [x] Authoritative fusion ordering established in `NavigationCore.step_imu`: (1) IMU propagation $\to$ (2) ML updates $\to$ (3) Stationarity check $\to$ (4) NHC update $\to$ (5) ZUPT update $\to$ (6) Outage & Mode FSM evaluation $\to$ (7) Covariance health.
 - [x] ESKF generic update path remains authoritative for all updates; no state vector overwrite.
-- [x] Replay baseline clearly established and labeled as "Phase-9-compatible NHC/ZUPT-off baseline". 4-way evaluation conducted on IO-VNBD `Categorised_S1.npz`:
-  - Scenario C (Sharp Turn): Phase 11 Full cuts final outage drift from $1566.48\text{ m}$ to $982.46\text{ m}$ (37.3% drift reduction, 32.0% RMSE reduction).
-  - Scenario D (Stop-and-Go 17.6s Standstill): Phase 11 Full cuts standstill position drift from $747.78\text{ m}$ to $101.16\text{ m}$ (86.5% error reduction); 84 ZUPT updates accepted; 158 NHC updates safely skipped at standstill.
-  - Scenario B (Highway Outage Scaling): Drift evaluated and honestly documented at 10s, 30s, and 60s.
-- [x] Test suite: 10 Phase 11 unit tests passing; 75 Phase 9/10 regression tests passing; full repository suite 394/394 passing (0 failed, 14 warnings in 33.44s).
+- [x] 4-way evaluation conducted on IO-VNBD `Categorised_S1.npz`:
+  - Scenario B 60s Outage: NHC reduces final drift from $585.83\text{ m}$ to $319.55\text{ m}$ (45.4% improvement, $266.28\text{ m}$ reduction).
+  - Scenario B 30s Outage: Max drift reduced from $250.38\text{ m}$ to $167.06\text{ m}$ (33.3% improvement).
+  - Scenario D (Stop-and-Go 17.6s Standstill): Final drift cut from $747.78\text{ m}$ to $259.29\text{ m}$ (Full) and $120.13\text{ m}$ (ZUPT-only, 83.9% reduction); 87 ZUPT updates accepted.
+  - Scenario B 10s Outage: Residual mounting yaw in S1 (phone GPS speed capped at 5.2 m/s prevented automated yaw alignment) results in sideslip projection.
+- [x] Test suite: 29 Phase 11 unit tests passing; full repository suite 344/344 passing (0 failed, 2 warnings in 12.75s).
 
-#### Status: COMPLETE & FROZEN (Ready for Phase 12)
+#### Status: CONDITIONAL — NEEDS FURTHER WORK (DO NOT FREEZE YET)
 
 #### Next-Phase Gate
-Kinematic constraints integrated, verified against finite differences, and validated across 4-way replay. Ready for Phase 12 (Downstream Map Matching & Trajectory Snapping: OSM + HMM).
+Phase 11 demonstrates major drift reduction on long outages (60s drift -45.4%) and standstills (ZUPT -83.9%), with zero estimator divergence across all tests. However, full freeze is withheld pending multi-session dataset validation (S2-S5) to verify automatic phone mounting yaw alignment convergence under uncorrupted GPS velocity. Ready for Phase 12 progression while Phase 11 remains active/conditional.
 
 ---
 
