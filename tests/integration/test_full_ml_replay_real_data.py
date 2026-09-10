@@ -22,6 +22,7 @@ from navigation.frames.local_geo import GeoReference
 from navigation.ins.attitude import rotation_matrix_to_quaternion
 from navigation.preprocessing.pipeline import PreprocessingPipeline
 from navigation.core import NavigationCore, NavigationCoreConfig
+from navigation.eskf.scheduling import compute_expected_cadence
 from ml.data.resample import resample_to_canonical_10hz
 
 
@@ -154,13 +155,23 @@ def test_real_replay_aided_and_outage_handoff(preprocessed_real_trip) -> None:
     assert gnss_fixes_applied >= 9, f"Expected ~10 GNSS fixes in aided phase, got {gnss_fixes_applied}"
     assert bnet_executed_count > 0, "BiasNet must have executed and applied updates"
 
-    # Verify telemetry accounting invariants
+    # Verify telemetry accounting invariants and exact cadence matching
     ml_telem = core.get_ml_telemetry()
+    step_ts = res.timestamps_ns[start_idx + 1 : end_idx + 1]
+    exp_vnet = compute_expected_cadence(step_ts, interval_s=0.5, warmup_samples=20)
+    exp_bnet = compute_expected_cadence(step_ts, interval_s=1.0, warmup_samples=20)
+
+    assert ml_telem["velocitynet"]["scheduler_due"] == exp_vnet.due_epochs == 40
+    assert ml_telem["velocitynet"]["inference_executed"] == exp_vnet.inference_executions == 36
+    assert ml_telem["velocitynet"]["buffer_not_ready"] == exp_vnet.buffer_not_ready == 4
+
+    assert ml_telem["biasnet"]["scheduler_due"] == exp_bnet.due_epochs == 20
+    assert ml_telem["biasnet"]["inference_executed"] == exp_bnet.inference_executions == 18
+    assert ml_telem["biasnet"]["buffer_not_ready"] == exp_bnet.buffer_not_ready == 2
+
     for name, telem in ml_telem.items():
-        assert telem["scheduler_due"] >= telem["inference_executed"], f"{name}: scheduler_due < inference_executed"
-        assert telem["inference_executed"] >= telem["update_accepted"], f"{name}: inference_executed < update_accepted"
-        assert telem["inference_executed"] == telem["update_accepted"] + telem["update_rejected"], f"{name}: inference_executed mismatch"
-        assert telem["buffer_not_ready"] > 0, f"{name}: expected warmup buffer_not_ready > 0"
+        assert telem["scheduler_due"] == telem["buffer_not_ready"] + telem["inference_executed"]
+        assert telem["inference_executed"] == telem["update_accepted"] + telem["update_rejected"]
     
     # Final state extraction and sanity
     nav_state = core.get_navigation_state()

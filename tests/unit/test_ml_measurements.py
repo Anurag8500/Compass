@@ -16,7 +16,12 @@ import pytest
 
 from navigation.eskf.gating import MahalanobisGating
 from navigation.eskf.predict import predict_eskf
-from navigation.eskf.scheduling import CadenceConfig, MLCadenceScheduler
+from navigation.eskf.scheduling import (
+    CadenceConfig,
+    ExpectedCadence,
+    MLCadenceScheduler,
+    compute_expected_cadence,
+)
 from navigation.eskf.state import ESKFNominalState, ESKFState
 from navigation.eskf.measurements.velocitynet import (
     CausalEMA,
@@ -279,6 +284,80 @@ class TestMLCadenceScheduler:
         b_diffs = np.diff(bnet_exec_times_s)
         assert len(b_diffs) > 0
         assert np.all(b_diffs >= 0.999), f"BNet cadence violated: diffs={b_diffs}"
+
+    def test_anchored_timeline_prevents_jitter_drift(self) -> None:
+        """Proves that timeline anchoring prevents drift even with realistic +/- 3ms IMU jitter."""
+        sched = MLCadenceScheduler(CadenceConfig(velocitynet_interval_s=0.5, biasnet_interval_s=1.0, jitter_tolerance_s=0.02))
+        
+        # 60 seconds of IMU at ~10 Hz with +/- 3ms jitter
+        rng = np.random.default_rng(42)
+        nominal_dt_ns = int(1e8)
+        jitters_ns = (rng.uniform(-0.003, 0.003, size=600) * 1e9).astype(np.int64)
+        
+        timestamps_ns: list[int] = []
+        cur_t = 0
+        for j in jitters_ns:
+            cur_t += nominal_dt_ns + int(j)
+            timestamps_ns.append(cur_t)
+
+        vnet_due_count = 0
+        bnet_due_count = 0
+        for t_ns in timestamps_ns:
+            v_due, b_due = sched.evaluate_cycle(t_ns)
+            if v_due:
+                vnet_due_count += 1
+                sched.mark_velocitynet_scheduled(t_ns)
+            if b_due:
+                bnet_due_count += 1
+                sched.mark_biasnet_scheduled(t_ns)
+
+        # In 60s at 0.5s interval: exactly 120 epochs
+        # In 60s at 1.0s interval: exactly 60 epochs
+        assert vnet_due_count == 120, f"Expected 120 VNet due events under jitter, got {vnet_due_count}"
+        assert bnet_due_count == 60, f"Expected 60 BNet due events under jitter, got {bnet_due_count}"
+
+        # Verify exact match with compute_expected_cadence
+        exp_vnet = compute_expected_cadence(timestamps_ns, interval_s=0.5, warmup_samples=20)
+        exp_bnet = compute_expected_cadence(timestamps_ns, interval_s=1.0, warmup_samples=20)
+        assert exp_vnet.due_epochs == 120
+        assert exp_bnet.due_epochs == 60
+        assert exp_vnet.buffer_not_ready == 4
+        assert exp_vnet.inference_executions == 116
+        assert exp_bnet.buffer_not_ready == 2
+        assert exp_bnet.inference_executions == 58
+
+    def test_large_time_gap_no_burst_executions(self) -> None:
+        """Proves that a sensor outage/time gap does NOT trigger burst duplicate executions."""
+        sched = MLCadenceScheduler(CadenceConfig(velocitynet_interval_s=0.5, biasnet_interval_s=1.0))
+        
+        # t = 0.0s to 0.9s (10 samples)
+        for step in range(10):
+            t_ns = int(step * 1e8)
+            v_due, b_due = sched.evaluate_cycle(t_ns)
+            if v_due:
+                sched.mark_velocitynet_scheduled(t_ns)
+            if b_due:
+                sched.mark_biasnet_scheduled(t_ns)
+
+        # Sudden gap of 3.3 seconds: jump from 0.9s to 4.2s
+        gap_t_ns = int(4.2 * 1e9)
+        v_due_after_gap, b_due_after_gap = sched.evaluate_cycle(gap_t_ns)
+
+        # Should fire exactly once at gap_t_ns
+        assert v_due_after_gap is True
+        assert b_due_after_gap is True
+        sched.mark_velocitynet_scheduled(gap_t_ns)
+        sched.mark_biasnet_scheduled(gap_t_ns)
+
+        # Immediate next sample at 4.3s (0.1s later): neither should fire (next grid is 4.5s for VNet, 5.0s for BNet)
+        v_next, b_next = sched.evaluate_cycle(int(4.3 * 1e9))
+        assert v_next is False
+        assert b_next is False
+
+        # Next sample at 4.5s: VNet should fire on the anchored 0.5s grid
+        v_due_45, b_due_45 = sched.evaluate_cycle(int(4.5 * 1e9))
+        assert v_due_45 is True
+        assert b_due_45 is False
 
 
 # ==============================================================================

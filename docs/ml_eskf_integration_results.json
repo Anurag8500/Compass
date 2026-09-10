@@ -2,7 +2,7 @@
   "metadata": {
     "phase": "Phase 9",
     "title": "ML -> ESKF Integration and Real GNSS-Denied Offline Replay",
-    "timestamp": "2026-09-10 14:01:10 UTC",
+    "timestamp": "2026-09-10 14:32:51 UTC",
     "dataset": "Categorised_S1.npz",
     "frame_convention": "One segment-local ENU frame per segment anchored at segment initial fix",
     "models": {
@@ -87,22 +87,22 @@
           "total_ml_updates": 0
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.21532766666666664,
-          "max_cycle_latency_ms": 0.6651
+          "mean_cycle_latency_ms": 0.22055183333333334,
+          "max_cycle_latency_ms": 0.6853
         },
         "divergence_records": []
       },
       "B_eskf_vnet": {
-        "final_horizontal_error_m": 1.1088331936959466,
-        "horizontal_rmse_m": 0.7630568438343326,
-        "max_horizontal_excursion_m": 1.4352901391582615,
-        "final_position_error_3d_m": 1.8141456015828352,
-        "velocity_rmse_mps": 0.4568867475908327,
-        "mean_yaw_error_deg": 18.433979744198652,
-        "final_accel_bias_norm_mps2": 0.05554615409429346,
-        "final_gyro_bias_norm_rads": 0.010738286887409888,
+        "final_horizontal_error_m": 1.1581567345130732,
+        "horizontal_rmse_m": 0.7994646049824751,
+        "max_horizontal_excursion_m": 1.4561834628278307,
+        "final_position_error_3d_m": 1.8407112119432474,
+        "velocity_rmse_mps": 0.4540722715978108,
+        "mean_yaw_error_deg": 18.411922680301615,
+        "final_accel_bias_norm_mps2": 0.05552601915824859,
+        "final_gyro_bias_norm_rads": 0.010755165535270627,
         "covariance_healthy": true,
-        "min_covariance_eigenvalue": 3.5075724734677884e-06,
+        "min_covariance_eigenvalue": 3.5075708992243355e-06,
         "filter_diverged": false,
         "zupt_updates_applied": 0,
         "gnss": {
@@ -113,18 +113,18 @@
           "first_rejection_timestamp_s": null
         },
         "velocitynet": {
-          "expected_due_epochs": 121,
-          "actual_due_epochs": 113,
-          "expected_min_executions_after_warmup": 117,
-          "actual_inference_executions": 109,
-          "scheduler_due": 113,
+          "expected_due_epochs": 120,
+          "actual_due_epochs": 120,
+          "expected_min_executions_after_warmup": 116,
+          "actual_inference_executions": 116,
+          "scheduler_due": 120,
           "buffer_not_ready": 4,
-          "inference_executed": 109,
-          "update_accepted": 109,
+          "inference_executed": 116,
+          "update_accepted": 116,
           "update_rejected": 0,
           "rejection_reasons": {},
-          "mean_nis": 1.0450401914078933,
-          "p95_nis": 3.3871308945394007
+          "mean_nis": 1.0577296960139386,
+          "p95_nis": 3.462101386138084
         },
         "biasnet": {
           "expected_due_epochs": 0,
@@ -141,27 +141,27 @@
           "p95_nis": 0.0
         },
         "combined_nis": {
-          "mean_nis": 1.0450401914078933,
-          "p95_nis": 3.3871308945394007,
-          "total_ml_updates": 109
+          "mean_nis": 1.0577296960139386,
+          "p95_nis": 3.462101386138084,
+          "total_ml_updates": 116
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.2992026666666667,
-          "max_cycle_latency_ms": 1.3566
+          "mean_cycle_latency_ms": 0.3043801666666667,
+          "max_cycle_latency_ms": 1.1935
         },
         "divergence_records": []
       },
       "C_eskf_bnet": {
-        "final_horizontal_error_m": 0.0987977863684499,
-        "horizontal_rmse_m": 0.5217283952242914,
+        "final_horizontal_error_m": 0.08029689063818178,
+        "horizontal_rmse_m": 0.526659420128718,
         "max_horizontal_excursion_m": 1.4100979269610003,
-        "final_position_error_3d_m": 1.5382423833584737,
-        "velocity_rmse_mps": 0.49793704146880513,
-        "mean_yaw_error_deg": 13.775910902988988,
-        "final_accel_bias_norm_mps2": 0.05406715566184059,
-        "final_gyro_bias_norm_rads": 0.010427194958915203,
+        "final_position_error_3d_m": 1.5395137113102224,
+        "velocity_rmse_mps": 0.5094947572734332,
+        "mean_yaw_error_deg": 11.73259307551533,
+        "final_accel_bias_norm_mps2": 0.054609990409340135,
+        "final_gyro_bias_norm_rads": 0.010510476639553692,
         "covariance_healthy": true,
-        "min_covariance_eigenvalue": 3.2759420893763096e-06,
+        "min_covariance_eigenvalue": 3.2723885904461743e-06,
         "filter_diverged": false,
         "zupt_updates_applied": 0,
         "gnss": {
@@ -186,41 +186,41 @@
           "p95_nis": 0.0
         },
         "biasnet": {
-          "expected_due_epochs": 61,
-          "actual_due_epochs": 59,
-          "expected_min_executions_after_warmup": 59,
-          "actual_inference_executions": 57,
-          "scheduler_due": 59,
+          "expected_due_epochs": 60,
+          "actual_due_epochs": 60,
+          "expected_min_executions_after_warmup": 58,
+          "actual_inference_executions": 58,
+          "scheduler_due": 60,
           "buffer_not_ready": 2,
-          "inference_executed": 57,
-          "update_accepted": 57,
+          "inference_executed": 58,
+          "update_accepted": 58,
           "update_rejected": 0,
           "rejection_reasons": {},
-          "mean_nis": 1.081691546966705,
-          "p95_nis": 2.972275355368369
+          "mean_nis": 1.1582443301684673,
+          "p95_nis": 2.581934893813879
         },
         "combined_nis": {
-          "mean_nis": 1.081691546966705,
-          "p95_nis": 2.972275355368369,
-          "total_ml_updates": 57
+          "mean_nis": 1.1582443301684673,
+          "p95_nis": 2.581934893813879,
+          "total_ml_updates": 58
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.2563358333333333,
-          "max_cycle_latency_ms": 1.1931
+          "mean_cycle_latency_ms": 0.26131299999999996,
+          "max_cycle_latency_ms": 1.0909
         },
         "divergence_records": []
       },
       "D_eskf_vnet_bnet": {
-        "final_horizontal_error_m": 0.8568690177964465,
-        "horizontal_rmse_m": 0.7083293164066332,
+        "final_horizontal_error_m": 0.8185904969613982,
+        "horizontal_rmse_m": 0.7189831882921949,
         "max_horizontal_excursion_m": 1.4310114804215124,
-        "final_position_error_3d_m": 1.69942815154672,
-        "velocity_rmse_mps": 0.4688582007873364,
-        "mean_yaw_error_deg": 13.707773292747477,
-        "final_accel_bias_norm_mps2": 0.05381487155414603,
-        "final_gyro_bias_norm_rads": 0.010429745217164645,
+        "final_position_error_3d_m": 1.684849801420305,
+        "velocity_rmse_mps": 0.47735857178654306,
+        "mean_yaw_error_deg": 11.646540497363597,
+        "final_accel_bias_norm_mps2": 0.05435190975485503,
+        "final_gyro_bias_norm_rads": 0.010487978128792546,
         "covariance_healthy": true,
-        "min_covariance_eigenvalue": 3.2759320655132283e-06,
+        "min_covariance_eigenvalue": 3.2723781838240745e-06,
         "filter_diverged": false,
         "zupt_updates_applied": 0,
         "gnss": {
@@ -231,41 +231,41 @@
           "first_rejection_timestamp_s": null
         },
         "velocitynet": {
-          "expected_due_epochs": 121,
-          "actual_due_epochs": 113,
-          "expected_min_executions_after_warmup": 117,
-          "actual_inference_executions": 109,
-          "scheduler_due": 113,
+          "expected_due_epochs": 120,
+          "actual_due_epochs": 120,
+          "expected_min_executions_after_warmup": 116,
+          "actual_inference_executions": 116,
+          "scheduler_due": 120,
           "buffer_not_ready": 4,
-          "inference_executed": 109,
-          "update_accepted": 109,
+          "inference_executed": 116,
+          "update_accepted": 116,
           "update_rejected": 0,
           "rejection_reasons": {},
-          "mean_nis": 0.746695609290717,
-          "p95_nis": 2.088930158901792
+          "mean_nis": 0.6853874907360705,
+          "p95_nis": 1.8998681104753636
         },
         "biasnet": {
-          "expected_due_epochs": 61,
-          "actual_due_epochs": 59,
-          "expected_min_executions_after_warmup": 59,
-          "actual_inference_executions": 57,
-          "scheduler_due": 59,
+          "expected_due_epochs": 60,
+          "actual_due_epochs": 60,
+          "expected_min_executions_after_warmup": 58,
+          "actual_inference_executions": 58,
+          "scheduler_due": 60,
           "buffer_not_ready": 2,
-          "inference_executed": 57,
-          "update_accepted": 57,
+          "inference_executed": 58,
+          "update_accepted": 58,
           "update_rejected": 0,
           "rejection_reasons": {},
-          "mean_nis": 1.0816948121489038,
-          "p95_nis": 2.9722791481515842
+          "mean_nis": 1.1582479373255297,
+          "p95_nis": 2.581941805444277
         },
         "combined_nis": {
-          "mean_nis": 0.861725456055275,
-          "p95_nis": 2.300462515050145,
-          "total_ml_updates": 166
+          "mean_nis": 0.8430076395992236,
+          "p95_nis": 2.0810306722546685,
+          "total_ml_updates": 174
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.3403426666666667,
-          "max_cycle_latency_ms": 1.6156
+          "mean_cycle_latency_ms": 0.343595,
+          "max_cycle_latency_ms": 1.706
         },
         "divergence_records": []
       }
@@ -334,22 +334,22 @@
           "total_ml_updates": 0
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.213449,
-          "max_cycle_latency_ms": 0.6985
+          "mean_cycle_latency_ms": 0.223355,
+          "max_cycle_latency_ms": 0.6867
         },
         "divergence_records": []
       },
       "B_eskf_vnet": {
-        "final_horizontal_error_m": 20.686515344108827,
-        "horizontal_rmse_m": 8.883154165562988,
-        "max_horizontal_excursion_m": 20.686515344108827,
-        "final_position_error_3d_m": 21.863533303497956,
-        "velocity_rmse_mps": 2.715357062351405,
-        "mean_yaw_error_deg": 4.508522765710012,
-        "final_accel_bias_norm_mps2": 0.005454860150767797,
-        "final_gyro_bias_norm_rads": 0.0025061957670238846,
+        "final_horizontal_error_m": 20.747630837434258,
+        "horizontal_rmse_m": 8.898456484984006,
+        "max_horizontal_excursion_m": 20.747630837434258,
+        "final_position_error_3d_m": 21.920987776560615,
+        "velocity_rmse_mps": 2.7172110030044574,
+        "mean_yaw_error_deg": 4.507224687430187,
+        "final_accel_bias_norm_mps2": 0.005549578805069246,
+        "final_gyro_bias_norm_rads": 0.002504632985245656,
         "covariance_healthy": true,
-        "min_covariance_eigenvalue": 1.2090349934409779e-05,
+        "min_covariance_eigenvalue": 1.209034670534199e-05,
         "filter_diverged": false,
         "zupt_updates_applied": 0,
         "gnss": {
@@ -361,17 +361,17 @@
         },
         "velocitynet": {
           "expected_due_epochs": 20,
-          "actual_due_epochs": 19,
+          "actual_due_epochs": 20,
           "expected_min_executions_after_warmup": 16,
-          "actual_inference_executions": 15,
-          "scheduler_due": 19,
+          "actual_inference_executions": 16,
+          "scheduler_due": 20,
           "buffer_not_ready": 4,
-          "inference_executed": 15,
-          "update_accepted": 15,
+          "inference_executed": 16,
+          "update_accepted": 16,
           "update_rejected": 0,
           "rejection_reasons": {},
-          "mean_nis": 0.09329277405143882,
-          "p95_nis": 0.2624060079810143
+          "mean_nis": 0.09183457142257281,
+          "p95_nis": 0.2681525919330883
         },
         "biasnet": {
           "expected_due_epochs": 0,
@@ -388,27 +388,27 @@
           "p95_nis": 0.0
         },
         "combined_nis": {
-          "mean_nis": 0.09329277405143882,
-          "p95_nis": 0.2624060079810143,
-          "total_ml_updates": 15
+          "mean_nis": 0.09183457142257281,
+          "p95_nis": 0.2681525919330883,
+          "total_ml_updates": 16
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.31139,
-          "max_cycle_latency_ms": 1.1227
+          "mean_cycle_latency_ms": 0.28733,
+          "max_cycle_latency_ms": 1.1804
         },
         "divergence_records": []
       },
       "C_eskf_bnet": {
-        "final_horizontal_error_m": 13.153270979912689,
-        "horizontal_rmse_m": 5.776932640489082,
-        "max_horizontal_excursion_m": 13.153270979912689,
-        "final_position_error_3d_m": 14.721173855110317,
-        "velocity_rmse_mps": 1.721155051945718,
-        "mean_yaw_error_deg": 4.653374169870283,
-        "final_accel_bias_norm_mps2": 0.002708048402624813,
-        "final_gyro_bias_norm_rads": 0.004220755078165428,
+        "final_horizontal_error_m": 12.954069873075904,
+        "horizontal_rmse_m": 5.755181639545195,
+        "max_horizontal_excursion_m": 12.954069873075904,
+        "final_position_error_3d_m": 14.52797628120248,
+        "velocity_rmse_mps": 1.711973632356198,
+        "mean_yaw_error_deg": 4.657012860967174,
+        "final_accel_bias_norm_mps2": 0.0026717368733955487,
+        "final_gyro_bias_norm_rads": 0.004348251158348235,
         "covariance_healthy": true,
-        "min_covariance_eigenvalue": 1.16438712883165e-05,
+        "min_covariance_eigenvalue": 1.1643936623104367e-05,
         "filter_diverged": false,
         "zupt_updates_applied": 0,
         "gnss": {
@@ -443,31 +443,31 @@
           "update_accepted": 8,
           "update_rejected": 0,
           "rejection_reasons": {},
-          "mean_nis": 0.684110869371501,
-          "p95_nis": 1.1515283014477773
+          "mean_nis": 0.6917467487952937,
+          "p95_nis": 1.1584508097644934
         },
         "combined_nis": {
-          "mean_nis": 0.684110869371501,
-          "p95_nis": 1.1515283014477773,
+          "mean_nis": 0.6917467487952937,
+          "p95_nis": 1.1584508097644934,
           "total_ml_updates": 8
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.25809299999999996,
-          "max_cycle_latency_ms": 1.3236999999999999
+          "mean_cycle_latency_ms": 0.254413,
+          "max_cycle_latency_ms": 1.2372999999999998
         },
         "divergence_records": []
       },
       "D_eskf_vnet_bnet": {
-        "final_horizontal_error_m": 20.53358951097751,
-        "horizontal_rmse_m": 8.779868281042624,
-        "max_horizontal_excursion_m": 20.53358951097751,
-        "final_position_error_3d_m": 21.73402201615215,
-        "velocity_rmse_mps": 2.627749340534919,
-        "mean_yaw_error_deg": 4.677812512683527,
-        "final_accel_bias_norm_mps2": 0.005853202022727412,
-        "final_gyro_bias_norm_rads": 0.0032216564334223937,
+        "final_horizontal_error_m": 20.559543804761717,
+        "horizontal_rmse_m": 8.798901190320443,
+        "max_horizontal_excursion_m": 20.559543804761717,
+        "final_position_error_3d_m": 21.75035828218905,
+        "velocity_rmse_mps": 2.6284876412006217,
+        "mean_yaw_error_deg": 4.680573016147677,
+        "final_accel_bias_norm_mps2": 0.006344911899785363,
+        "final_gyro_bias_norm_rads": 0.0033102674797198623,
         "covariance_healthy": true,
-        "min_covariance_eigenvalue": 1.1643710148778404e-05,
+        "min_covariance_eigenvalue": 1.1643769385263816e-05,
         "filter_diverged": false,
         "zupt_updates_applied": 0,
         "gnss": {
@@ -479,17 +479,17 @@
         },
         "velocitynet": {
           "expected_due_epochs": 20,
-          "actual_due_epochs": 19,
+          "actual_due_epochs": 20,
           "expected_min_executions_after_warmup": 16,
-          "actual_inference_executions": 15,
-          "scheduler_due": 19,
+          "actual_inference_executions": 16,
+          "scheduler_due": 20,
           "buffer_not_ready": 4,
-          "inference_executed": 15,
-          "update_accepted": 15,
+          "inference_executed": 16,
+          "update_accepted": 16,
           "update_rejected": 0,
           "rejection_reasons": {},
-          "mean_nis": 0.095713702695514,
-          "p95_nis": 0.2688978544850973
+          "mean_nis": 0.09384962894753704,
+          "p95_nis": 0.27480762901250466
         },
         "biasnet": {
           "expected_due_epochs": 10,
@@ -502,17 +502,17 @@
           "update_accepted": 8,
           "update_rejected": 0,
           "rejection_reasons": {},
-          "mean_nis": 0.6843013467334433,
-          "p95_nis": 1.1515616889918603
+          "mean_nis": 0.6918797285698488,
+          "p95_nis": 1.1584833306952629
         },
         "combined_nis": {
-          "mean_nis": 0.3004398397521851,
-          "p95_nis": 1.0385277746945987,
-          "total_ml_updates": 23
+          "mean_nis": 0.29319299548830763,
+          "p95_nis": 1.0433359949231935,
+          "total_ml_updates": 24
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.312623,
-          "max_cycle_latency_ms": 1.1462999999999999
+          "mean_cycle_latency_ms": 0.32197899999999996,
+          "max_cycle_latency_ms": 1.3081
         },
         "divergence_records": []
       }
@@ -581,22 +581,22 @@
           "total_ml_updates": 0
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.21369633333333332,
-          "max_cycle_latency_ms": 0.773
+          "mean_cycle_latency_ms": 0.218859,
+          "max_cycle_latency_ms": 0.6655
         },
         "divergence_records": []
       },
       "B_eskf_vnet": {
-        "final_horizontal_error_m": 345.6758947895635,
-        "horizontal_rmse_m": 113.44746967884367,
-        "max_horizontal_excursion_m": 345.6758947895635,
-        "final_position_error_3d_m": 345.6768390168331,
-        "velocity_rmse_mps": 4.703015768189145,
-        "mean_yaw_error_deg": 5.615480383992888,
-        "final_accel_bias_norm_mps2": 0.004800781114719939,
-        "final_gyro_bias_norm_rads": 0.0037504909984842657,
+        "final_horizontal_error_m": 333.3332966448637,
+        "horizontal_rmse_m": 106.70281827053941,
+        "max_horizontal_excursion_m": 333.3332966448637,
+        "final_position_error_3d_m": 333.33734680247494,
+        "velocity_rmse_mps": 4.339436378706915,
+        "mean_yaw_error_deg": 5.611623158352624,
+        "final_accel_bias_norm_mps2": 0.004412798153316853,
+        "final_gyro_bias_norm_rads": 0.0036050186798088257,
         "covariance_healthy": true,
-        "min_covariance_eigenvalue": 5.959509072450236e-06,
+        "min_covariance_eigenvalue": 5.959208618399884e-06,
         "filter_diverged": false,
         "zupt_updates_applied": 0,
         "gnss": {
@@ -608,17 +608,17 @@
         },
         "velocitynet": {
           "expected_due_epochs": 60,
-          "actual_due_epochs": 57,
+          "actual_due_epochs": 60,
           "expected_min_executions_after_warmup": 56,
-          "actual_inference_executions": 53,
-          "scheduler_due": 57,
+          "actual_inference_executions": 56,
+          "scheduler_due": 60,
           "buffer_not_ready": 4,
-          "inference_executed": 53,
-          "update_accepted": 53,
+          "inference_executed": 56,
+          "update_accepted": 56,
           "update_rejected": 0,
           "rejection_reasons": {},
-          "mean_nis": 0.2214950296744676,
-          "p95_nis": 0.6314246324566054
+          "mean_nis": 0.211936470123484,
+          "p95_nis": 0.5824454407942092
         },
         "biasnet": {
           "expected_due_epochs": 0,
@@ -635,27 +635,27 @@
           "p95_nis": 0.0
         },
         "combined_nis": {
-          "mean_nis": 0.2214950296744676,
-          "p95_nis": 0.6314246324566054,
-          "total_ml_updates": 53
+          "mean_nis": 0.211936470123484,
+          "p95_nis": 0.5824454407942092,
+          "total_ml_updates": 56
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.28379566666666667,
-          "max_cycle_latency_ms": 0.8834
+          "mean_cycle_latency_ms": 0.2894583333333333,
+          "max_cycle_latency_ms": 0.8925
         },
         "divergence_records": []
       },
       "C_eskf_bnet": {
-        "final_horizontal_error_m": 149.8353649180453,
-        "horizontal_rmse_m": 80.68610501730582,
-        "max_horizontal_excursion_m": 152.1821919889382,
-        "final_position_error_3d_m": 149.84647076159234,
-        "velocity_rmse_mps": 4.764503008652619,
-        "mean_yaw_error_deg": 4.785475791580442,
-        "final_accel_bias_norm_mps2": 0.012074216829507283,
-        "final_gyro_bias_norm_rads": 0.003612549487489721,
+        "final_horizontal_error_m": 149.42481770476473,
+        "horizontal_rmse_m": 79.839129206177,
+        "max_horizontal_excursion_m": 149.5571849732859,
+        "final_position_error_3d_m": 149.42801585120642,
+        "velocity_rmse_mps": 4.409379729767735,
+        "mean_yaw_error_deg": 4.6038053508817,
+        "final_accel_bias_norm_mps2": 0.012303360933229684,
+        "final_gyro_bias_norm_rads": 0.005200356985089619,
         "covariance_healthy": true,
-        "min_covariance_eigenvalue": 5.599050815438598e-06,
+        "min_covariance_eigenvalue": 5.599550365821368e-06,
         "filter_diverged": false,
         "zupt_updates_applied": 0,
         "gnss": {
@@ -690,31 +690,31 @@
           "update_accepted": 28,
           "update_rejected": 0,
           "rejection_reasons": {},
-          "mean_nis": 0.8981361574107688,
-          "p95_nis": 2.597443129049438
+          "mean_nis": 1.0018158937012553,
+          "p95_nis": 2.3920255919746847
         },
         "combined_nis": {
-          "mean_nis": 0.8981361574107688,
-          "p95_nis": 2.597443129049438,
+          "mean_nis": 1.0018158937012553,
+          "p95_nis": 2.3920255919746847,
           "total_ml_updates": 28
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.2597696666666666,
-          "max_cycle_latency_ms": 1.3683999999999998
+          "mean_cycle_latency_ms": 0.26314499999999996,
+          "max_cycle_latency_ms": 1.1839
         },
         "divergence_records": []
       },
       "D_eskf_vnet_bnet": {
-        "final_horizontal_error_m": 287.40952739683223,
-        "horizontal_rmse_m": 97.12560698863076,
-        "max_horizontal_excursion_m": 288.2928837278724,
-        "final_position_error_3d_m": 287.4188035769561,
-        "velocity_rmse_mps": 3.893792689643256,
-        "mean_yaw_error_deg": 5.058169643494024,
-        "final_accel_bias_norm_mps2": 0.013017261007449439,
-        "final_gyro_bias_norm_rads": 0.0034109223313179672,
+        "final_horizontal_error_m": 257.38897071458524,
+        "horizontal_rmse_m": 89.11911178412736,
+        "max_horizontal_excursion_m": 257.38897071458524,
+        "final_position_error_3d_m": 257.40995286307736,
+        "velocity_rmse_mps": 3.6444640679357576,
+        "mean_yaw_error_deg": 4.74473851002229,
+        "final_accel_bias_norm_mps2": 0.014270096328090355,
+        "final_gyro_bias_norm_rads": 0.004457112075341139,
         "covariance_healthy": true,
-        "min_covariance_eigenvalue": 5.598529759208011e-06,
+        "min_covariance_eigenvalue": 5.598641278340174e-06,
         "filter_diverged": false,
         "zupt_updates_applied": 0,
         "gnss": {
@@ -726,17 +726,17 @@
         },
         "velocitynet": {
           "expected_due_epochs": 60,
-          "actual_due_epochs": 57,
+          "actual_due_epochs": 60,
           "expected_min_executions_after_warmup": 56,
-          "actual_inference_executions": 53,
-          "scheduler_due": 57,
+          "actual_inference_executions": 56,
+          "scheduler_due": 60,
           "buffer_not_ready": 4,
-          "inference_executed": 53,
-          "update_accepted": 53,
+          "inference_executed": 56,
+          "update_accepted": 56,
           "update_rejected": 0,
           "rejection_reasons": {},
-          "mean_nis": 0.2272428752117609,
-          "p95_nis": 0.6666945254074137
+          "mean_nis": 0.22318111790886022,
+          "p95_nis": 0.6232824886593626
         },
         "biasnet": {
           "expected_due_epochs": 30,
@@ -749,17 +749,17 @@
           "update_accepted": 28,
           "update_rejected": 0,
           "rejection_reasons": {},
-          "mean_nis": 0.8986861048328176,
-          "p95_nis": 2.5983204870254424
+          "mean_nis": 1.0022546136502253,
+          "p95_nis": 2.392406112282488
         },
         "combined_nis": {
-          "mean_nis": 0.4593467076733608,
-          "p95_nis": 1.5380978640264407,
-          "total_ml_updates": 81
+          "mean_nis": 0.48287228315598196,
+          "p95_nis": 1.7262030154688996,
+          "total_ml_updates": 84
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.33806766666666666,
-          "max_cycle_latency_ms": 1.557
+          "mean_cycle_latency_ms": 0.3417353333333333,
+          "max_cycle_latency_ms": 1.6268
         },
         "divergence_records": []
       }
@@ -828,22 +828,22 @@
           "total_ml_updates": 0
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.212334,
-          "max_cycle_latency_ms": 1.0198
+          "mean_cycle_latency_ms": 0.21292283333333334,
+          "max_cycle_latency_ms": 0.6361
         },
         "divergence_records": []
       },
       "B_eskf_vnet": {
-        "final_horizontal_error_m": 731.901241493847,
-        "horizontal_rmse_m": 409.5447750784407,
-        "max_horizontal_excursion_m": 986.8785483062643,
-        "final_position_error_3d_m": 738.192003209778,
-        "velocity_rmse_mps": 9.102290310054146,
-        "mean_yaw_error_deg": 15.426048382356939,
-        "final_accel_bias_norm_mps2": 0.02104719420505637,
-        "final_gyro_bias_norm_rads": 0.009718444479644876,
+        "final_horizontal_error_m": 732.1729277994117,
+        "horizontal_rmse_m": 405.40218958147045,
+        "max_horizontal_excursion_m": 939.8043934929369,
+        "final_position_error_3d_m": 737.7008140849819,
+        "velocity_rmse_mps": 8.754107974012848,
+        "mean_yaw_error_deg": 15.504080859046692,
+        "final_accel_bias_norm_mps2": 0.021450195972447565,
+        "final_gyro_bias_norm_rads": 0.009752230529077895,
         "covariance_healthy": true,
-        "min_covariance_eigenvalue": 3.5145100735216257e-06,
+        "min_covariance_eigenvalue": 3.5140158363209543e-06,
         "filter_diverged": false,
         "zupt_updates_applied": 0,
         "gnss": {
@@ -854,18 +854,18 @@
           "first_rejection_timestamp_s": null
         },
         "velocitynet": {
-          "expected_due_epochs": 121,
-          "actual_due_epochs": 113,
-          "expected_min_executions_after_warmup": 117,
-          "actual_inference_executions": 109,
-          "scheduler_due": 113,
+          "expected_due_epochs": 120,
+          "actual_due_epochs": 120,
+          "expected_min_executions_after_warmup": 116,
+          "actual_inference_executions": 116,
+          "scheduler_due": 120,
           "buffer_not_ready": 4,
-          "inference_executed": 109,
-          "update_accepted": 109,
+          "inference_executed": 116,
+          "update_accepted": 116,
           "update_rejected": 0,
           "rejection_reasons": {},
-          "mean_nis": 0.3926184104285926,
-          "p95_nis": 1.2523804661437565
+          "mean_nis": 0.379014226445057,
+          "p95_nis": 1.2127506993666728
         },
         "biasnet": {
           "expected_due_epochs": 0,
@@ -882,27 +882,27 @@
           "p95_nis": 0.0
         },
         "combined_nis": {
-          "mean_nis": 0.3926184104285926,
-          "p95_nis": 1.2523804661437565,
-          "total_ml_updates": 109
+          "mean_nis": 0.379014226445057,
+          "p95_nis": 1.2127506993666728,
+          "total_ml_updates": 116
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.2915248333333333,
-          "max_cycle_latency_ms": 1.3321999999999998
+          "mean_cycle_latency_ms": 0.3047368333333333,
+          "max_cycle_latency_ms": 1.1646999999999998
         },
         "divergence_records": []
       },
       "C_eskf_bnet": {
-        "final_horizontal_error_m": 764.0237094069894,
-        "horizontal_rmse_m": 215.3945882476155,
-        "max_horizontal_excursion_m": 764.0237094069894,
-        "final_position_error_3d_m": 780.601620840668,
-        "velocity_rmse_mps": 21.60636802899842,
-        "mean_yaw_error_deg": 6.717089982471766,
-        "final_accel_bias_norm_mps2": 0.016401392831768474,
-        "final_gyro_bias_norm_rads": 0.0050417172825299285,
+        "final_horizontal_error_m": 774.0872880234425,
+        "horizontal_rmse_m": 217.09198010513654,
+        "max_horizontal_excursion_m": 774.0872880234425,
+        "final_position_error_3d_m": 792.0386696009982,
+        "velocity_rmse_mps": 21.763174062058933,
+        "mean_yaw_error_deg": 4.625435302567284,
+        "final_accel_bias_norm_mps2": 0.014093274498884006,
+        "final_gyro_bias_norm_rads": 0.006474378019338143,
         "covariance_healthy": true,
-        "min_covariance_eigenvalue": 3.2796369325972595e-06,
+        "min_covariance_eigenvalue": 3.2759654903220182e-06,
         "filter_diverged": false,
         "zupt_updates_applied": 1,
         "gnss": {
@@ -927,41 +927,41 @@
           "p95_nis": 0.0
         },
         "biasnet": {
-          "expected_due_epochs": 61,
-          "actual_due_epochs": 59,
-          "expected_min_executions_after_warmup": 59,
-          "actual_inference_executions": 57,
-          "scheduler_due": 59,
+          "expected_due_epochs": 60,
+          "actual_due_epochs": 60,
+          "expected_min_executions_after_warmup": 58,
+          "actual_inference_executions": 58,
+          "scheduler_due": 60,
           "buffer_not_ready": 2,
-          "inference_executed": 57,
-          "update_accepted": 57,
+          "inference_executed": 58,
+          "update_accepted": 58,
           "update_rejected": 0,
           "rejection_reasons": {},
-          "mean_nis": 1.0797911299733614,
-          "p95_nis": 2.960819365791805
+          "mean_nis": 1.1563562497094508,
+          "p95_nis": 2.579064693927475
         },
         "combined_nis": {
-          "mean_nis": 1.0797911299733614,
-          "p95_nis": 2.960819365791805,
-          "total_ml_updates": 57
+          "mean_nis": 1.1563562497094508,
+          "p95_nis": 2.579064693927475,
+          "total_ml_updates": 58
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.26224816666666667,
-          "max_cycle_latency_ms": 1.2896999999999998
+          "mean_cycle_latency_ms": 0.2636615,
+          "max_cycle_latency_ms": 1.0766
         },
         "divergence_records": []
       },
       "D_eskf_vnet_bnet": {
-        "final_horizontal_error_m": 500.23514875020015,
-        "horizontal_rmse_m": 337.7307595827698,
-        "max_horizontal_excursion_m": 908.1930789558655,
-        "final_position_error_3d_m": 507.6440046095005,
-        "velocity_rmse_mps": 7.365320261093835,
-        "mean_yaw_error_deg": 11.363889285901784,
-        "final_accel_bias_norm_mps2": 0.022552831202349872,
-        "final_gyro_bias_norm_rads": 0.010004590959267284,
+        "final_horizontal_error_m": 459.39078195656765,
+        "horizontal_rmse_m": 303.73847432260783,
+        "max_horizontal_excursion_m": 768.8398025002512,
+        "final_position_error_3d_m": 466.1339980705655,
+        "velocity_rmse_mps": 5.769566886314325,
+        "mean_yaw_error_deg": 9.740619090051155,
+        "final_accel_bias_norm_mps2": 0.02387576621923367,
+        "final_gyro_bias_norm_rads": 0.010119009754376223,
         "covariance_healthy": true,
-        "min_covariance_eigenvalue": 3.281479498243884e-06,
+        "min_covariance_eigenvalue": 3.2772297289746702e-06,
         "filter_diverged": false,
         "zupt_updates_applied": 0,
         "gnss": {
@@ -972,41 +972,41 @@
           "first_rejection_timestamp_s": null
         },
         "velocitynet": {
-          "expected_due_epochs": 121,
-          "actual_due_epochs": 113,
-          "expected_min_executions_after_warmup": 117,
-          "actual_inference_executions": 109,
-          "scheduler_due": 113,
+          "expected_due_epochs": 120,
+          "actual_due_epochs": 120,
+          "expected_min_executions_after_warmup": 116,
+          "actual_inference_executions": 116,
+          "scheduler_due": 120,
           "buffer_not_ready": 4,
-          "inference_executed": 109,
-          "update_accepted": 109,
+          "inference_executed": 116,
+          "update_accepted": 116,
           "update_rejected": 0,
           "rejection_reasons": {},
-          "mean_nis": 0.3796764774284481,
-          "p95_nis": 1.0930160851253394
+          "mean_nis": 0.3711228501168748,
+          "p95_nis": 1.1666210908136436
         },
         "biasnet": {
-          "expected_due_epochs": 61,
-          "actual_due_epochs": 59,
-          "expected_min_executions_after_warmup": 59,
-          "actual_inference_executions": 57,
-          "scheduler_due": 59,
+          "expected_due_epochs": 60,
+          "actual_due_epochs": 60,
+          "expected_min_executions_after_warmup": 58,
+          "actual_inference_executions": 58,
+          "scheduler_due": 60,
           "buffer_not_ready": 2,
-          "inference_executed": 57,
-          "update_accepted": 57,
+          "inference_executed": 58,
+          "update_accepted": 58,
           "update_rejected": 0,
           "rejection_reasons": {},
-          "mean_nis": 1.0805447084094288,
-          "p95_nis": 2.970885349797622
+          "mean_nis": 1.1569145269443237,
+          "p95_nis": 2.5794418759355957
         },
         "combined_nis": {
-          "mean_nis": 0.6203360507170982,
-          "p95_nis": 1.8897749181223502,
-          "total_ml_updates": 166
+          "mean_nis": 0.6330534090593577,
+          "p95_nis": 1.9260953378568857,
+          "total_ml_updates": 174
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.3338978333333333,
-          "max_cycle_latency_ms": 1.3858
+          "mean_cycle_latency_ms": 0.34737199999999996,
+          "max_cycle_latency_ms": 1.5383
         },
         "divergence_records": []
       }
@@ -1075,8 +1075,8 @@
           "total_ml_updates": 0
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.2828723333333333,
-          "max_cycle_latency_ms": 1.007
+          "mean_cycle_latency_ms": 0.2879201666666667,
+          "max_cycle_latency_ms": 0.8904
         },
         "divergence_records": [
           {
@@ -1443,16 +1443,16 @@
         ]
       },
       "B_eskf_vnet": {
-        "final_horizontal_error_m": 5219.013452368463,
-        "horizontal_rmse_m": 1736.4395917187112,
-        "max_horizontal_excursion_m": 5219.013452368463,
-        "final_position_error_3d_m": 6908.856476618277,
-        "velocity_rmse_mps": 131.2931778353241,
-        "mean_yaw_error_deg": 23.541543773328026,
-        "final_accel_bias_norm_mps2": 0.05086386454554445,
-        "final_gyro_bias_norm_rads": 0.004586019911711717,
+        "final_horizontal_error_m": 5217.107237639104,
+        "horizontal_rmse_m": 1735.7380800302788,
+        "max_horizontal_excursion_m": 5217.107237639104,
+        "final_position_error_3d_m": 6902.38258903109,
+        "velocity_rmse_mps": 131.25038926300056,
+        "mean_yaw_error_deg": 23.583827421513416,
+        "final_accel_bias_norm_mps2": 0.05082329621383847,
+        "final_gyro_bias_norm_rads": 0.004608809467348852,
         "covariance_healthy": true,
-        "min_covariance_eigenvalue": 3.5040608161082324e-06,
+        "min_covariance_eigenvalue": 3.5040588428254917e-06,
         "filter_diverged": false,
         "zupt_updates_applied": 240,
         "gnss": {
@@ -1463,21 +1463,21 @@
           "first_rejection_timestamp_s": 27.999000000000002
         },
         "velocitynet": {
-          "expected_due_epochs": 121,
-          "actual_due_epochs": 114,
-          "expected_min_executions_after_warmup": 117,
-          "actual_inference_executions": 110,
-          "scheduler_due": 114,
+          "expected_due_epochs": 120,
+          "actual_due_epochs": 120,
+          "expected_min_executions_after_warmup": 116,
+          "actual_inference_executions": 116,
+          "scheduler_due": 120,
           "buffer_not_ready": 4,
-          "inference_executed": 110,
-          "update_accepted": 8,
-          "update_rejected": 102,
+          "inference_executed": 116,
+          "update_accepted": 9,
+          "update_rejected": 107,
           "rejection_reasons": {
-            "STANDSTILL_SUPPRESSED": 43,
-            "GATE_REJECTED": 59
+            "STANDSTILL_SUPPRESSED": 45,
+            "GATE_REJECTED": 62
           },
-          "mean_nis": 4.023193243442261,
-          "p95_nis": 13.28016797264159
+          "mean_nis": 3.6715707792879737,
+          "p95_nis": 13.152205779475171
         },
         "biasnet": {
           "expected_due_epochs": 0,
@@ -1494,27 +1494,27 @@
           "p95_nis": 0.0
         },
         "combined_nis": {
-          "mean_nis": 4.023193243442261,
-          "p95_nis": 13.28016797264159,
-          "total_ml_updates": 8
+          "mean_nis": 3.6715707792879737,
+          "p95_nis": 13.152205779475171,
+          "total_ml_updates": 9
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.3455968333333333,
-          "max_cycle_latency_ms": 1.4404
+          "mean_cycle_latency_ms": 0.3565948333333333,
+          "max_cycle_latency_ms": 1.204
         },
         "divergence_records": []
       },
       "C_eskf_bnet": {
-        "final_horizontal_error_m": 5278.919689103609,
-        "horizontal_rmse_m": 1761.0329098171214,
-        "max_horizontal_excursion_m": 5278.919689103609,
-        "final_position_error_3d_m": 7055.792248880108,
-        "velocity_rmse_mps": 132.1562054966205,
-        "mean_yaw_error_deg": 18.784508217309508,
-        "final_accel_bias_norm_mps2": 0.06461955833704949,
-        "final_gyro_bias_norm_rads": 0.005678914400083084,
+        "final_horizontal_error_m": 5280.713318292444,
+        "horizontal_rmse_m": 1761.71677233477,
+        "max_horizontal_excursion_m": 5280.713318292444,
+        "final_position_error_3d_m": 7066.660436110436,
+        "velocity_rmse_mps": 132.1905467897676,
+        "mean_yaw_error_deg": 18.557253957640537,
+        "final_accel_bias_norm_mps2": 0.06555516084578064,
+        "final_gyro_bias_norm_rads": 0.005501680716494296,
         "covariance_healthy": true,
-        "min_covariance_eigenvalue": 3.2735583315181373e-06,
+        "min_covariance_eigenvalue": 3.2701115893981583e-06,
         "filter_diverged": false,
         "zupt_updates_applied": 240,
         "gnss": {
@@ -1539,41 +1539,41 @@
           "p95_nis": 0.0
         },
         "biasnet": {
-          "expected_due_epochs": 61,
-          "actual_due_epochs": 59,
-          "expected_min_executions_after_warmup": 59,
-          "actual_inference_executions": 57,
-          "scheduler_due": 59,
+          "expected_due_epochs": 60,
+          "actual_due_epochs": 60,
+          "expected_min_executions_after_warmup": 58,
+          "actual_inference_executions": 58,
+          "scheduler_due": 60,
           "buffer_not_ready": 2,
-          "inference_executed": 57,
-          "update_accepted": 57,
+          "inference_executed": 58,
+          "update_accepted": 58,
           "update_rejected": 0,
           "rejection_reasons": {},
-          "mean_nis": 2.5419328376421335,
-          "p95_nis": 10.859718081103315
+          "mean_nis": 2.5130451388088195,
+          "p95_nis": 11.163666332419771
         },
         "combined_nis": {
-          "mean_nis": 2.5419328376421335,
-          "p95_nis": 10.859718081103315,
-          "total_ml_updates": 57
+          "mean_nis": 2.5130451388088195,
+          "p95_nis": 11.163666332419771,
+          "total_ml_updates": 58
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.3293773333333333,
-          "max_cycle_latency_ms": 1.4482
+          "mean_cycle_latency_ms": 0.3421635,
+          "max_cycle_latency_ms": 1.2989
         },
         "divergence_records": []
       },
       "D_eskf_vnet_bnet": {
-        "final_horizontal_error_m": 5202.3726235109925,
-        "horizontal_rmse_m": 1733.1685734575528,
-        "max_horizontal_excursion_m": 5202.3726235109925,
-        "final_position_error_3d_m": 6788.218745538415,
-        "velocity_rmse_mps": 130.40493420360747,
-        "mean_yaw_error_deg": 21.2219509054839,
-        "final_accel_bias_norm_mps2": 0.06121785305014858,
-        "final_gyro_bias_norm_rads": 0.006517696544222146,
+        "final_horizontal_error_m": 5202.927490357516,
+        "horizontal_rmse_m": 1733.2695941313223,
+        "max_horizontal_excursion_m": 5202.927490357516,
+        "final_position_error_3d_m": 6792.887134356905,
+        "velocity_rmse_mps": 130.4081637140413,
+        "mean_yaw_error_deg": 20.932893878739005,
+        "final_accel_bias_norm_mps2": 0.06209911033619922,
+        "final_gyro_bias_norm_rads": 0.00634691715757402,
         "covariance_healthy": true,
-        "min_covariance_eigenvalue": 3.273418300970463e-06,
+        "min_covariance_eigenvalue": 3.269971441962687e-06,
         "filter_diverged": false,
         "zupt_updates_applied": 240,
         "gnss": {
@@ -1584,44 +1584,44 @@
           "first_rejection_timestamp_s": 27.999000000000002
         },
         "velocitynet": {
-          "expected_due_epochs": 121,
-          "actual_due_epochs": 114,
-          "expected_min_executions_after_warmup": 117,
-          "actual_inference_executions": 110,
-          "scheduler_due": 114,
+          "expected_due_epochs": 120,
+          "actual_due_epochs": 120,
+          "expected_min_executions_after_warmup": 116,
+          "actual_inference_executions": 116,
+          "scheduler_due": 120,
           "buffer_not_ready": 4,
-          "inference_executed": 110,
-          "update_accepted": 8,
-          "update_rejected": 102,
+          "inference_executed": 116,
+          "update_accepted": 9,
+          "update_rejected": 107,
           "rejection_reasons": {
-            "STANDSTILL_SUPPRESSED": 43,
-            "GATE_REJECTED": 59
+            "STANDSTILL_SUPPRESSED": 45,
+            "GATE_REJECTED": 62
           },
-          "mean_nis": 3.9862032206790357,
-          "p95_nis": 13.16713566071857
+          "mean_nis": 3.6393409862151396,
+          "p95_nis": 13.041401300528689
         },
         "biasnet": {
-          "expected_due_epochs": 61,
-          "actual_due_epochs": 59,
-          "expected_min_executions_after_warmup": 59,
-          "actual_inference_executions": 57,
-          "scheduler_due": 59,
+          "expected_due_epochs": 60,
+          "actual_due_epochs": 60,
+          "expected_min_executions_after_warmup": 58,
+          "actual_inference_executions": 58,
+          "scheduler_due": 60,
           "buffer_not_ready": 2,
-          "inference_executed": 57,
-          "update_accepted": 57,
+          "inference_executed": 58,
+          "update_accepted": 58,
           "update_rejected": 0,
           "rejection_reasons": {},
-          "mean_nis": 2.541958477307322,
-          "p95_nis": 10.859841589059135
+          "mean_nis": 2.5130703328594786,
+          "p95_nis": 11.163834958637354
         },
         "combined_nis": {
-          "mean_nis": 2.7197116764915332,
-          "p95_nis": 11.132348641647228,
-          "total_ml_updates": 65
+          "mean_nis": 2.6643604206236717,
+          "p95_nis": 11.465774946177548,
+          "total_ml_updates": 67
         },
         "timing": {
-          "mean_cycle_latency_ms": 0.389395,
-          "max_cycle_latency_ms": 1.4923
+          "mean_cycle_latency_ms": 0.3944498333333333,
+          "max_cycle_latency_ms": 1.5706
         },
         "divergence_records": []
       }

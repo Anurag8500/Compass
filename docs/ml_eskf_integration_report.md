@@ -1,6 +1,6 @@
 # Phase 9 — ML → ESKF Integration & Real GNSS-Denied Offline Replay Report
 
-**Date/Timestamp**: 2026-09-10 14:01:10 UTC  
+**Date/Timestamp**: 2026-09-10 14:32:51 UTC  
 **Replay Dataset**: `Categorised_S1.npz`  
 **Frame Convention**: `One segment-local ENU frame per segment anchored at segment initial fix`  
 **VelocityNet Hash**: `86b65c7e443970c2e27d0f1bdb6db66b42d41c9cc0053b91c837b158a707d47a`  
@@ -85,9 +85,9 @@ Authoritative State Injection & Error-State Reset
 | Condition | Horizontal RMSE (m) | Final Horizontal Error (m) | Max Excursion (m) | Velocity RMSE (m/s) | Yaw Error (deg) | VNet Acc/Rej | BNet Acc/Rej | GNSS Fixes | Cov Health |
 |---|---|---|---|---|---|---|---|---|---|
 | `A_pure_eskf` | 0.514 | 0.152 | 1.414 | 0.486 | 18.51 | 0/0 | 0/0 | 60/60 | HEALTHY |
-| `B_eskf_vnet` | 0.763 | 1.109 | 1.435 | 0.457 | 18.43 | 109/0 | 0/0 | 60/60 | HEALTHY |
-| `C_eskf_bnet` | 0.522 | 0.099 | 1.410 | 0.498 | 13.78 | 0/0 | 57/0 | 60/60 | HEALTHY |
-| `D_eskf_vnet_bnet` | 0.708 | 0.857 | 1.431 | 0.469 | 13.71 | 109/0 | 57/0 | 60/60 | HEALTHY |
+| `B_eskf_vnet` | 0.799 | 1.158 | 1.456 | 0.454 | 18.41 | 116/0 | 0/0 | 60/60 | HEALTHY |
+| `C_eskf_bnet` | 0.527 | 0.080 | 1.410 | 0.509 | 11.73 | 0/0 | 58/0 | 60/60 | HEALTHY |
+| `D_eskf_vnet_bnet` | 0.719 | 0.819 | 1.431 | 0.477 | 11.65 | 116/0 | 58/0 | 60/60 | HEALTHY |
 
 ### 11. Moving Outage 10S (Highway Cruising (10s Outage))
 - **Segment Parameters**: Start 490.0s | Duration 10.0s | Mean Speed 13.40 m/s (48.2 km/h) | Distance Traveled 133.9m
@@ -95,9 +95,9 @@ Authoritative State Injection & Error-State Reset
 | Condition | Horizontal RMSE (m) | Final Horizontal Error (m) | Max Excursion (m) | Velocity RMSE (m/s) | Yaw Error (deg) | VNet Acc/Rej | BNet Acc/Rej | GNSS Fixes | Cov Health |
 |---|---|---|---|---|---|---|---|---|---|
 | `A_pure_eskf` | 6.048 | 13.836 | 13.836 | 1.874 | 4.49 | 0/0 | 0/0 | N/A | HEALTHY |
-| `B_eskf_vnet` | 8.883 | 20.687 | 20.687 | 2.715 | 4.51 | 15/0 | 0/0 | N/A | HEALTHY |
-| `C_eskf_bnet` | 5.777 | 13.153 | 13.153 | 1.721 | 4.65 | 0/0 | 8/0 | N/A | HEALTHY |
-| `D_eskf_vnet_bnet` | 8.780 | 20.534 | 20.534 | 2.628 | 4.68 | 15/0 | 8/0 | N/A | HEALTHY |
+| `B_eskf_vnet` | 8.898 | 20.748 | 20.748 | 2.717 | 4.51 | 16/0 | 0/0 | N/A | HEALTHY |
+| `C_eskf_bnet` | 5.755 | 12.954 | 12.954 | 1.712 | 4.66 | 0/0 | 8/0 | N/A | HEALTHY |
+| `D_eskf_vnet_bnet` | 8.799 | 20.560 | 20.560 | 2.628 | 4.68 | 16/0 | 8/0 | N/A | HEALTHY |
 
 ### 12. Moving Outage 30S (Highway Cruising (30s Outage))
 - **Segment Parameters**: Start 490.0s | Duration 30.0s | Mean Speed 13.93 m/s (50.2 km/h) | Distance Traveled 417.5m
@@ -105,9 +105,9 @@ Authoritative State Injection & Error-State Reset
 | Condition | Horizontal RMSE (m) | Final Horizontal Error (m) | Max Excursion (m) | Velocity RMSE (m/s) | Yaw Error (deg) | VNet Acc/Rej | BNet Acc/Rej | GNSS Fixes | Cov Health |
 |---|---|---|---|---|---|---|---|---|---|
 | `A_pure_eskf` | 67.176 | 106.423 | 114.063 | 4.566 | 5.25 | 0/0 | 0/0 | N/A | HEALTHY |
-| `B_eskf_vnet` | 113.447 | 345.676 | 345.676 | 4.703 | 5.62 | 53/0 | 0/0 | N/A | HEALTHY |
-| `C_eskf_bnet` | 80.686 | 149.835 | 152.182 | 4.765 | 4.79 | 0/0 | 28/0 | N/A | HEALTHY |
-| `D_eskf_vnet_bnet` | 97.126 | 287.410 | 288.293 | 3.894 | 5.06 | 53/0 | 28/0 | N/A | HEALTHY |
+| `B_eskf_vnet` | 106.703 | 333.333 | 333.333 | 4.339 | 5.61 | 56/0 | 0/0 | N/A | HEALTHY |
+| `C_eskf_bnet` | 79.839 | 149.425 | 149.557 | 4.409 | 4.60 | 0/0 | 28/0 | N/A | HEALTHY |
+| `D_eskf_vnet_bnet` | 89.119 | 257.389 | 257.389 | 3.644 | 4.74 | 56/0 | 28/0 | N/A | HEALTHY |
 
 ### 13. Moving Outage 60S (Highway Cruising (60s Outage))
 - **Segment Parameters**: Start 490.0s | Duration 60.0s | Mean Speed 14.06 m/s (50.6 km/h) | Distance Traveled 842.2m
@@ -115,9 +115,9 @@ Authoritative State Injection & Error-State Reset
 | Condition | Horizontal RMSE (m) | Final Horizontal Error (m) | Max Excursion (m) | Velocity RMSE (m/s) | Yaw Error (deg) | VNet Acc/Rej | BNet Acc/Rej | GNSS Fixes | Cov Health |
 |---|---|---|---|---|---|---|---|---|---|
 | `A_pure_eskf` | 209.924 | 753.808 | 753.808 | 23.239 | 11.76 | 0/0 | 0/0 | N/A | HEALTHY |
-| `B_eskf_vnet` | 409.545 | 731.901 | 986.879 | 9.102 | 15.43 | 109/0 | 0/0 | N/A | HEALTHY |
-| `C_eskf_bnet` | 215.395 | 764.024 | 764.024 | 21.606 | 6.72 | 0/0 | 57/0 | N/A | HEALTHY |
-| `D_eskf_vnet_bnet` | 337.731 | 500.235 | 908.193 | 7.365 | 11.36 | 109/0 | 57/0 | N/A | HEALTHY |
+| `B_eskf_vnet` | 405.402 | 732.173 | 939.804 | 8.754 | 15.50 | 116/0 | 0/0 | N/A | HEALTHY |
+| `C_eskf_bnet` | 217.092 | 774.087 | 774.087 | 21.763 | 4.63 | 0/0 | 58/0 | N/A | HEALTHY |
+| `D_eskf_vnet_bnet` | 303.738 | 459.391 | 768.840 | 5.770 | 9.74 | 116/0 | 58/0 | N/A | HEALTHY |
 
 ### 14. Sharp Turn Stress (Stationary-to-Turn Transition & GNSS Gating Stress)
 - **Segment Parameters**: Start 25.0s | Duration 60.0s | Mean Speed 3.96 m/s (14.3 km/h) | Distance Traveled 238.2m
@@ -125,9 +125,9 @@ Authoritative State Injection & Error-State Reset
 | Condition | Horizontal RMSE (m) | Final Horizontal Error (m) | Max Excursion (m) | Velocity RMSE (m/s) | Yaw Error (deg) | VNet Acc/Rej | BNet Acc/Rej | GNSS Fixes | Cov Health |
 |---|---|---|---|---|---|---|---|---|---|
 | `A_pure_eskf` | 1761.508 | 5285.678 | 5285.678 | 132.732 | 21.94 | 0/0 | 0/0 | 27/60 | HEALTHY |
-| `B_eskf_vnet` | 1736.440 | 5219.013 | 5219.013 | 131.293 | 23.54 | 8/102 | 0/0 | 27/60 | HEALTHY |
-| `C_eskf_bnet` | 1761.033 | 5278.920 | 5278.920 | 132.156 | 18.78 | 0/0 | 57/0 | 27/60 | HEALTHY |
-| `D_eskf_vnet_bnet` | 1733.169 | 5202.373 | 5202.373 | 130.405 | 21.22 | 8/102 | 57/0 | 27/60 | HEALTHY |
+| `B_eskf_vnet` | 1735.738 | 5217.107 | 5217.107 | 131.250 | 23.58 | 9/107 | 0/0 | 27/60 | HEALTHY |
+| `C_eskf_bnet` | 1761.717 | 5280.713 | 5280.713 | 132.191 | 18.56 | 0/0 | 58/0 | 27/60 | HEALTHY |
+| `D_eskf_vnet_bnet` | 1733.270 | 5202.927 | 5202.927 | 130.408 | 20.93 | 9/107 | 58/0 | 27/60 | HEALTHY |
 
 ---
 
@@ -139,27 +139,31 @@ Authoritative State Injection & Error-State Reset
 
 ## 16. Cadence & Execution Telemetry Audit
 
-Mathematical expectations are computed directly from scenario timestamps:
-- **VelocityNet**: Interval $\Delta t \ge 0.5\text{ s}$. For duration $T$, warmup requires 2.0 s (20 samples @ 10 Hz). Due epochs $= 1 + \lfloor T / 0.5 \rfloor$. Executions after warmup $= 1 + \lfloor (T - 2.0) / 0.5 \rfloor$.
-- **BiasNet**: Interval $\Delta t \ge 1.0\text{ s}$. Due epochs $= 1 + \lfloor T / 1.0 \rfloor$. Executions after warmup $= 1 + \lfloor (T - 2.0) / 1.0 \rfloor$.
-- **Invariants Verified Across All Scenarios**:
-  - `scheduler_due >= inference_executed`
+### Anchored Timeline Cadence Semantics
+- **Timeline Anchoring**: Cadence targets are anchored to the start epoch ($t_0$) at fixed intervals (VelocityNet: $\Delta t = 0.5\text{ s}$, BiasNet: $\Delta t = 1.0\text{ s}$).
+- **Jitter Resilience**: A 20 ms tolerance window allows discrete 10 Hz IMU samples (which exhibit $\pm 3\text{ ms}$ hardware clock jitter) to match scheduled epochs without cadence slippage or cumulative timing drift.
+- **No Burst / Duplicate Executions**: If a data gap occurs, the scheduler advances along the anchored grid without firing duplicate inferences at a single timestamp.
+- **Warmup Isolation**: During the initial 20-sample causal warmup ($2.0\text{ s}$), due epochs are recorded under `buffer_not_ready` and the schedule advances along the anchored timeline without 10 Hz sample retries.
+- **Independent Derivation**: Expected due epochs, executions, and warmup events are independently derived directly from the exact replay timestamp sequence via `compute_expected_cadence()`.
+- **Exact Invariants Verified Across All Scenarios**:
+  - `actual_due_epochs == expected_due_epochs`
+  - `actual_inference_executions == expected_min_executions_after_warmup`
+  - `actual_due_epochs == buffer_not_ready + inference_executed`
   - `inference_executed == update_accepted + update_rejected`
-  - `buffer_not_ready` is logged exclusively during warmup without triggering inference retries.
   - Standstill suppression ($v < 0.5\text{ m/s}$) is recorded under `update_rejected` with reason `STANDSTILL_SUPPRESSED`.
 
 | Scenario | Model | Expected Due | Actual Due | Warmup Not Ready | Expected Min Exec | Actual Exec | Accepted | Rejected | Primary Rejection Reason |
 |---|---|---|---|---|---|---|---|---|---|
-| `continuous_gnss_sanity` | VelocityNet | 121 | 113 | 4 | 117 | 109 | 109 | 0 | `None` |
-| `continuous_gnss_sanity` | BiasNet | 61 | 59 | 2 | 59 | 57 | 57 | 0 | `None` |
-| `moving_outage_10s` | VelocityNet | 20 | 19 | 4 | 16 | 15 | 15 | 0 | `None` |
+| `continuous_gnss_sanity` | VelocityNet | 120 | 120 | 4 | 116 | 116 | 116 | 0 | `None` |
+| `continuous_gnss_sanity` | BiasNet | 60 | 60 | 2 | 58 | 58 | 58 | 0 | `None` |
+| `moving_outage_10s` | VelocityNet | 20 | 20 | 4 | 16 | 16 | 16 | 0 | `None` |
 | `moving_outage_10s` | BiasNet | 10 | 10 | 2 | 8 | 8 | 8 | 0 | `None` |
-| `moving_outage_30s` | VelocityNet | 60 | 57 | 4 | 56 | 53 | 53 | 0 | `None` |
+| `moving_outage_30s` | VelocityNet | 60 | 60 | 4 | 56 | 56 | 56 | 0 | `None` |
 | `moving_outage_30s` | BiasNet | 30 | 30 | 2 | 28 | 28 | 28 | 0 | `None` |
-| `moving_outage_60s` | VelocityNet | 121 | 113 | 4 | 117 | 109 | 109 | 0 | `None` |
-| `moving_outage_60s` | BiasNet | 61 | 59 | 2 | 59 | 57 | 57 | 0 | `None` |
-| `sharp_turn_stress` | VelocityNet | 121 | 114 | 4 | 117 | 110 | 8 | 102 | `STANDSTILL_SUPPRESSED` |
-| `sharp_turn_stress` | BiasNet | 61 | 59 | 2 | 59 | 57 | 57 | 0 | `None` |
+| `moving_outage_60s` | VelocityNet | 120 | 120 | 4 | 116 | 116 | 116 | 0 | `None` |
+| `moving_outage_60s` | BiasNet | 60 | 60 | 2 | 58 | 58 | 58 | 0 | `None` |
+| `sharp_turn_stress` | VelocityNet | 120 | 120 | 4 | 116 | 116 | 9 | 107 | `STANDSTILL_SUPPRESSED` |
+| `sharp_turn_stress` | BiasNet | 60 | 60 | 2 | 58 | 58 | 58 | 0 | `None` |
 
 ## 17. Covariance Health
 Across all scenarios and all 4 conditions:
@@ -169,8 +173,8 @@ Across all scenarios and all 4 conditions:
 - Attitude quaternion remained normalized ($|||q|| - 1.0| < 10^{-3}$).
 
 ## 18. Execution Latency
-- **Mean Cycle Latency**: 0.33 ms per 10 Hz IMU step.
-- **Max Cycle Latency**: 1.39 ms.
+- **Mean Cycle Latency**: 0.35 ms per 10 Hz IMU step.
+- **Max Cycle Latency**: 1.54 ms.
 *Measurement Scope*: Python replay cycle timing measured on this development environment. Note: This characterizes offline host execution; production Android on-device real-time verification is reserved for downstream deployment phases.
 
 ## 19. Detailed Diagnostic Analysis & Known Limitations
@@ -209,19 +213,20 @@ The legacy 25s-start scenario contains an 84-degree turn starting at $t_{\text{r
 - **Consequence**: Without Phase 10's GNSS Reacquisition FSM (which detects consecutive gate rejections, inflates filter covariance, and re-seeds position), the filter continues open-loop dead reckoning, resulting in 33 consecutive rejected fixes.
 
 ### 3. Scientific Evaluation of 60 s Moving Outage
-On the high-speed highway segment (`moving_outage_60s`, 850 m traveled at 14.1 m/s):
-- **Pure ESKF (Condition A)**: Final horizontal error $= 753.801\text{ m}$, velocity RMSE $= 23.235\text{ m/s}$.
-- **ESKF + VelocityNet (Condition B)**: Final horizontal error $= 731.854\text{ m}$, velocity RMSE $= 18.256\text{ m/s}$.
-- **ESKF + BiasNet (Condition C)**: Final horizontal error $= 764.015\text{ m}$, velocity RMSE $= 23.473\text{ m/s}$.
-- **ESKF + VelocityNet + BiasNet (Condition D)**: Final horizontal error $= 500.171\text{ m}$ ($-253.630\text{ m}$ / $33.6\%$ reduction vs Pure ESKF), velocity RMSE $= 7.366\text{ m/s}$ ($-15.869\text{ m/s}$ / $68.3\%$ reduction).
+On the high-speed highway segment (`moving_outage_60s`, 842.2 m traveled at 14.1 m/s):
+- **Pure ESKF (Condition A)**: Final horizontal error $= 753.808\text{ m}$, velocity RMSE $= 23.239\text{ m/s}$.
+- **ESKF + VelocityNet (Condition B)**: Final horizontal error $= 732.173\text{ m}$, velocity RMSE $= 8.754\text{ m/s}$.
+- **ESKF + BiasNet (Condition C)**: Final horizontal error $= 774.087\text{ m}$, velocity RMSE $= 21.763\text{ m/s}$.
+- **ESKF + VelocityNet + BiasNet (Condition D)**: Final horizontal error $= 459.391\text{ m}$ ($-294.417\text{ m}$ / $39.1\%$ reduction vs Pure ESKF), velocity RMSE $= 5.770\text{ m/s}$ ($-17.470\text{ m/s}$ / $75.2\%$ reduction).
 
 **Scientific Assessment**:
-- The $33.6\%$ reduction in final displacement error and $68.3\%$ reduction in velocity RMSE prove that VelocityNet and BiasNet are actively and beneficially exercising estimator authority during total GNSS outages.
-- However, $500\text{ m}$ final drift after 60 s remains **poor absolute navigation accuracy**. Along-track forward speed updates cannot eliminate cross-track position divergence caused by open-loop gyro heading drift.
+- The $39.1\%$ reduction in final displacement error and $75.2\%$ reduction in velocity RMSE prove that VelocityNet and BiasNet are actively and beneficially exercising estimator authority during total GNSS outages.
+- However, $\approx 459\text{ m}$ final drift after 60 s remains **poor absolute navigation accuracy**. Along-track forward speed updates cannot eliminate cross-track position divergence caused by open-loop gyro heading drift.
 - This conclusively establishes that Phase 9 does not 'solve' 60 s dead reckoning on its own, and provides empirical justification for downstream Non-Holonomic Constraints (Phase 11) and Map Matching (Phase 12).
 
 ### 4. High-Speed Cruising Validation (`continuous_gnss_sanity`)
 - Under continuous 1 Hz GNSS aiding on the moving highway segment, the filter achieves sub-meter tracking accuracy ($0.150\text{ m}$ final error, $60/60$ fixes applied).
+- *Measurement Provenance*: In this replay simulation, GNSS velocity aiding utilizes horizontal velocity synthesized from the reference trajectory (`v_ref_speed * [sin(hdg), cos(hdg)]`). This is explicitly classified as a controlled reference-derived aiding input to validate multi-sensor measurement fusion and ESKF covariance stability, distinct from raw receiver Doppler or independent OEM GNSS velocity logs.
 - Demonstrates that strapdown propagation, Kalman updates, and covariance health are completely stable when aided.
 
 ## 20. Exact Conclusion & Phase Gate Sign-off
