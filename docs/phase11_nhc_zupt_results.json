@@ -12,9 +12,9 @@
   },
   "scenario_a_continuous_gnss": {
     "phase9_baseline": {
-      "pos_rmse_2d_m": 0.6873282496964658,
-      "max_pos_err_2d_m": 1.9346370573654519,
-      "vel_rmse_2d_mps": 0.716305018525937,
+      "pos_rmse_2d_m": 1.7010033866630947,
+      "max_pos_err_2d_m": 2.2744894084547123,
+      "vel_rmse_2d_mps": 0.7207994731202364,
       "nhc_telemetry": {
         "attempts": 0,
         "accepted": 0,
@@ -35,20 +35,21 @@
       "inf_count": 0
     },
     "phase11_full": {
-      "pos_rmse_2d_m": 1.340322786245376,
-      "max_pos_err_2d_m": 5.669953396088082,
-      "vel_rmse_2d_mps": 0.9793826021287099,
+      "pos_rmse_2d_m": 1.5496224217307877,
+      "max_pos_err_2d_m": 2.441643107329968,
+      "vel_rmse_2d_mps": 0.7106736708750722,
       "nhc_telemetry": {
         "attempts": 600,
-        "accepted": 454,
-        "relaxed": 18,
-        "skipped": 144,
+        "accepted": 549,
+        "relaxed": 3,
+        "skipped": 49,
         "skipped_stationary": 2,
         "skipped_low_speed": 0,
         "rejection_reasons": {
-          "SKIPPED_SEVERE_INNOVATION": 143,
-          "SKIPPED_DYNAMIC_CORNERING_INCONSISTENCY": 1
-        }
+          "SKIPPED_DYNAMIC_CORNERING_INCONSISTENCY": 1,
+          "SKIPPED_SEVERE_INNOVATION": 31
+        },
+        "skipped_unaligned": 17
       },
       "zupt_telemetry": {
         "standstill_evaluations": 600,
@@ -61,20 +62,21 @@
       "inf_count": 0
     },
     "nhc_only": {
-      "pos_rmse_2d_m": 1.340322786245376,
-      "max_pos_err_2d_m": 5.669953396088082,
-      "vel_rmse_2d_mps": 0.9793826021287099,
+      "pos_rmse_2d_m": 1.5499037743428958,
+      "max_pos_err_2d_m": 2.441643107329968,
+      "vel_rmse_2d_mps": 0.7107349185978566,
       "nhc_telemetry": {
         "attempts": 600,
-        "accepted": 454,
-        "relaxed": 18,
-        "skipped": 146,
+        "accepted": 551,
+        "relaxed": 3,
+        "skipped": 49,
         "skipped_stationary": 0,
         "skipped_low_speed": 0,
         "rejection_reasons": {
-          "SKIPPED_SEVERE_INNOVATION": 145,
-          "SKIPPED_DYNAMIC_CORNERING_INCONSISTENCY": 1
-        }
+          "SKIPPED_DYNAMIC_CORNERING_INCONSISTENCY": 1,
+          "SKIPPED_SEVERE_INNOVATION": 31
+        },
+        "skipped_unaligned": 17
       },
       "zupt_telemetry": {
         "standstill_evaluations": 0,
@@ -87,9 +89,9 @@
       "inf_count": 0
     },
     "zupt_only": {
-      "pos_rmse_2d_m": 0.6873282496964658,
-      "max_pos_err_2d_m": 1.9346370573654519,
-      "vel_rmse_2d_mps": 0.716305018525937,
+      "pos_rmse_2d_m": 1.7010033866630947,
+      "max_pos_err_2d_m": 2.2744894084547123,
+      "vel_rmse_2d_mps": 0.7207994731202364,
       "nhc_telemetry": {
         "attempts": 0,
         "accepted": 0,
@@ -114,11 +116,11 @@
     "outage_10s": {
       "phase9_baseline": {
         "outage_duration_s": 10.0,
-        "outage_max_drift_m": 17.615519934570095,
-        "outage_final_drift_m": 17.615519934570095,
-        "outage_drift_pct": 12.50622246899027,
-        "vel_rmse_2d_mps": 1.701213744442641,
-        "pos_rmse_2d_m": 7.471824109559024,
+        "outage_max_drift_m": 18.671141109622397,
+        "outage_final_drift_m": 18.671141109622397,
+        "outage_drift_pct": 13.255665761451521,
+        "vel_rmse_2d_mps": 1.70134526315456,
+        "pos_rmse_2d_m": 8.1235250562127,
         "nhc_telemetry": {
           "attempts": 0,
           "accepted": 0,
@@ -140,22 +142,22 @@
       },
       "phase11_full": {
         "outage_duration_s": 10.0,
-        "outage_max_drift_m": 8.093344225171363,
-        "outage_final_drift_m": 8.093344225171363,
-        "outage_drift_pct": 5.745908367965576,
-        "vel_rmse_2d_mps": 4.468048477562132,
-        "pos_rmse_2d_m": 24.103283012851005,
+        "outage_max_drift_m": 8.297359521864813,
+        "outage_final_drift_m": 7.7805791028211075,
+        "outage_drift_pct": 5.523859276301981,
+        "vel_rmse_2d_mps": 0.9804176567113474,
+        "pos_rmse_2d_m": 3.561744966805527,
         "nhc_telemetry": {
           "attempts": 300,
-          "accepted": 194,
-          "relaxed": 7,
-          "skipped": 106,
+          "accepted": 240,
+          "relaxed": 5,
+          "skipped": 60,
           "skipped_stationary": 0,
           "skipped_low_speed": 0,
           "rejection_reasons": {
-            "SKIPPED_SEVERE_INNOVATION": 105,
-            "SKIPPED_DYNAMIC_CORNERING_INCONSISTENCY": 1
-          }
+            "SKIPPED_SEVERE_INNOVATION": 43
+          },
+          "skipped_unaligned": 17
         },
         "zupt_telemetry": {
           "standstill_evaluations": 300,
@@ -169,22 +171,22 @@
       },
       "nhc_only": {
         "outage_duration_s": 10.0,
-        "outage_max_drift_m": 8.093344225171363,
-        "outage_final_drift_m": 8.093344225171363,
-        "outage_drift_pct": 5.745908367965576,
-        "vel_rmse_2d_mps": 4.468048477562132,
-        "pos_rmse_2d_m": 24.103283012851005,
+        "outage_max_drift_m": 8.297359521864813,
+        "outage_final_drift_m": 7.7805791028211075,
+        "outage_drift_pct": 5.523859276301981,
+        "vel_rmse_2d_mps": 0.9804176567113474,
+        "pos_rmse_2d_m": 3.561744966805527,
         "nhc_telemetry": {
           "attempts": 300,
-          "accepted": 194,
-          "relaxed": 7,
-          "skipped": 106,
+          "accepted": 240,
+          "relaxed": 5,
+          "skipped": 60,
           "skipped_stationary": 0,
           "skipped_low_speed": 0,
           "rejection_reasons": {
-            "SKIPPED_SEVERE_INNOVATION": 105,
-            "SKIPPED_DYNAMIC_CORNERING_INCONSISTENCY": 1
-          }
+            "SKIPPED_SEVERE_INNOVATION": 43
+          },
+          "skipped_unaligned": 17
         },
         "zupt_telemetry": {
           "standstill_evaluations": 0,
@@ -198,11 +200,11 @@
       },
       "zupt_only": {
         "outage_duration_s": 10.0,
-        "outage_max_drift_m": 17.615519934570095,
-        "outage_final_drift_m": 17.615519934570095,
-        "outage_drift_pct": 12.50622246899027,
-        "vel_rmse_2d_mps": 1.701213744442641,
-        "pos_rmse_2d_m": 7.471824109559024,
+        "outage_max_drift_m": 18.671141109622397,
+        "outage_final_drift_m": 18.671141109622397,
+        "outage_drift_pct": 13.255665761451521,
+        "vel_rmse_2d_mps": 1.70134526315456,
+        "pos_rmse_2d_m": 8.1235250562127,
         "nhc_telemetry": {
           "attempts": 0,
           "accepted": 0,
@@ -223,8 +225,8 @@
         "inf_count": 0
       },
       "ablation_summary": {
-        "nhc_benefit_m": 9.522175709398732,
-        "nhc_benefit_pct": 54.055604062595165,
+        "nhc_benefit_m": 10.89056200680129,
+        "nhc_benefit_pct": 58.32831503366823,
         "zupt_benefit_m": 0.0,
         "zupt_benefit_pct": 0.0,
         "combined_interaction_m": 0.0
@@ -233,11 +235,11 @@
     "outage_30s": {
       "phase9_baseline": {
         "outage_duration_s": 30.0,
-        "outage_max_drift_m": 250.38240028886278,
-        "outage_final_drift_m": 122.90615849559819,
-        "outage_drift_pct": 28.905426507538586,
-        "vel_rmse_2d_mps": 9.967118693908978,
-        "pos_rmse_2d_m": 87.77110099123895,
+        "outage_max_drift_m": 250.41517353727605,
+        "outage_final_drift_m": 121.42806439052124,
+        "outage_drift_pct": 28.557804052744686,
+        "vel_rmse_2d_mps": 9.900691973015956,
+        "pos_rmse_2d_m": 87.94445372231986,
         "nhc_telemetry": {
           "attempts": 0,
           "accepted": 0,
@@ -259,22 +261,22 @@
       },
       "phase11_full": {
         "outage_duration_s": 30.0,
-        "outage_max_drift_m": 113.30682988442783,
-        "outage_final_drift_m": 113.30682988442783,
-        "outage_drift_pct": 26.647828588213528,
-        "vel_rmse_2d_mps": 4.070903295038371,
-        "pos_rmse_2d_m": 75.90618993104917,
+        "outage_max_drift_m": 84.75989617033552,
+        "outage_final_drift_m": 84.75989617033552,
+        "outage_drift_pct": 19.934077995172068,
+        "vel_rmse_2d_mps": 3.296398541316654,
+        "pos_rmse_2d_m": 56.104403267735115,
         "nhc_telemetry": {
           "attempts": 500,
-          "accepted": 272,
-          "relaxed": 11,
-          "skipped": 226,
+          "accepted": 302,
+          "relaxed": 6,
+          "skipped": 196,
           "skipped_stationary": 2,
           "skipped_low_speed": 0,
           "rejection_reasons": {
-            "SKIPPED_SEVERE_INNOVATION": 225,
-            "SKIPPED_DYNAMIC_CORNERING_INCONSISTENCY": 1
-          }
+            "SKIPPED_SEVERE_INNOVATION": 179
+          },
+          "skipped_unaligned": 17
         },
         "zupt_telemetry": {
           "standstill_evaluations": 500,
@@ -288,22 +290,22 @@
       },
       "nhc_only": {
         "outage_duration_s": 30.0,
-        "outage_max_drift_m": 113.30682988442783,
-        "outage_final_drift_m": 113.30682988442783,
-        "outage_drift_pct": 26.647828588213528,
-        "vel_rmse_2d_mps": 4.070903295038371,
-        "pos_rmse_2d_m": 75.90618993104917,
+        "outage_max_drift_m": 84.75989617033552,
+        "outage_final_drift_m": 84.75989617033552,
+        "outage_drift_pct": 19.934077995172068,
+        "vel_rmse_2d_mps": 3.296398541316654,
+        "pos_rmse_2d_m": 56.104403267735115,
         "nhc_telemetry": {
           "attempts": 500,
-          "accepted": 272,
-          "relaxed": 11,
-          "skipped": 228,
+          "accepted": 302,
+          "relaxed": 6,
+          "skipped": 198,
           "skipped_stationary": 0,
           "skipped_low_speed": 0,
           "rejection_reasons": {
-            "SKIPPED_SEVERE_INNOVATION": 227,
-            "SKIPPED_DYNAMIC_CORNERING_INCONSISTENCY": 1
-          }
+            "SKIPPED_SEVERE_INNOVATION": 181
+          },
+          "skipped_unaligned": 17
         },
         "zupt_telemetry": {
           "standstill_evaluations": 0,
@@ -317,11 +319,11 @@
       },
       "zupt_only": {
         "outage_duration_s": 30.0,
-        "outage_max_drift_m": 250.38240028886278,
-        "outage_final_drift_m": 122.90615849559819,
-        "outage_drift_pct": 28.905426507538586,
-        "vel_rmse_2d_mps": 9.967118693908978,
-        "pos_rmse_2d_m": 87.77110099123895,
+        "outage_max_drift_m": 250.41517353727605,
+        "outage_final_drift_m": 121.42806439052124,
+        "outage_drift_pct": 28.557804052744686,
+        "vel_rmse_2d_mps": 9.900691973015956,
+        "pos_rmse_2d_m": 87.94445372231986,
         "nhc_telemetry": {
           "attempts": 0,
           "accepted": 0,
@@ -342,8 +344,8 @@
         "inf_count": 0
       },
       "ablation_summary": {
-        "nhc_benefit_m": 9.599328611170364,
-        "nhc_benefit_pct": 7.8102909802637415,
+        "nhc_benefit_m": 36.66816822018572,
+        "nhc_benefit_pct": 30.197441097519512,
         "zupt_benefit_m": 0.0,
         "zupt_benefit_pct": 0.0,
         "combined_interaction_m": 0.0
@@ -352,11 +354,11 @@
     "outage_60s": {
       "phase9_baseline": {
         "outage_duration_s": 60.0,
-        "outage_max_drift_m": 585.8273333374342,
-        "outage_final_drift_m": 585.8273333374342,
-        "outage_drift_pct": 69.88979167018903,
-        "vel_rmse_2d_mps": 21.959500778979116,
-        "pos_rmse_2d_m": 281.09037439163245,
+        "outage_max_drift_m": 576.9597953178617,
+        "outage_final_drift_m": 576.9597953178617,
+        "outage_drift_pct": 68.83188544159994,
+        "vel_rmse_2d_mps": 21.769721363687523,
+        "pos_rmse_2d_m": 276.974295544874,
         "nhc_telemetry": {
           "attempts": 0,
           "accepted": 0,
@@ -378,22 +380,22 @@
       },
       "phase11_full": {
         "outage_duration_s": 60.0,
-        "outage_max_drift_m": 317.27880725774384,
-        "outage_final_drift_m": 317.27880725774384,
-        "outage_drift_pct": 37.85168167945029,
-        "vel_rmse_2d_mps": 6.468704490001004,
-        "pos_rmse_2d_m": 190.7654120277759,
+        "outage_max_drift_m": 175.24144505378808,
+        "outage_final_drift_m": 173.8894285035006,
+        "outage_drift_pct": 20.745184186818662,
+        "vel_rmse_2d_mps": 4.080397383209343,
+        "pos_rmse_2d_m": 110.67342328594071,
         "nhc_telemetry": {
           "attempts": 800,
-          "accepted": 567,
-          "relaxed": 17,
-          "skipped": 231,
+          "accepted": 593,
+          "relaxed": 13,
+          "skipped": 205,
           "skipped_stationary": 2,
           "skipped_low_speed": 0,
           "rejection_reasons": {
-            "SKIPPED_SEVERE_INNOVATION": 230,
-            "SKIPPED_DYNAMIC_CORNERING_INCONSISTENCY": 1
-          }
+            "SKIPPED_SEVERE_INNOVATION": 188
+          },
+          "skipped_unaligned": 17
         },
         "zupt_telemetry": {
           "standstill_evaluations": 800,
@@ -407,22 +409,22 @@
       },
       "nhc_only": {
         "outage_duration_s": 60.0,
-        "outage_max_drift_m": 317.27880725774384,
-        "outage_final_drift_m": 317.27880725774384,
-        "outage_drift_pct": 37.85168167945029,
-        "vel_rmse_2d_mps": 6.468704490001004,
-        "pos_rmse_2d_m": 190.7654120277759,
+        "outage_max_drift_m": 175.24144505378808,
+        "outage_final_drift_m": 173.8894285035006,
+        "outage_drift_pct": 20.745184186818662,
+        "vel_rmse_2d_mps": 4.080397383209343,
+        "pos_rmse_2d_m": 110.67342328594071,
         "nhc_telemetry": {
           "attempts": 800,
-          "accepted": 567,
-          "relaxed": 17,
-          "skipped": 233,
+          "accepted": 593,
+          "relaxed": 13,
+          "skipped": 207,
           "skipped_stationary": 0,
           "skipped_low_speed": 0,
           "rejection_reasons": {
-            "SKIPPED_SEVERE_INNOVATION": 232,
-            "SKIPPED_DYNAMIC_CORNERING_INCONSISTENCY": 1
-          }
+            "SKIPPED_SEVERE_INNOVATION": 190
+          },
+          "skipped_unaligned": 17
         },
         "zupt_telemetry": {
           "standstill_evaluations": 0,
@@ -436,11 +438,11 @@
       },
       "zupt_only": {
         "outage_duration_s": 60.0,
-        "outage_max_drift_m": 585.8273333374342,
-        "outage_final_drift_m": 585.8273333374342,
-        "outage_drift_pct": 69.88979167018903,
-        "vel_rmse_2d_mps": 21.959500778979116,
-        "pos_rmse_2d_m": 281.09037439163245,
+        "outage_max_drift_m": 576.9597953178617,
+        "outage_final_drift_m": 576.9597953178617,
+        "outage_drift_pct": 68.83188544159994,
+        "vel_rmse_2d_mps": 21.769721363687523,
+        "pos_rmse_2d_m": 276.974295544874,
         "nhc_telemetry": {
           "attempts": 0,
           "accepted": 0,
@@ -461,8 +463,8 @@
         "inf_count": 0
       },
       "ablation_summary": {
-        "nhc_benefit_m": 268.54852607969036,
-        "nhc_benefit_pct": 45.840900688225055,
+        "nhc_benefit_m": 403.0703668143611,
+        "nhc_benefit_pct": 69.8610839239326,
         "zupt_benefit_m": 0.0,
         "zupt_benefit_pct": 0.0,
         "combined_interaction_m": 0.0
@@ -471,9 +473,9 @@
   },
   "scenario_c_sharp_turn": {
     "phase9_baseline": {
-      "pos_rmse_2d_m": 1120.831003986208,
-      "max_pos_err_2d_m": 2170.2444165242314,
-      "outage_final_drift_m": 1538.2236120173432,
+      "pos_rmse_2d_m": 1121.5848078954818,
+      "max_pos_err_2d_m": 2170.0176752052726,
+      "outage_final_drift_m": 1539.8950850962938,
       "nhc_telemetry": {
         "attempts": 0,
         "accepted": 0,
@@ -487,45 +489,43 @@
       "inf_count": 0
     },
     "phase11_full": {
-      "pos_rmse_2d_m": 872.5703694740813,
-      "max_pos_err_2d_m": 1365.842658760207,
-      "outage_final_drift_m": 1269.5908494763962,
+      "pos_rmse_2d_m": 1121.5848078954818,
+      "max_pos_err_2d_m": 2170.0176752052726,
+      "outage_final_drift_m": 1539.8950850962938,
       "nhc_telemetry": {
         "attempts": 350,
-        "accepted": 12,
-        "relaxed": 7,
-        "skipped": 318,
+        "accepted": 0,
+        "relaxed": 0,
+        "skipped": 338,
         "skipped_stationary": 0,
-        "skipped_low_speed": 20,
-        "rejection_reasons": {
-          "SKIPPED_SEVERE_INNOVATION": 318
-        }
+        "skipped_low_speed": 12,
+        "rejection_reasons": {},
+        "skipped_unaligned": 338
       },
       "nan_count": 0,
       "inf_count": 0
     },
     "nhc_only": {
-      "pos_rmse_2d_m": 872.5703694740813,
-      "max_pos_err_2d_m": 1365.842658760207,
-      "outage_final_drift_m": 1269.5908494763962,
+      "pos_rmse_2d_m": 1121.5848078954818,
+      "max_pos_err_2d_m": 2170.0176752052726,
+      "outage_final_drift_m": 1539.8950850962938,
       "nhc_telemetry": {
         "attempts": 350,
-        "accepted": 12,
-        "relaxed": 7,
-        "skipped": 318,
+        "accepted": 0,
+        "relaxed": 0,
+        "skipped": 338,
         "skipped_stationary": 0,
-        "skipped_low_speed": 20,
-        "rejection_reasons": {
-          "SKIPPED_SEVERE_INNOVATION": 318
-        }
+        "skipped_low_speed": 12,
+        "rejection_reasons": {},
+        "skipped_unaligned": 338
       },
       "nan_count": 0,
       "inf_count": 0
     },
     "zupt_only": {
-      "pos_rmse_2d_m": 1120.831003986208,
-      "max_pos_err_2d_m": 2170.2444165242314,
-      "outage_final_drift_m": 1538.2236120173432,
+      "pos_rmse_2d_m": 1121.5848078954818,
+      "max_pos_err_2d_m": 2170.0176752052726,
+      "outage_final_drift_m": 1539.8950850962938,
       "nhc_telemetry": {
         "attempts": 0,
         "accepted": 0,
@@ -541,9 +541,9 @@
   },
   "scenario_d_stop_and_go": {
     "phase9_baseline": {
-      "pos_rmse_2d_m": 175.67493423554365,
-      "max_pos_err_2d_m": 747.7764323132485,
-      "final_pos_err_2d_m": 747.7764323132485,
+      "pos_rmse_2d_m": 176.45497790616116,
+      "max_pos_err_2d_m": 748.5448846112268,
+      "final_pos_err_2d_m": 748.5448846112268,
       "nhc_telemetry": {
         "attempts": 0,
         "accepted": 0,
@@ -564,44 +564,42 @@
       "inf_count": 0
     },
     "phase11_full": {
-      "pos_rmse_2d_m": 78.20301731158007,
-      "max_pos_err_2d_m": 292.6676520319356,
-      "final_pos_err_2d_m": 292.6676520319356,
+      "pos_rmse_2d_m": 57.81368581090791,
+      "max_pos_err_2d_m": 126.36284814609176,
+      "final_pos_err_2d_m": 119.23778233606384,
       "nhc_telemetry": {
         "attempts": 400,
-        "accepted": 74,
-        "relaxed": 6,
-        "skipped": 148,
+        "accepted": 0,
+        "relaxed": 0,
+        "skipped": 222,
         "skipped_stationary": 158,
         "skipped_low_speed": 20,
-        "rejection_reasons": {
-          "SKIPPED_SEVERE_INNOVATION": 148
-        }
+        "rejection_reasons": {},
+        "skipped_unaligned": 222
       },
       "zupt_telemetry": {
         "standstill_evaluations": 400,
         "standstill_confirmed": 158,
         "updates_attempted": 158,
-        "updates_accepted": 82,
-        "updates_rejected": 76
+        "updates_accepted": 84,
+        "updates_rejected": 74
       },
       "nan_count": 0,
       "inf_count": 0
     },
     "nhc_only": {
-      "pos_rmse_2d_m": 79.88934189941921,
-      "max_pos_err_2d_m": 221.07902440682787,
-      "final_pos_err_2d_m": 221.07902440682787,
+      "pos_rmse_2d_m": 176.45497790616116,
+      "max_pos_err_2d_m": 748.5448846112268,
+      "final_pos_err_2d_m": 748.5448846112268,
       "nhc_telemetry": {
         "attempts": 400,
-        "accepted": 196,
-        "relaxed": 6,
-        "skipped": 139,
+        "accepted": 0,
+        "relaxed": 0,
+        "skipped": 329,
         "skipped_stationary": 0,
-        "skipped_low_speed": 65,
-        "rejection_reasons": {
-          "SKIPPED_SEVERE_INNOVATION": 139
-        }
+        "skipped_low_speed": 71,
+        "rejection_reasons": {},
+        "skipped_unaligned": 329
       },
       "zupt_telemetry": {
         "standstill_evaluations": 0,
@@ -614,9 +612,9 @@
       "inf_count": 0
     },
     "zupt_only": {
-      "pos_rmse_2d_m": 58.37319940582123,
-      "max_pos_err_2d_m": 127.05988159622751,
-      "final_pos_err_2d_m": 120.12917010801829,
+      "pos_rmse_2d_m": 57.81368581090791,
+      "max_pos_err_2d_m": 126.36284814609176,
+      "final_pos_err_2d_m": 119.23778233606384,
       "nhc_telemetry": {
         "attempts": 0,
         "accepted": 0,
@@ -630,117 +628,283 @@
         "standstill_evaluations": 400,
         "standstill_confirmed": 158,
         "updates_attempted": 158,
-        "updates_accepted": 83,
-        "updates_rejected": 75
+        "updates_accepted": 84,
+        "updates_rejected": 74
       },
       "nan_count": 0,
       "inf_count": 0
     },
     "ablation_summary": {
-      "nhc_benefit_m": 526.6974079064206,
-      "nhc_benefit_pct": 70.43514413486939,
-      "zupt_benefit_m": 627.6472622052302,
-      "zupt_benefit_pct": 83.9351489406535,
-      "combined_interaction_m": 699.2358898303379
+      "nhc_benefit_m": 0.0,
+      "nhc_benefit_pct": 0.0,
+      "zupt_benefit_m": 629.3071022751631,
+      "zupt_benefit_pct": 84.07072377523593,
+      "combined_interaction_m": -1.1368683772161603e-13
     }
   },
   "frame_isolation_experiment": {
     "description": "Isolating algorithmic NHC performance from frame calibration error",
     "exp_a_correct_frame_nhc_on": {
-      "outage_60s_drift_m": 317.27880725774384,
-      "outage_10s_drift_m": 8.093344225171363
+      "outage_60s_drift_m": 173.8894285035006,
+      "outage_10s_drift_m": 7.7805791028211075
     },
     "exp_b_wrong_frame_minus_10deg_nhc_on": {
-      "outage_60s_drift_m": 519.7136548745642,
-      "outage_10s_drift_m": 9.252034326136044
+      "outage_60s_drift_m": 239.6292909122771,
+      "outage_10s_drift_m": 8.947736853493952
     },
     "exp_c_correct_frame_nhc_off": {
-      "outage_60s_drift_m": 585.8273333374342,
-      "outage_10s_drift_m": 17.615519934570095
+      "outage_60s_drift_m": 576.9597953178617,
+      "outage_10s_drift_m": 18.671141109622397
     }
   },
   "mounting_yaw_sensitivity": {
     "-15.0deg": {
       "yaw_offset_deg": -15.0,
-      "final_drift_m": 564.8594836929211,
-      "max_drift_m": 564.8594836929211
+      "final_drift_m": 303.98961784240356,
+      "max_drift_m": 303.98961784240356
     },
     "-10.0deg": {
       "yaw_offset_deg": -10.0,
-      "final_drift_m": 519.7136548745642,
-      "max_drift_m": 519.7136548745642
+      "final_drift_m": 239.6292909122771,
+      "max_drift_m": 239.6292909122771
     },
     "-5.0deg": {
       "yaw_offset_deg": -5.0,
-      "final_drift_m": 453.72737124821765,
-      "max_drift_m": 453.72737124821765
+      "final_drift_m": 206.69239418726,
+      "max_drift_m": 208.29604279897833
     },
     "+0.0deg": {
       "yaw_offset_deg": 0.0,
-      "final_drift_m": 317.27880725774384,
-      "max_drift_m": 317.27880725774384
+      "final_drift_m": 173.8894285035006,
+      "max_drift_m": 175.24144505378808
     },
     "+5.0deg": {
       "yaw_offset_deg": 5.0,
-      "final_drift_m": 345.5704712470667,
-      "max_drift_m": 345.5704712470667
+      "final_drift_m": 167.70159796675338,
+      "max_drift_m": 167.70159796675338
     },
     "+10.0deg": {
       "yaw_offset_deg": 10.0,
-      "final_drift_m": 277.60554356827646,
-      "max_drift_m": 277.60554356827646
+      "final_drift_m": 159.9146464087852,
+      "max_drift_m": 160.29306242789733
     },
     "+15.0deg": {
       "yaw_offset_deg": 15.0,
-      "final_drift_m": 394.08184905770634,
-      "max_drift_m": 394.08184905770634
+      "final_drift_m": 217.50398063783328,
+      "max_drift_m": 217.50398063783328
     }
   },
   "multi_session_validation": {
-    "S1": {
-      "session_file": "Categorised_S1.npz",
-      "start_idx": 4900,
-      "baseline_drift_m": 122.90615849559819,
-      "full_drift_m": 113.30682988442783,
-      "improvement_m": 9.599328611170364,
-      "improvement_pct": 7.8102909802637415,
-      "status": "IMPROVED"
+    "canonical_sessions": {
+      "S1": {
+        "session_file": "Categorised_S1.npz",
+        "start_idx": 4900,
+        "baseline_drift_m": 121.42806439052124,
+        "full_drift_m": 84.75989617033552,
+        "improvement_m": 36.66816822018572,
+        "improvement_pct": 30.197441097519512,
+        "status": "IMPROVED",
+        "alignment_confidence": "ALIGNMENT_LOW_CONFIDENCE",
+        "mounting_yaw_deg": -23.51672646431403,
+        "accumulated_epochs": 20,
+        "nhc_accepted": 302,
+        "nhc_relaxed": 6,
+        "nhc_skipped": 196,
+        "nhc_skipped_unaligned": 17,
+        "zupt_accepted": 0
+      },
+      "S2": {
+        "session_file": "Categorised_S2.npz",
+        "start_idx": 54700,
+        "baseline_drift_m": 5843.643296022327,
+        "full_drift_m": 5843.643296022327,
+        "improvement_m": 0.0,
+        "improvement_pct": 0.0,
+        "status": "NEUTRAL",
+        "alignment_confidence": "ALIGNMENT_UNKNOWN",
+        "mounting_yaw_deg": 0.0,
+        "accumulated_epochs": 0,
+        "nhc_accepted": 0,
+        "nhc_relaxed": 0,
+        "nhc_skipped": 405,
+        "nhc_skipped_unaligned": 405,
+        "zupt_accepted": 0
+      },
+      "S3a": {
+        "session_file": "Categorised_S3a.npz",
+        "start_idx": 9600,
+        "baseline_drift_m": 6904.343637956263,
+        "full_drift_m": 6904.343637956263,
+        "improvement_m": 0.0,
+        "improvement_pct": 0.0,
+        "status": "NEUTRAL",
+        "alignment_confidence": "ALIGNMENT_UNKNOWN",
+        "mounting_yaw_deg": 0.0,
+        "accumulated_epochs": 0,
+        "nhc_accepted": 0,
+        "nhc_relaxed": 0,
+        "nhc_skipped": 222,
+        "nhc_skipped_unaligned": 222,
+        "zupt_accepted": 0
+      },
+      "S3c": {
+        "session_file": "Categorised_S3c.npz",
+        "start_idx": 13100,
+        "baseline_drift_m": 523.0381209951836,
+        "full_drift_m": 523.0381209951836,
+        "improvement_m": 0.0,
+        "improvement_pct": 0.0,
+        "status": "NEUTRAL",
+        "alignment_confidence": "ALIGNMENT_UNKNOWN",
+        "mounting_yaw_deg": 0.0,
+        "accumulated_epochs": 0,
+        "nhc_accepted": 0,
+        "nhc_relaxed": 0,
+        "nhc_skipped": 461,
+        "nhc_skipped_unaligned": 461,
+        "zupt_accepted": 0
+      },
+      "S4": {
+        "session_file": "Categorised_S4.npz",
+        "start_idx": 67100,
+        "baseline_drift_m": 353.1715746568286,
+        "full_drift_m": 353.1715746568286,
+        "improvement_m": 0.0,
+        "improvement_pct": 0.0,
+        "status": "NEUTRAL",
+        "alignment_confidence": "ALIGNMENT_UNKNOWN",
+        "mounting_yaw_deg": 0.0,
+        "accumulated_epochs": 0,
+        "nhc_accepted": 0,
+        "nhc_relaxed": 0,
+        "nhc_skipped": 500,
+        "nhc_skipped_unaligned": 500,
+        "zupt_accepted": 0
+      }
     },
-    "S2": {
-      "session_file": "Categorised_S2.npz",
-      "start_idx": 54700,
-      "baseline_drift_m": 5874.394954136895,
-      "full_drift_m": 5809.154372849186,
-      "improvement_m": 65.24058128770866,
-      "improvement_pct": 1.110592355418061,
-      "status": "IMPROVED"
-    },
-    "S3a": {
-      "session_file": "Categorised_S3a.npz",
-      "start_idx": 9600,
-      "baseline_drift_m": 6616.575580185838,
-      "full_drift_m": 6559.454790444394,
-      "improvement_m": 57.12078974144333,
-      "improvement_pct": 0.8632983791872442,
-      "status": "IMPROVED"
-    },
-    "S3c": {
-      "session_file": "Categorised_S3c.npz",
-      "start_idx": 13100,
-      "baseline_drift_m": 519.1916355369873,
-      "full_drift_m": 579.400331550543,
-      "improvement_m": -60.20869601355571,
-      "improvement_pct": -11.596622883048436,
-      "status": "DEGRADED"
-    },
-    "S4": {
-      "session_file": "Categorised_S4.npz",
-      "start_idx": 67100,
-      "baseline_drift_m": 353.85422798267524,
-      "full_drift_m": 721.496231061358,
-      "improvement_m": -367.64200307868276,
-      "improvement_pct": -103.89645622566437,
-      "status": "DEGRADED"
+    "multiwindow_aggregate": {
+      "windows_evaluated": 11,
+      "windows_improved": 4,
+      "windows_neutral": 7,
+      "windows_degraded": 0,
+      "percent_improved_or_neutral": 100.0,
+      "mean_improvement_m": 97.61685067635999,
+      "median_improvement_m": 0.0,
+      "mean_improvement_pct": 18.248472825190177,
+      "median_improvement_pct": 0.0,
+      "worst_case_degradation_m": 0.0,
+      "all_windows": [
+        {
+          "window_id": "S1_w1",
+          "session_file": "Categorised_S1.npz",
+          "start_idx": 4900,
+          "baseline_drift_m": 121.42806439052124,
+          "full_drift_m": 84.75989617033552,
+          "improvement_m": 36.66816822018572,
+          "improvement_pct": 30.197441097519512,
+          "status": "IMPROVED"
+        },
+        {
+          "window_id": "S1_w2",
+          "session_file": "Categorised_S1.npz",
+          "start_idx": 10500,
+          "baseline_drift_m": 473.2778564172871,
+          "full_drift_m": 146.31872259380998,
+          "improvement_m": 326.95913382347715,
+          "improvement_pct": 69.08397031261032,
+          "status": "IMPROVED"
+        },
+        {
+          "window_id": "S1_w3",
+          "session_file": "Categorised_S1.npz",
+          "start_idx": 18500,
+          "baseline_drift_m": 391.7802876487241,
+          "full_drift_m": 391.7802876487241,
+          "improvement_m": 0.0,
+          "improvement_pct": 0.0,
+          "status": "NEUTRAL"
+        },
+        {
+          "window_id": "S2_w1",
+          "session_file": "Categorised_S2.npz",
+          "start_idx": 54700,
+          "baseline_drift_m": 5843.643296022327,
+          "full_drift_m": 5843.643296022327,
+          "improvement_m": 0.0,
+          "improvement_pct": 0.0,
+          "status": "NEUTRAL"
+        },
+        {
+          "window_id": "S2_w2",
+          "session_file": "Categorised_S2.npz",
+          "start_idx": 24500,
+          "baseline_drift_m": 4964.869941613999,
+          "full_drift_m": 4964.869941613999,
+          "improvement_m": 0.0,
+          "improvement_pct": 0.0,
+          "status": "NEUTRAL"
+        },
+        {
+          "window_id": "S3a_w1",
+          "session_file": "Categorised_S3a.npz",
+          "start_idx": 9600,
+          "baseline_drift_m": 6904.343637956263,
+          "full_drift_m": 6904.343637956263,
+          "improvement_m": 0.0,
+          "improvement_pct": 0.0,
+          "status": "NEUTRAL"
+        },
+        {
+          "window_id": "S3a_w2",
+          "session_file": "Categorised_S3a.npz",
+          "start_idx": 4500,
+          "baseline_drift_m": 4451.294717399356,
+          "full_drift_m": 4451.294717399356,
+          "improvement_m": 0.0,
+          "improvement_pct": 0.0,
+          "status": "NEUTRAL"
+        },
+        {
+          "window_id": "S3c_w1",
+          "session_file": "Categorised_S3c.npz",
+          "start_idx": 13100,
+          "baseline_drift_m": 523.0381209951836,
+          "full_drift_m": 523.0381209951836,
+          "improvement_m": 0.0,
+          "improvement_pct": 0.0,
+          "status": "NEUTRAL"
+        },
+        {
+          "window_id": "S3c_w2",
+          "session_file": "Categorised_S3c.npz",
+          "start_idx": 14500,
+          "baseline_drift_m": 695.3961781033768,
+          "full_drift_m": 374.28923832107296,
+          "improvement_m": 321.1069397823038,
+          "improvement_pct": 46.176115125925875,
+          "status": "IMPROVED"
+        },
+        {
+          "window_id": "S4_w1",
+          "session_file": "Categorised_S4.npz",
+          "start_idx": 67100,
+          "baseline_drift_m": 353.1715746568286,
+          "full_drift_m": 353.1715746568286,
+          "improvement_m": 0.0,
+          "improvement_pct": 0.0,
+          "status": "NEUTRAL"
+        },
+        {
+          "window_id": "S4_w2",
+          "session_file": "Categorised_S4.npz",
+          "start_idx": 18500,
+          "baseline_drift_m": 703.8378433992056,
+          "full_drift_m": 314.78672778521235,
+          "improvement_m": 389.0511156139932,
+          "improvement_pct": 55.275674541036246,
+          "status": "IMPROVED"
+        }
+      ]
     }
   }
 }

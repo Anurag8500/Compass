@@ -68,6 +68,11 @@ from navigation.nhc import (
     NHCMeasurementModel,
     NHCStatus,
 )
+from navigation.alignment import (
+    AlignmentConfidence,
+    DynamicAlignmentState,
+    DynamicMountingAligner,
+)
 
 
 @dataclass(frozen=True)
@@ -175,6 +180,11 @@ class NavigationCore:
         self._last_update_nis: Optional[float] = None
         self._last_gnss_nis: Optional[float] = None
 
+        # Causal Dynamic Mounting Alignment Subsystem (Phase 11)
+        self.mounting_aligner = DynamicMountingAligner()
+        self._last_gnss_speed: Optional[float] = None
+        self._last_gnss_accel: Optional[float] = None
+
         self._ml_telemetry: dict[str, Any] = {
             "velocitynet": {
                 "scheduler_due": 0,
@@ -241,6 +251,9 @@ class NavigationCore:
         self._current_measurement_nis = None
         self._last_update_nis = None
         self._last_gnss_nis = None
+        self.mounting_aligner.reset()
+        self._last_gnss_speed = None
+        self._last_gnss_accel = None
 
         nom = ESKFNominalState.from_components(
             position_enu=p0_enu,
@@ -427,12 +440,31 @@ class NavigationCore:
         nhc_diag: Optional[NHCDiagnostics] = None
         nhc_applied = False
         if self.config.nhc_enabled:
+            # Dynamic mounting alignment causal state update
+            if self.mode == GNSSMode.DR_ONLY:
+                self.mounting_aligner.freeze()
+                gnss_trust_for_nhc = 0.0
+            else:
+                self.mounting_aligner.unfreeze()
+                gnss_trust_val = self._last_gnss_quality.trust_score if self._last_gnss_quality else 1.0
+                is_trusted = bool(self.mode == GNSSMode.GNSS_AIDED and gnss_trust_val >= 0.7)
+                self.mounting_aligner.update(
+                    f_level=f_arr,
+                    omega_level=w_arr,
+                    gnss_speed_mps=self._last_gnss_speed,
+                    gnss_accel_mps2=self._last_gnss_accel,
+                    is_gnss_trusted=is_trusted,
+                )
+                gnss_trust_for_nhc = gnss_trust_val
+
             self._nhc_telemetry["attempts"] += 1
             self.state, nhc_diag = self.nhc_model.update(
                 state=self.state,
                 is_stationary=is_stationary,
                 omega_v=w_arr,
                 f_v=f_arr,
+                alignment_confidence=self.mounting_aligner.state.confidence,
+                gnss_trust_score=gnss_trust_for_nhc,
                 timestamp_ns=t_ns,
             )
             nhc_applied = nhc_diag.applied
@@ -445,6 +477,9 @@ class NavigationCore:
                 self._nhc_telemetry["skipped"] += 1
                 rej = nhc_diag.reason
                 self._nhc_telemetry["rejection_reasons"][rej] = self._nhc_telemetry["rejection_reasons"].get(rej, 0) + 1
+            elif nhc_diag.status == NHCStatus.SKIPPED_UNALIGNED_FRAME:
+                self._nhc_telemetry["skipped"] += 1
+                self._nhc_telemetry["skipped_unaligned"] = self._nhc_telemetry.get("skipped_unaligned", 0) + 1
             elif nhc_diag.status == NHCStatus.SKIPPED_STATIONARY:
                 self._nhc_telemetry["skipped_stationary"] += 1
             elif nhc_diag.status == NHCStatus.SKIPPED_LOW_SPEED:
@@ -548,6 +583,16 @@ class NavigationCore:
         )
 
         applied = False
+
+        # Track causal GNSS ground speed and acceleration for dynamic mounting alignment
+        if v_east is not None and v_north is not None:
+            spd = math.sqrt(float(v_east)**2 + float(v_north)**2)
+            if self._last_gnss_speed is not None and self._last_gnss_timestamp_ns is not None:
+                dt_fix = max(0.1, (t_ns - self._last_gnss_timestamp_ns) * 1e-9)
+                self._last_gnss_accel = (spd - self._last_gnss_speed) / dt_fix
+            else:
+                self._last_gnss_accel = 0.0
+            self._last_gnss_speed = spd
 
         # 4. Handle according to current authoritative FSM mode
         if self.mode == GNSSMode.DR_ONLY:
@@ -772,3 +817,15 @@ class NavigationCore:
         """Return standardized Phase 11 ZUPT supervisory telemetry counters."""
         import copy
         return copy.deepcopy(self._zupt_telemetry)
+
+    def get_alignment_telemetry(self) -> dict[str, Any]:
+        """Return standardized Phase 11 dynamic mounting alignment state and metrics."""
+        st = self.mounting_aligner.state
+        return {
+            "confidence": st.confidence.value,
+            "mounting_yaw_deg": st.mounting_yaw_deg,
+            "accumulated_epochs": st.accumulated_epochs,
+            "mean_resultant_length": st.mean_resultant_length,
+            "circular_dispersion_deg": st.circular_dispersion_deg,
+            "is_frozen": st.is_frozen,
+        }

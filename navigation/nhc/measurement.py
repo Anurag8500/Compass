@@ -29,6 +29,7 @@ from navigation.eskf.state import ESKFState
 from navigation.eskf.update import UpdateDiagnostics, eskf_update
 from navigation.ins.attitude import quaternion_to_rotation_matrix
 from navigation.nhc.skid_detection import NHCStatus, SkidDetectorConfig, SkidSlipDetector
+from navigation.alignment.dynamic import AlignmentConfidence
 
 
 @dataclass(frozen=True)
@@ -150,6 +151,8 @@ class NHCMeasurementModel:
         is_stationary: bool = False,
         omega_v: Optional[np.ndarray] = None,
         f_v: Optional[np.ndarray] = None,
+        alignment_confidence: AlignmentConfidence = AlignmentConfidence.CONFIDENT,
+        gnss_trust_score: float = 0.0,
         timestamp_ns: Optional[int] = None,
     ) -> Tuple[ESKFState, NHCDiagnostics]:
         """Evaluate consistency, apply relaxation/skipping, and update ESKF state.
@@ -159,6 +162,8 @@ class NHCMeasurementModel:
             is_stationary: Whether classical standstill detector confirms standstill.
             omega_v: (3,) Vehicle-frame angular velocity [rad/s].
             f_v: (3,) Vehicle-frame specific force [m/s^2].
+            alignment_confidence: Observability confidence of mounting orientation.
+            gnss_trust_score: Current GNSS trust score (0.0 to 1.0) for authority modulation.
             timestamp_ns: Current update timestamp in nanoseconds.
 
         Returns:
@@ -206,12 +211,33 @@ class NHCMeasurementModel:
                 covariance_inflation=1.0,
             )
 
-        # 4. Innovation and innovation covariance
+        # 4. Alignment Observability Gate:
+        # If mounting azimuth is physically unobservable/unknown, suppressing lateral constraint
+        # protects against catastrophic cross-track errors from skewed sensor coordinates.
+        if alignment_confidence == AlignmentConfidence.UNKNOWN:
+            return state, NHCDiagnostics(
+                status=NHCStatus.SKIPPED_UNALIGNED_FRAME,
+                applied=False,
+                reason="SKIPPED_UNALIGNED_FRAME",
+                innovation=z - h_val,
+                predicted_v_v=v_v,
+                nis=0.0,
+                covariance_inflation=1.0,
+            )
+
+        # 5. GNSS-aided authority modulation and alignment uncertainty inflation:
+        # Relax NHC pseudo-measurement noise when GNSS is healthy to avoid 10-Hz vs 1-Hz jitter.
+        # During outages (trust_score=0.0), full nominal authority (sigma=0.10 m/s) is preserved.
+        scale_gnss = (1.0 + 3.0 * max(0.0, min(1.0, float(gnss_trust_score)))) ** 2
+        scale_align = 2.25 if alignment_confidence == AlignmentConfidence.LOW_CONFIDENCE else 1.0
+        R_base = R_base * (scale_gnss * scale_align)
+
+        # 6. Innovation and innovation covariance
         y = z - h_val  # y = [-vy_v, -vz_v]
         P = state.covariance
         S = H @ P @ H.T + R_base
 
-        # 5. Evaluate normalized innovation squared (Mahalanobis distance squared)
+        # 7. Evaluate normalized innovation squared (Mahalanobis distance squared)
         try:
             # Solve S^-1 @ y numerically without explicit inversion
             S_inv_y = np.linalg.solve(S, y)
