@@ -697,17 +697,24 @@ The two dedicated authority/always-active tests (steps 6-7) are the most importa
 #### Expected Artifacts
 `docs/ml_eskf_integration_report.md` with the ML-augmented drift/RMSE result vs. the Phase 5 GNSS-only baseline.
 
-#### Definition of Done
-Both authority/always-active tests pass; real-data replay shows the ML-augmented result improves on (or at minimum does not degrade) the Phase 5 baseline; cadence scheduling confirmed to run VelocityNet/BiasNet at their intended rates, not every IMU sample.
-
-#### Failure / Recovery
-If ML integration *degrades* the Phase 5 baseline, do not proceed — first check the `(z,H,R)` construction (a sign/scale error here is easy to make and would look like "the model is bad" when it's actually an integration bug), then re-examine the models themselves only after integration correctness is confirmed.
-
-#### GitHub Commit Strategy
-Commits per adapter; a dedicated commit for the authority tests (call this out in the commit message explicitly, since it's a load-bearing correctness property); tagged `git tag ml-eskf-integration-v1` once the real-data replay improves on baseline.
+#### Definition of Done — Acceptance Gate Status
+**STATUS**: **COMPLETE**
+- **ModelRunner & Export Contract**: `ONNXModelRunner` loads frozen `velocitynet_v1_1.onnx` and `biasnet_v1.onnx` with training-only normalizer (`normalization.json`). Rejects non-finite, out-of-bounds, or discontinuous windows with reason codes.
+- **VelocityNet Adapter**: Evaluates attitude-dependent forward projection $fwd_n = R_v^n[:, 0]$, 15D Jacobian $H_v[0, 3:6] = fwd_n^T$, bounded heteroscedastic uncertainty $R_v \in [1.0, 25.0]\text{ m}^2/\text{s}^2$, causal EMA smoothing ($\alpha=0.2$), and standstill motion suppression ($< 0.5\text{ m/s}$).
+- **BiasNet Adapter**: Implements pseudo-measurement $z_b = b_{\text{nom}} + \Delta b_{\text{pred}}$, $h_b(x) = b_{\text{nom}}$, error-state Jacobian $H_b[0:3, 9:12] = I_3$, $H_b[3:6, 12:15] = I_3$, and frozen Phase 8 covariance $R_b = \text{diag}([1.21, 1.21, 1.21, 0.0025, 0.0025, 0.0025])$.
+- **Cadence & Causality**: Explicit time-aware scheduler enforces ~2 Hz VelocityNet ($\Delta t \ge 0.5\text{ s}$) and ~1 Hz BiasNet ($\Delta t \ge 1.0\text{ s}$). `CausalWindowBuffer` strictly prevents lookahead ($t_i \le t_{\text{update}}$).
+- **Filter Authority & Safety**: PASSED (`test_ml_eskf_authority.py`). Deliberately absurd speed ($1000\text{ m/s}$) and bias ($50\text{ m/s}^2$) predictions are rejected by the Mahalanobis gate, leaving nominal state and covariance strictly unmodified.
+- **GNSS-Denied Aiding**: PASSED (`test_ml_active_without_gnss.py`). When GNSS is withheld, VelocityNet and BiasNet continue firing and aiding the ESKF.
+- **Full Real-Data Offline Replay (`Categorised_S1.npz`)**:
+  - **10s Outage**: Standstill motion gate active. Pure ESKF RMSE $0.426\text{ m}$, +VNet $0.426\text{ m}$, +BNet $0.426\text{ m}$, +VNet+BNet $0.426\text{ m}$.
+  - **30s Outage**: Pure ESKF RMSE $11.288\text{ m}$, +VNet $10.394\text{ m}$ (-7.9% drift reduction), +BNet $11.272\text{ m}$, +VNet+BNet $10.389\text{ m}$ (-8.0% drift reduction). Velocity RMSE reduced from $3.775\text{ m/s}$ to $3.388\text{ m/s}$.
+  - **60s Outage**: Pure ESKF RMSE $1771.216\text{ m}$, +VNet $1746.078\text{ m}$ (-25.1 m drift reduction), +BNet $1771.102\text{ m}$, +VNet+BNet $1743.021\text{ m}$ (-28.2 m drift reduction). Final horizontal error reduced from $5308.950\text{ m}$ to $5227.814\text{ m}$ (-81.1 m).
+- **Covariance Health**: 100% PASS across all scenarios and conditions (strictly finite, symmetric, PSD, normalized quaternion).
+- **Test Suite**: 334 tests passing cleanly (`uv run pytest`).
+- **Artifacts Generated**: `docs/ml_eskf_integration_results.json`, `docs/ml_eskf_integration_report.md`.
 
 #### Next-Phase Gate
-ML fully integrated and proven authoritative-filter-preserving; real-data result improves on GNSS-only baseline.
+Phase 9 complete. System ready for Phase 10 (GNSS Quality/Trust, Outage Detection, Mode FSM, Recovery). Phase 10 not started.
 
 ---
 

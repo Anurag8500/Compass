@@ -1,10 +1,11 @@
-"""Error-State Kalman Filter (ESKF) Package for C.O.M.P.A.S.S. (Phase 5).
+"""Error-State Kalman Filter (ESKF) Package for C.O.M.P.A.S.S. (Phase 5 & Phase 9).
 
 Provides:
 - State definitions: 16-state nominal manifold, 15-state error manifold, 15x15 covariance.
 - Prediction: Discrete nominal strapdown propagation, analytical F_d, discrete Q_d.
 - Generic Gated Update: Innovation calculation, Mahalanobis gating, Joseph-form covariance update.
-- Measurement Models: GNSS (position and velocity in local ENU frame) and Classical Gated ZUPT.
+- Measurement Models: GNSS, Classical Gated ZUPT, VelocityNet, BiasNet.
+- Cadence Scheduling: Time-aware 2 Hz / 1 Hz ML update scheduling.
 """
 
 from navigation.eskf.state import (
@@ -29,6 +30,10 @@ from navigation.eskf.update import (
     UpdateDiagnostics,
     eskf_update,
 )
+from navigation.eskf.scheduling import (
+    CadenceConfig,
+    MLCadenceScheduler,
+)
 from navigation.eskf.measurements.gnss import (
     GNSSMeasurementModel,
     GNSSUpdateConfig,
@@ -41,6 +46,18 @@ from navigation.eskf.measurements.zupt import (
     ZUPTDetectorDiagnostics,
     ZUPTMeasurementConfig,
     ZUPTMeasurementModel,
+)
+from navigation.eskf.measurements.velocitynet import (
+    CausalEMA,
+    VelocityNetAdapterDiagnostics,
+    VelocityNetConfig,
+    VelocityNetMeasurementModel,
+)
+from navigation.eskf.measurements.biasnet import (
+    BiasNetAdapterDiagnostics,
+    BiasNetConfig,
+    BiasNetMeasurementModel,
+    PHASE8_R_BIAS_DIAG,
 )
 
 __all__ = [
@@ -61,6 +78,9 @@ __all__ = [
     "MahalanobisGating",
     "UpdateDiagnostics",
     "eskf_update",
+    # Scheduling
+    "CadenceConfig",
+    "MLCadenceScheduler",
     # Measurements
     "GNSSMeasurementModel",
     "GNSSUpdateConfig",
@@ -71,4 +91,12 @@ __all__ = [
     "ZUPTDetectorDiagnostics",
     "ZUPTMeasurementConfig",
     "ZUPTMeasurementModel",
+    "CausalEMA",
+    "VelocityNetAdapterDiagnostics",
+    "VelocityNetConfig",
+    "VelocityNetMeasurementModel",
+    "BiasNetAdapterDiagnostics",
+    "BiasNetConfig",
+    "BiasNetMeasurementModel",
+    "PHASE8_R_BIAS_DIAG",
 ]

@@ -1,0 +1,672 @@
+{
+  "metadata": {
+    "phase": "Phase 9",
+    "title": "ML -> ESKF Integration and Real GNSS-Denied Offline Replay",
+    "timestamp": "2026-09-10 12:43:51 UTC",
+    "dataset": "Categorised_S1.npz",
+    "models": {
+      "velocitynet": {
+        "version": "v1.1",
+        "onnx_path": "models/velocitynet_v1_1.onnx",
+        "onnx_sha256": "86b65c7e443970c2e27d0f1bdb6db66b42d41c9cc0053b91c837b158a707d47a"
+      },
+      "biasnet": {
+        "version": "v1.0",
+        "onnx_path": "models/biasnet_v1.onnx",
+        "onnx_sha256": "d57e64485a8722bc4041d7e73b3fed606e878c5b7ba5504e54081c4225674067"
+      },
+      "normalization": {
+        "path": "data/ml_dataset_v1/normalization.json",
+        "sha256": "0649fdd7e350c931f48c9b7c2d6e9eb74cd731e4ec8d797a713e41753d1ee219"
+      }
+    }
+  },
+  "scenarios": {
+    "continuous_gnss": {
+      "A_pure_eskf": {
+        "final_horizontal_error_m": 5313.346167293718,
+        "horizontal_rmse_m": 1773.3850955534451,
+        "max_horizontal_excursion_m": 5313.346167293718,
+        "final_position_error_3d_m": 7253.528001409948,
+        "velocity_rmse_mps": 133.06639521203383,
+        "mean_yaw_error_deg": 83.61672184247443,
+        "final_accel_bias_norm_mps2": 0.05355216339271095,
+        "final_gyro_bias_norm_rads": 0.0037799926657504815,
+        "covariance_healthy": true,
+        "min_covariance_eigenvalue": 3.5046731358755044e-06,
+        "filter_diverged": false,
+        "zupt_updates_applied": 240,
+        "velocitynet": {
+          "accepted": 0,
+          "rejected": 0,
+          "rejection_reasons": {},
+          "mean_nis": 0.0,
+          "p95_nis": 0.0
+        },
+        "biasnet": {
+          "accepted": 0,
+          "rejected": 0,
+          "rejection_reasons": {},
+          "mean_nis": 0.0,
+          "p95_nis": 0.0
+        },
+        "combined_nis": {
+          "mean_nis": 0.0,
+          "p95_nis": 0.0,
+          "total_ml_updates": 0
+        },
+        "timing": {
+          "mean_cycle_latency_ms": 0.30056099999999997,
+          "max_cycle_latency_ms": 1.0792
+        }
+      },
+      "B_eskf_vnet": {
+        "final_horizontal_error_m": 5253.94958435823,
+        "horizontal_rmse_m": 1750.6847955151281,
+        "max_horizontal_excursion_m": 5253.94958435823,
+        "final_position_error_3d_m": 6992.5610163873425,
+        "velocity_rmse_mps": 131.8196141597275,
+        "mean_yaw_error_deg": 82.99760499794696,
+        "final_accel_bias_norm_mps2": 0.05076125351478352,
+        "final_gyro_bias_norm_rads": 0.004378682551964492,
+        "covariance_healthy": true,
+        "min_covariance_eigenvalue": 3.50449875707156e-06,
+        "filter_diverged": false,
+        "zupt_updates_applied": 240,
+        "velocitynet": {
+          "accepted": 8,
+          "rejected": 121,
+          "rejection_reasons": {
+            "BUFFER_INSUFFICIENT_HISTORY": 19,
+            "STANDSTILL_SUPPRESSED": 43,
+            "GATE_REJECTED": 59
+          },
+          "mean_nis": 4.207873388045505,
+          "p95_nis": 13.863191988951243
+        },
+        "biasnet": {
+          "accepted": 0,
+          "rejected": 0,
+          "rejection_reasons": {},
+          "mean_nis": 0.0,
+          "p95_nis": 0.0
+        },
+        "combined_nis": {
+          "mean_nis": 4.207873388045505,
+          "p95_nis": 13.863191988951243,
+          "total_ml_updates": 8
+        },
+        "timing": {
+          "mean_cycle_latency_ms": 0.3484681666666667,
+          "max_cycle_latency_ms": 1.2248999999999999
+        }
+      },
+      "C_eskf_bnet": {
+        "final_horizontal_error_m": 5308.534332507141,
+        "horizontal_rmse_m": 1773.264897430483,
+        "max_horizontal_excursion_m": 5308.534332507141,
+        "final_position_error_3d_m": 7132.536131583464,
+        "velocity_rmse_mps": 132.59974639053405,
+        "mean_yaw_error_deg": 86.9591623202938,
+        "final_accel_bias_norm_mps2": 0.06484155603459936,
+        "final_gyro_bias_norm_rads": 0.005895091178523354,
+        "covariance_healthy": true,
+        "min_covariance_eigenvalue": 3.2739447947987815e-06,
+        "filter_diverged": false,
+        "zupt_updates_applied": 240,
+        "velocitynet": {
+          "accepted": 0,
+          "rejected": 0,
+          "rejection_reasons": {},
+          "mean_nis": 0.0,
+          "p95_nis": 0.0
+        },
+        "biasnet": {
+          "accepted": 57,
+          "rejected": 19,
+          "rejection_reasons": {
+            "BUFFER_INSUFFICIENT_HISTORY": 19
+          },
+          "mean_nis": 2.541854542968533,
+          "p95_nis": 10.859862315545016
+        },
+        "combined_nis": {
+          "mean_nis": 2.541854542968533,
+          "p95_nis": 10.859862315545016,
+          "total_ml_updates": 57
+        },
+        "timing": {
+          "mean_cycle_latency_ms": 0.33070849999999996,
+          "max_cycle_latency_ms": 1.2567
+        }
+      },
+      "D_eskf_vnet_bnet": {
+        "final_horizontal_error_m": 5239.5988866257685,
+        "horizontal_rmse_m": 1747.8871885717945,
+        "max_horizontal_excursion_m": 5239.5988866257685,
+        "final_position_error_3d_m": 6874.818848409535,
+        "velocity_rmse_mps": 131.04758729108627,
+        "mean_yaw_error_deg": 86.65879066974514,
+        "final_accel_bias_norm_mps2": 0.06133822778304222,
+        "final_gyro_bias_norm_rads": 0.006562804537035917,
+        "covariance_healthy": true,
+        "min_covariance_eigenvalue": 3.2737794175859406e-06,
+        "filter_diverged": false,
+        "zupt_updates_applied": 240,
+        "velocitynet": {
+          "accepted": 8,
+          "rejected": 121,
+          "rejection_reasons": {
+            "BUFFER_INSUFFICIENT_HISTORY": 19,
+            "STANDSTILL_SUPPRESSED": 43,
+            "GATE_REJECTED": 59
+          },
+          "mean_nis": 4.175136781119936,
+          "p95_nis": 13.766529321694446
+        },
+        "biasnet": {
+          "accepted": 57,
+          "rejected": 19,
+          "rejection_reasons": {
+            "BUFFER_INSUFFICIENT_HISTORY": 19
+          },
+          "mean_nis": 2.5418770431664828,
+          "p95_nis": 10.859971142224616
+        },
+        "combined_nis": {
+          "mean_nis": 2.7428936262992156,
+          "p95_nis": 11.13237939003331,
+          "total_ml_updates": 65
+        },
+        "timing": {
+          "mean_cycle_latency_ms": 0.3917581666666667,
+          "max_cycle_latency_ms": 1.4286999999999999
+        }
+      }
+    },
+    "outage_10s": {
+      "A_pure_eskf": {
+        "final_horizontal_error_m": 0.6160473699792406,
+        "horizontal_rmse_m": 0.425573959035952,
+        "max_horizontal_excursion_m": 0.6160473699792406,
+        "final_position_error_3d_m": 0.8608615272162214,
+        "velocity_rmse_mps": 0.012007846638962302,
+        "mean_yaw_error_deg": 34.964810174719695,
+        "final_accel_bias_norm_mps2": 0.033873517666497176,
+        "final_gyro_bias_norm_rads": 0.0005019957261149343,
+        "covariance_healthy": true,
+        "min_covariance_eigenvalue": 1.2066228916742208e-05,
+        "filter_diverged": false,
+        "zupt_updates_applied": 93,
+        "velocitynet": {
+          "accepted": 0,
+          "rejected": 0,
+          "rejection_reasons": {},
+          "mean_nis": 0.0,
+          "p95_nis": 0.0
+        },
+        "biasnet": {
+          "accepted": 0,
+          "rejected": 0,
+          "rejection_reasons": {},
+          "mean_nis": 0.0,
+          "p95_nis": 0.0
+        },
+        "combined_nis": {
+          "mean_nis": 0.0,
+          "p95_nis": 0.0,
+          "total_ml_updates": 0
+        },
+        "timing": {
+          "mean_cycle_latency_ms": 0.36871899999999996,
+          "max_cycle_latency_ms": 0.8818999999999999
+        }
+      },
+      "B_eskf_vnet": {
+        "final_horizontal_error_m": 0.6160473699792406,
+        "horizontal_rmse_m": 0.425573959035952,
+        "max_horizontal_excursion_m": 0.6160473699792406,
+        "final_position_error_3d_m": 0.8608615272162214,
+        "velocity_rmse_mps": 0.012007846638962302,
+        "mean_yaw_error_deg": 34.964810174719695,
+        "final_accel_bias_norm_mps2": 0.033873517666497176,
+        "final_gyro_bias_norm_rads": 0.0005019957261149343,
+        "covariance_healthy": true,
+        "min_covariance_eigenvalue": 1.2066228916742208e-05,
+        "filter_diverged": false,
+        "zupt_updates_applied": 93,
+        "velocitynet": {
+          "accepted": 0,
+          "rejected": 35,
+          "rejection_reasons": {
+            "BUFFER_INSUFFICIENT_HISTORY": 19,
+            "STANDSTILL_SUPPRESSED": 16
+          },
+          "mean_nis": 0.0,
+          "p95_nis": 0.0
+        },
+        "biasnet": {
+          "accepted": 0,
+          "rejected": 0,
+          "rejection_reasons": {},
+          "mean_nis": 0.0,
+          "p95_nis": 0.0
+        },
+        "combined_nis": {
+          "mean_nis": 0.0,
+          "p95_nis": 0.0,
+          "total_ml_updates": 0
+        },
+        "timing": {
+          "mean_cycle_latency_ms": 0.40901099999999996,
+          "max_cycle_latency_ms": 0.8499
+        }
+      },
+      "C_eskf_bnet": {
+        "final_horizontal_error_m": 0.6160705259064762,
+        "horizontal_rmse_m": 0.4255918972666813,
+        "max_horizontal_excursion_m": 0.6160705259064762,
+        "final_position_error_3d_m": 0.8607412916838623,
+        "velocity_rmse_mps": 0.012035643345454606,
+        "mean_yaw_error_deg": 35.02271689573528,
+        "final_accel_bias_norm_mps2": 0.03444206379956639,
+        "final_gyro_bias_norm_rads": 0.0008136484884294195,
+        "covariance_healthy": true,
+        "min_covariance_eigenvalue": 1.1621634746369928e-05,
+        "filter_diverged": false,
+        "zupt_updates_applied": 93,
+        "velocitynet": {
+          "accepted": 0,
+          "rejected": 0,
+          "rejection_reasons": {},
+          "mean_nis": 0.0,
+          "p95_nis": 0.0
+        },
+        "biasnet": {
+          "accepted": 8,
+          "rejected": 19,
+          "rejection_reasons": {
+            "BUFFER_INSUFFICIENT_HISTORY": 19
+          },
+          "mean_nis": 0.05172489174785719,
+          "p95_nis": 0.07707163127639846
+        },
+        "combined_nis": {
+          "mean_nis": 0.05172489174785719,
+          "p95_nis": 0.07707163127639846,
+          "total_ml_updates": 8
+        },
+        "timing": {
+          "mean_cycle_latency_ms": 0.427815,
+          "max_cycle_latency_ms": 1.1046
+        }
+      },
+      "D_eskf_vnet_bnet": {
+        "final_horizontal_error_m": 0.6160705259064762,
+        "horizontal_rmse_m": 0.4255918972666813,
+        "max_horizontal_excursion_m": 0.6160705259064762,
+        "final_position_error_3d_m": 0.8607412916838623,
+        "velocity_rmse_mps": 0.012035643345454606,
+        "mean_yaw_error_deg": 35.02271689573528,
+        "final_accel_bias_norm_mps2": 0.03444206379956639,
+        "final_gyro_bias_norm_rads": 0.0008136484884294195,
+        "covariance_healthy": true,
+        "min_covariance_eigenvalue": 1.1621634746369928e-05,
+        "filter_diverged": false,
+        "zupt_updates_applied": 93,
+        "velocitynet": {
+          "accepted": 0,
+          "rejected": 35,
+          "rejection_reasons": {
+            "BUFFER_INSUFFICIENT_HISTORY": 19,
+            "STANDSTILL_SUPPRESSED": 16
+          },
+          "mean_nis": 0.0,
+          "p95_nis": 0.0
+        },
+        "biasnet": {
+          "accepted": 8,
+          "rejected": 19,
+          "rejection_reasons": {
+            "BUFFER_INSUFFICIENT_HISTORY": 19
+          },
+          "mean_nis": 0.05172489174785719,
+          "p95_nis": 0.07707163127639846
+        },
+        "combined_nis": {
+          "mean_nis": 0.05172489174785719,
+          "p95_nis": 0.07707163127639846,
+          "total_ml_updates": 8
+        },
+        "timing": {
+          "mean_cycle_latency_ms": 0.457254,
+          "max_cycle_latency_ms": 1.66
+        }
+      }
+    },
+    "outage_30s": {
+      "A_pure_eskf": {
+        "final_horizontal_error_m": 63.87545255351707,
+        "horizontal_rmse_m": 11.287506909276251,
+        "max_horizontal_excursion_m": 63.87545255351707,
+        "final_position_error_3d_m": 65.88249630147631,
+        "velocity_rmse_mps": 3.7749485497019126,
+        "mean_yaw_error_deg": 39.91131253906945,
+        "final_accel_bias_norm_mps2": 0.05342232515902195,
+        "final_gyro_bias_norm_rads": 0.003509271748249268,
+        "covariance_healthy": true,
+        "min_covariance_eigenvalue": 5.942019579461944e-06,
+        "filter_diverged": false,
+        "zupt_updates_applied": 240,
+        "velocitynet": {
+          "accepted": 0,
+          "rejected": 0,
+          "rejection_reasons": {},
+          "mean_nis": 0.0,
+          "p95_nis": 0.0
+        },
+        "biasnet": {
+          "accepted": 0,
+          "rejected": 0,
+          "rejection_reasons": {},
+          "mean_nis": 0.0,
+          "p95_nis": 0.0
+        },
+        "combined_nis": {
+          "mean_nis": 0.0,
+          "p95_nis": 0.0,
+          "total_ml_updates": 0
+        },
+        "timing": {
+          "mean_cycle_latency_ms": 0.34948966666666664,
+          "max_cycle_latency_ms": 0.8874
+        }
+      },
+      "B_eskf_vnet": {
+        "final_horizontal_error_m": 58.78412562578641,
+        "horizontal_rmse_m": 10.39373029066229,
+        "max_horizontal_excursion_m": 58.78412562578641,
+        "final_position_error_3d_m": 60.30776054662769,
+        "velocity_rmse_mps": 3.4273878149363513,
+        "mean_yaw_error_deg": 39.683644987140454,
+        "final_accel_bias_norm_mps2": 0.05065929463092386,
+        "final_gyro_bias_norm_rads": 0.004256868987526172,
+        "covariance_healthy": true,
+        "min_covariance_eigenvalue": 5.9419890037784005e-06,
+        "filter_diverged": false,
+        "zupt_updates_applied": 240,
+        "velocitynet": {
+          "accepted": 8,
+          "rejected": 64,
+          "rejection_reasons": {
+            "BUFFER_INSUFFICIENT_HISTORY": 19,
+            "STANDSTILL_SUPPRESSED": 43,
+            "GATE_REJECTED": 2
+          },
+          "mean_nis": 4.193230230870633,
+          "p95_nis": 13.735751292471523
+        },
+        "biasnet": {
+          "accepted": 0,
+          "rejected": 0,
+          "rejection_reasons": {},
+          "mean_nis": 0.0,
+          "p95_nis": 0.0
+        },
+        "combined_nis": {
+          "mean_nis": 4.193230230870633,
+          "p95_nis": 13.735751292471523,
+          "total_ml_updates": 8
+        },
+        "timing": {
+          "mean_cycle_latency_ms": 0.40072166666666664,
+          "max_cycle_latency_ms": 1.2165
+        }
+      },
+      "C_eskf_bnet": {
+        "final_horizontal_error_m": 63.774876245972074,
+        "horizontal_rmse_m": 11.271948131842562,
+        "max_horizontal_excursion_m": 63.774876245972074,
+        "final_position_error_3d_m": 65.70994925667614,
+        "velocity_rmse_mps": 3.7323857298023375,
+        "mean_yaw_error_deg": 40.69231095221686,
+        "final_accel_bias_norm_mps2": 0.056864262758308706,
+        "final_gyro_bias_norm_rads": 0.005148186860854563,
+        "covariance_healthy": true,
+        "min_covariance_eigenvalue": 5.584136399070335e-06,
+        "filter_diverged": false,
+        "zupt_updates_applied": 240,
+        "velocitynet": {
+          "accepted": 0,
+          "rejected": 0,
+          "rejection_reasons": {},
+          "mean_nis": 0.0,
+          "p95_nis": 0.0
+        },
+        "biasnet": {
+          "accepted": 28,
+          "rejected": 19,
+          "rejection_reasons": {
+            "BUFFER_INSUFFICIENT_HISTORY": 19
+          },
+          "mean_nis": 1.7326942291995537,
+          "p95_nis": 10.966842828170373
+        },
+        "combined_nis": {
+          "mean_nis": 1.7326942291995537,
+          "p95_nis": 10.966842828170373,
+          "total_ml_updates": 28
+        },
+        "timing": {
+          "mean_cycle_latency_ms": 0.39458166666666666,
+          "max_cycle_latency_ms": 1.464
+        }
+      },
+      "D_eskf_vnet_bnet": {
+        "final_horizontal_error_m": 58.75134749666386,
+        "horizontal_rmse_m": 10.389369495352854,
+        "max_horizontal_excursion_m": 58.75134749666386,
+        "final_position_error_3d_m": 60.22003773989265,
+        "velocity_rmse_mps": 3.3882830317930988,
+        "mean_yaw_error_deg": 40.47756630922124,
+        "final_accel_bias_norm_mps2": 0.053569898253431635,
+        "final_gyro_bias_norm_rads": 0.005920281140820515,
+        "covariance_healthy": true,
+        "min_covariance_eigenvalue": 5.584107040564088e-06,
+        "filter_diverged": false,
+        "zupt_updates_applied": 240,
+        "velocitynet": {
+          "accepted": 8,
+          "rejected": 64,
+          "rejection_reasons": {
+            "BUFFER_INSUFFICIENT_HISTORY": 19,
+            "STANDSTILL_SUPPRESSED": 43,
+            "GATE_REJECTED": 2
+          },
+          "mean_nis": 4.155770262577986,
+          "p95_nis": 13.621833267104549
+        },
+        "biasnet": {
+          "accepted": 28,
+          "rejected": 19,
+          "rejection_reasons": {
+            "BUFFER_INSUFFICIENT_HISTORY": 19
+          },
+          "mean_nis": 1.7327082731508094,
+          "p95_nis": 10.966938196032178
+        },
+        "combined_nis": {
+          "mean_nis": 2.2711664930235154,
+          "p95_nis": 11.606283471419475,
+          "total_ml_updates": 36
+        },
+        "timing": {
+          "mean_cycle_latency_ms": 0.442054,
+          "max_cycle_latency_ms": 1.339
+        }
+      }
+    },
+    "outage_60s": {
+      "A_pure_eskf": {
+        "final_horizontal_error_m": 5308.9501284774105,
+        "horizontal_rmse_m": 1771.215914026638,
+        "max_horizontal_excursion_m": 5308.9501284774105,
+        "final_position_error_3d_m": 7249.895538798486,
+        "velocity_rmse_mps": 133.0815734209276,
+        "mean_yaw_error_deg": 83.8141424221796,
+        "final_accel_bias_norm_mps2": 0.05342232515902195,
+        "final_gyro_bias_norm_rads": 0.003509271748249268,
+        "covariance_healthy": true,
+        "min_covariance_eigenvalue": 3.50424767470721e-06,
+        "filter_diverged": false,
+        "zupt_updates_applied": 240,
+        "velocitynet": {
+          "accepted": 0,
+          "rejected": 0,
+          "rejection_reasons": {},
+          "mean_nis": 0.0,
+          "p95_nis": 0.0
+        },
+        "biasnet": {
+          "accepted": 0,
+          "rejected": 0,
+          "rejection_reasons": {},
+          "mean_nis": 0.0,
+          "p95_nis": 0.0
+        },
+        "combined_nis": {
+          "mean_nis": 0.0,
+          "p95_nis": 0.0,
+          "total_ml_updates": 0
+        },
+        "timing": {
+          "mean_cycle_latency_ms": 0.280451,
+          "max_cycle_latency_ms": 1.0073999999999999
+        }
+      },
+      "B_eskf_vnet": {
+        "final_horizontal_error_m": 5243.2464325210085,
+        "horizontal_rmse_m": 1746.0777136946092,
+        "max_horizontal_excursion_m": 5243.2464325210085,
+        "final_position_error_3d_m": 6969.304864912081,
+        "velocity_rmse_mps": 131.71156425203299,
+        "mean_yaw_error_deg": 83.05899311906632,
+        "final_accel_bias_norm_mps2": 0.05065929463092386,
+        "final_gyro_bias_norm_rads": 0.004256868987526172,
+        "covariance_healthy": true,
+        "min_covariance_eigenvalue": 3.504067535263442e-06,
+        "filter_diverged": false,
+        "zupt_updates_applied": 240,
+        "velocitynet": {
+          "accepted": 8,
+          "rejected": 121,
+          "rejection_reasons": {
+            "BUFFER_INSUFFICIENT_HISTORY": 19,
+            "STANDSTILL_SUPPRESSED": 43,
+            "GATE_REJECTED": 59
+          },
+          "mean_nis": 4.193230230870633,
+          "p95_nis": 13.735751292471523
+        },
+        "biasnet": {
+          "accepted": 0,
+          "rejected": 0,
+          "rejection_reasons": {},
+          "mean_nis": 0.0,
+          "p95_nis": 0.0
+        },
+        "combined_nis": {
+          "mean_nis": 4.193230230870633,
+          "p95_nis": 13.735751292471523,
+          "total_ml_updates": 8
+        },
+        "timing": {
+          "mean_cycle_latency_ms": 0.34386266666666665,
+          "max_cycle_latency_ms": 1.1442999999999999
+        }
+      },
+      "C_eskf_bnet": {
+        "final_horizontal_error_m": 5303.960370996301,
+        "horizontal_rmse_m": 1771.1016232070376,
+        "max_horizontal_excursion_m": 5303.960370996301,
+        "final_position_error_3d_m": 7125.056827905308,
+        "velocity_rmse_mps": 132.58712026188545,
+        "mean_yaw_error_deg": 87.21859781118238,
+        "final_accel_bias_norm_mps2": 0.06471041681778328,
+        "final_gyro_bias_norm_rads": 0.005646022695296975,
+        "covariance_healthy": true,
+        "min_covariance_eigenvalue": 3.2736009956810312e-06,
+        "filter_diverged": false,
+        "zupt_updates_applied": 240,
+        "velocitynet": {
+          "accepted": 0,
+          "rejected": 0,
+          "rejection_reasons": {},
+          "mean_nis": 0.0,
+          "p95_nis": 0.0
+        },
+        "biasnet": {
+          "accepted": 57,
+          "rejected": 19,
+          "rejection_reasons": {
+            "BUFFER_INSUFFICIENT_HISTORY": 19
+          },
+          "mean_nis": 2.541816107720062,
+          "p95_nis": 10.859701508429753
+        },
+        "combined_nis": {
+          "mean_nis": 2.541816107720062,
+          "p95_nis": 10.859701508429753,
+          "total_ml_updates": 57
+        },
+        "timing": {
+          "mean_cycle_latency_ms": 0.3325933333333333,
+          "max_cycle_latency_ms": 1.1208
+        }
+      },
+      "D_eskf_vnet_bnet": {
+        "final_horizontal_error_m": 5227.814416884003,
+        "horizontal_rmse_m": 1743.021148931026,
+        "max_horizontal_excursion_m": 5227.814416884003,
+        "final_position_error_3d_m": 6848.261606542572,
+        "velocity_rmse_mps": 130.8853585299671,
+        "mean_yaw_error_deg": 86.80647368207596,
+        "final_accel_bias_norm_mps2": 0.06121935802006434,
+        "final_gyro_bias_norm_rads": 0.006404368291974024,
+        "covariance_healthy": true,
+        "min_covariance_eigenvalue": 3.2734224131947665e-06,
+        "filter_diverged": false,
+        "zupt_updates_applied": 240,
+        "velocitynet": {
+          "accepted": 8,
+          "rejected": 121,
+          "rejection_reasons": {
+            "BUFFER_INSUFFICIENT_HISTORY": 19,
+            "STANDSTILL_SUPPRESSED": 43,
+            "GATE_REJECTED": 59
+          },
+          "mean_nis": 4.155770262577986,
+          "p95_nis": 13.621833267104549
+        },
+        "biasnet": {
+          "accepted": 57,
+          "rejected": 19,
+          "rejection_reasons": {
+            "BUFFER_INSUFFICIENT_HISTORY": 19
+          },
+          "mean_nis": 2.5418419792311924,
+          "p95_nis": 10.859825338345653
+        },
+        "combined_nis": {
+          "mean_nis": 2.7404793064123365,
+          "p95_nis": 11.13232484846629,
+          "total_ml_updates": 65
+        },
+        "timing": {
+          "mean_cycle_latency_ms": 0.384473,
+          "max_cycle_latency_ms": 1.7147999999999999
+        }
+      }
+    }
+  }
+}
