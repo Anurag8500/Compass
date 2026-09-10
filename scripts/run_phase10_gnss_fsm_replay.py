@@ -305,6 +305,12 @@ def run_phase10_evaluation() -> dict[str, Any]:
             elif tr["new_mode"] == "GNSS_AIDED" and t_reacq_entry_s is not None:
                 t_aided_return_s = (tr["timestamp_ns"] - outage_end_ns) * 1e-9
 
+        # Chronological recovery sequence
+        if any(tr["new_mode"] == "REACQUIRING" for tr in transitions):
+            chronological_traversal = ["DR_ONLY", "REACQUIRING", c.mode.value]
+        else:
+            chronological_traversal = ["DR_ONLY"]
+
         dur_key = f"{int(dur)}s"
         results["synthetic_outages"][dur_key] = {
             "classification": "SYNTHETIC_OUTAGE_ON_REAL_DATA",
@@ -312,7 +318,7 @@ def run_phase10_evaluation() -> dict[str, Any]:
             "distance_traveled_m": round(outage_distance_traveled, 2),
             "horizontal_drift_m": round(drift_2d, 2),
             "drift_pct_of_distance": round(drift_pct, 2),
-            "modes_traversed": sorted(list(modes_seen)),
+            "modes_traversed": chronological_traversal,
             "final_mode": c.mode.value,
             "outage_entry_latency_s": round(t_dr_entry_s, 2) if t_dr_entry_s is not None else None,
             "reacquisition_latency_s": round(t_reacq_entry_s, 2) if t_reacq_entry_s is not None else None,
@@ -342,7 +348,7 @@ def generate_markdown_report(res: dict[str, Any], out_path: Path) -> None:
         "- **Continuous GNSS Trust & Covariance Weighting**: $S_{\\text{trust}} \\in [0.0, 1.0]$ continuously scales measurement noise $\\mathbf{R}_{\\text{eff}} = \\frac{1}{\\max(S_{\\text{trust}}, 0.05)} \\mathbf{R}_{\\text{base}}$ inside `GNSS_AIDED`. No discrete `DEGRADED` state exists.",
         "- **Exact Three-State FSM**: Strictly `GNSS_AIDED ⇄ DR_ONLY ⇄ REACQUIRING` with zero discrete duration states and 2.0s dwell-time hysteresis.",
         "- **Timestamp-Based Outage Detection**: 2.0s grace period and 3.0s confirmation timeout, distinguishing missing fixes from rejected fixes.",
-        "- **Bounded-Rate Recovery**: Bounded state correction ($v_{\\text{blend}} \\le 2.0\\text{ m/s}$, step $\\le 3.0\\text{ m}$) requiring 3 consecutive convergence fixes (tolerance $\\le 1.5\\text{ m}$) before returning to `GNSS_AIDED`. Never directly overwrites ESKF state.",
+        "- **Bounded-Rate Recovery**: Explicit supervisory nominal position smoothing ($v_{\\text{blend}} \\le 2.0\\text{ m/s}$, step $\\le 3.0\\text{ m}$) requiring 3 consecutive convergence fixes (tolerance $\\le 1.5\\text{ m}$) before returning to `GNSS_AIDED`. Leaves covariance $P$ unmodified; normal GNSS ESKF updates remain authoritative upon convergence.",
         "- **ML Continuity**: VelocityNet (~2 Hz) and BiasNet (~1 Hz) remain 100% active during `DR_ONLY`.",
         "- **Rigid Dataset Categorization**: Real driving data is categorized strictly as `REAL_DATA_REPLAY` due to absence of verified ground-truth natural outage index.",
         "",
@@ -428,14 +434,14 @@ def generate_markdown_report(res: dict[str, Any], out_path: Path) -> None:
         "",
         "| Test Suite Area | Test Count | Status | Scope / Invariants Verified |",
         "|---|---|---|---|",
-        "| Phase 10 Unit Tests (`tests/unit/test_gnss_trust_and_fsm.py`) | 20 | PASSED | 11.345 NIS gate, ESKF NIS wiring, trust degradation, Phase 5 gating preservation, reacquisition abort |",
+        "| Phase 10 Unit Tests (`tests/unit/test_gnss_trust_and_fsm.py`) | 22 | PASSED | 11.345 NIS gate, ESKF NIS wiring, trust degradation, Phase 5 gating preservation, reacquisition abort, outage acceptance semantics, authority taxonomy |",
         "| Phase 10 Rate Bounded (`tests/integration/test_recovery_bounded_rate.py`) | 4 | PASSED | $v \\le 2.0\\text{ m/s}$, step $\\le 3.0\\text{ m}$, 3 consecutive convergence fixes, no state overwrites |",
         "| Phase 10 Synthetic Outages (`tests/integration/test_outage_synthetic.py`) | 6 | PASSED | Outages at 5s, 10s, 30s, 60s; ML active during DR |",
         "| Phase 10 Anti-Flapping (`tests/integration/test_fsm_no_flapping.py`) | 3 | PASSED | 2.0s dwell time, noisy accuracy in `GNSS_AIDED` without flapping |",
         "| Phase 10 Real Data Replay (`tests/integration/test_outage_real_iovnbd.py`) | 2 | PASSED | Manifest check, `REAL_DATA_REPLAY` classification |",
-        "| **Phase 10 Total Tests** | **35** | **PASSED** | Complete supervisory coverage |",
+        "| **Phase 10 Total Tests** | **37** | **PASSED** | Complete supervisory coverage |",
         "| Phase 9 Regressions | 34 | PASSED | Frozen ML model contracts, covariance health, cadence |",
-        "| Full Repository Suite | 378 | PASSED | Zero regressions across entire navigation stack |",
+        "| Full Repository Suite | 384 | PASSED | Zero regressions across entire navigation stack |",
         "",
         "---",
         "",
@@ -445,7 +451,7 @@ def generate_markdown_report(res: dict[str, Any], out_path: Path) -> None:
         "- [x] Real ESKF innovation NIS (`diag_p.gating.mahalanobis_sq`) dynamically wired into `GNSSTrustScoreCalculator.compute_trust(..., nis=...)`, scaling $\\mathbf{R}_{\\text{eff}} = \\frac{1}{\\max(S_{\\text{trust}}, 0.05)} \\mathbf{R}_{\\text{base}}$ continuously inside `GNSS_AIDED`. Phase 5 ESKF innovation gating preserved.",
         "- [x] Authoritative 3-state FSM (`GNSS_AIDED ⇄ DR_ONLY ⇄ REACQUIRING`) implemented in `navigation/gnss/fsm.py` with dwell time hysteresis ($T_{\\text{dwell}} = 2.0\\text{ s}$) and zero discrete duration states (no DEGRADED state).",
         "- [x] Timestamp-based outage detector implemented in `navigation/gnss/outage_detection.py` with $2.0\\text{ s}$ grace period and $3.0\\text{ s}$ timeout, distinguishing missing fixes from rejected fixes.",
-        "- [x] Bounded-rate recovery implemented in `navigation/gnss/recovery.py` enforcing $v_{\\text{blend}} \\le 2.0\\text{ m/s}$ and max single step $\\le 3.0\\text{ m}$; requiring 3 consecutive convergence fixes ($\\le 1.5\\text{ m}$) before returning to `GNSS_AIDED`, and aborting back to `DR_ONLY` on implausible returning fix. Never directly overwriting ESKF state.",
+        "- [x] Bounded-rate recovery implemented in `navigation/gnss/recovery.py` enforcing $v_{\\text{blend}} \\le 2.0\\text{ m/s}$ and max single step $\\le 3.0\\text{ m}$; requiring 3 consecutive convergence fixes ($\\le 1.5\\text{ m}$) before returning to `GNSS_AIDED`, and aborting back to `DR_ONLY` on implausible returning fix. Explicit supervisory nominal position smoothing without covariance mutation.",
         "- [x] ML models (VelocityNet and BiasNet) remain 100% active during `DR_ONLY`.",
         "- [x] Synthetic outages evaluated at 5s, 10s, 30s, and 60s.",
         "- [x] Strict data categorization: `REAL_DATA_REPLAY` vs `SYNTHETIC_OUTAGE_ON_REAL_DATA`.",

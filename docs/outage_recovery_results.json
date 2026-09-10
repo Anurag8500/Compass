@@ -30,8 +30,8 @@
       "drift_pct_of_distance": 4.42,
       "modes_traversed": [
         "DR_ONLY",
-        "GNSS_AIDED",
-        "REACQUIRING"
+        "REACQUIRING",
+        "GNSS_AIDED"
       ],
       "final_mode": "GNSS_AIDED",
       "outage_entry_latency_s": 2.0,
@@ -77,8 +77,8 @@
       "drift_pct_of_distance": 13.55,
       "modes_traversed": [
         "DR_ONLY",
-        "GNSS_AIDED",
-        "REACQUIRING"
+        "REACQUIRING",
+        "GNSS_AIDED"
       ],
       "final_mode": "GNSS_AIDED",
       "outage_entry_latency_s": 2.0,
@@ -123,8 +123,7 @@
       "horizontal_drift_m": 105.25,
       "drift_pct_of_distance": 24.62,
       "modes_traversed": [
-        "DR_ONLY",
-        "GNSS_AIDED"
+        "DR_ONLY"
       ],
       "final_mode": "DR_ONLY",
       "outage_entry_latency_s": 2.0,
@@ -153,8 +152,7 @@
       "horizontal_drift_m": 594.98,
       "drift_pct_of_distance": 70.73,
       "modes_traversed": [
-        "DR_ONLY",
-        "GNSS_AIDED"
+        "DR_ONLY"
       ],
       "final_mode": "DR_ONLY",
       "outage_entry_latency_s": 2.0,

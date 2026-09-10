@@ -14,7 +14,7 @@ from typing import Optional, Tuple, Union
 import numpy as np
 
 from navigation.frames.local_geo import GeoReference
-from navigation.eskf.gating import MahalanobisGating
+from navigation.eskf.gating import GatingDiagnostics, MahalanobisGating
 from navigation.eskf.state import ESKFState
 from navigation.eskf.update import UpdateDiagnostics, eskf_update
 
@@ -39,6 +39,26 @@ class GNSSUpdateConfig:
     min_speed_accuracy_mps: float = 0.2
     default_speed_accuracy_mps: float = 0.5
     min_trust_score: float = 0.1
+
+
+@dataclass(frozen=True)
+class PreUpdateInnovationDiagnostics:
+    """Statistical evaluation of an incoming GNSS position fix prior to trust-covariance weighting.
+
+    Attributes:
+        innovation: (3,) raw innovation residual z_p - h(x) in local ENU frame.
+        innovation_covariance_base: (3, 3) innovation covariance S_base = H P H^T + R_base.
+        nis_base: Normalized Innovation Squared y^T S_base^-1 y under unscaled baseline noise R_base.
+        is_valid: True if measurement values and covariance are finite and non-singular.
+        gating_passed: True if baseline NIS passes the authoritative innovation gate.
+        gating: Optional GatingDiagnostics record from evaluating baseline innovation.
+    """
+    innovation: np.ndarray
+    innovation_covariance_base: np.ndarray
+    nis_base: float
+    is_valid: bool
+    gating_passed: bool = True
+    gating: Optional[GatingDiagnostics] = None
 
 
 def course_to_horizontal_velocity(
@@ -207,6 +227,54 @@ class GNSSMeasurementModel:
 
         return z_v, H_v, R_v
 
+    def evaluate_pre_update_innovation(
+        self,
+        state: ESKFState,
+        lat: float,
+        lon: float,
+        alt: float,
+        accuracy_h_m: Optional[float] = None,
+        accuracy_v_m: Optional[float] = None,
+    ) -> Optional[PreUpdateInnovationDiagnostics]:
+        """Compute pre-update innovation and baseline NIS for an incoming fix before trust weighting.
+
+        Evaluates the discrepancy between the incoming raw GNSS position and the current predicted
+        ESKF nominal state against the unscaled baseline measurement noise covariance R_base.
+        This provides an uncorrupted, non-circular statistical quality measure to feed into
+        trust score calculation before final covariance scaling and update gating.
+        """
+        meas = self.create_position_measurement(lat, lon, alt, accuracy_h_m, accuracy_v_m, trust_score=1.0)
+        if meas is None:
+            return None
+
+        z_p, H_p, R_base = meas
+        h_val = state.position_enu
+        y = z_p - h_val
+
+        P = state.covariance
+        S_base = H_p @ P @ H_p.T + R_base
+        S_base = 0.5 * (S_base + S_base.T)
+
+        try:
+            S_inv = np.linalg.inv(S_base)
+            nis_base = float(y.T @ S_inv @ y)
+            is_valid = math.isfinite(nis_base) and nis_base >= 0.0
+        except np.linalg.LinAlgError:
+            nis_base = float("inf")
+            is_valid = False
+
+        gating_diag = self.gating.evaluate(y, S_base) if self.gating is not None else None
+        gating_passed = gating_diag.accepted if gating_diag is not None else True
+
+        return PreUpdateInnovationDiagnostics(
+            innovation=y,
+            innovation_covariance_base=S_base,
+            nis_base=nis_base if is_valid else float("inf"),
+            is_valid=is_valid,
+            gating_passed=gating_passed,
+            gating=gating_diag,
+        )
+
     def update_position(
         self,
         state: ESKFState,
@@ -219,6 +287,25 @@ class GNSSMeasurementModel:
         timestamp_ns: Optional[int] = None,
     ) -> Tuple[ESKFState, UpdateDiagnostics]:
         """Apply 3D position GNSS fix update to ESKF state."""
+        # Authoritative Phase 5 innovation gating check against baseline covariance:
+        # Prevents low trust scores (which inflate R) from admitting otherwise invalid outlier fixes.
+        pre_diag = self.evaluate_pre_update_innovation(
+            state=state,
+            lat=lat,
+            lon=lon,
+            alt=alt,
+            accuracy_h_m=accuracy_h_m,
+            accuracy_v_m=accuracy_v_m,
+        )
+        if pre_diag is not None and not pre_diag.gating_passed:
+            diag = UpdateDiagnostics(
+                applied=False,
+                measurement_dim=3,
+                innovation=pre_diag.innovation,
+                innovation_covariance=pre_diag.innovation_covariance_base,
+                gating=pre_diag.gating,
+            )
+            return state, diag
         meas = self.create_position_measurement(lat, lon, alt, accuracy_h_m, accuracy_v_m, trust_score)
         if meas is None:
             # Corrupted / invalid input: emit rejected diagnostic

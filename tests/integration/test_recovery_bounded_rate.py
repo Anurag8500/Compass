@@ -111,7 +111,7 @@ def test_pipeline_recovery_rate_limit_and_authoritative_gate() -> None:
     1. Implausible returning fix (NIS > 11.345) does NOT enter REACQUIRING.
     2. Plausible returning fix (NIS <= 11.345) enters REACQUIRING.
     3. Rate-bounded recovery enforces <= 2.0 m/s displacement rate, step <= 3.0m.
-    4. Never directly overwrites ESKF state.
+    4. Bounded recovery supervisory correction: nominal position smoothing without covariance mutation.
     5. Requires 3 consecutive convergence fixes to return to GNSS_AIDED.
     """
     core = NavigationCore(NavigationCoreConfig(
@@ -168,8 +168,14 @@ def test_pipeline_recovery_rate_limit_and_authoritative_gate() -> None:
     prev_pos = core.state.nominal.position_enu.copy()
     applied_plausible = core.step_gnss_fix(lat0, target_lon, alt0, accuracy_h_m=2.0, timestamp_ns=t_reacq1_ns)
 
-    assert applied_plausible is True
+    # First reacquisition fix: enters REACQUIRING, applies bounded supervisory correction,
+    # but no ESKF measurement update has occurred yet (applied must be False).
+    assert applied_plausible is False
     assert core.mode == GNSSMode.REACQUIRING
+    telem_reacq = core.get_gnss_telemetry()
+    assert telem_reacq["total_fixes_received"] == 3  # Initial fix + 1 implausible + 1 plausible reacquiring fix
+    assert telem_reacq["total_fixes_accepted"] == 1  # ONLY initial fix was accepted as an ESKF update
+
     delta_p1 = float(np.linalg.norm(core.state.nominal.position_enu - prev_pos))
     # Must NOT snap 10 meters! Bounded rate limit enforces <= 3.0m max single step
     assert delta_p1 <= 3.01, f"Position jumped {delta_p1:.2f}m in single cycle, exceeding 3.0m bound"

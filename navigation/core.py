@@ -154,6 +154,8 @@ class NavigationCore:
         self._last_gnss_timestamp_ns: Optional[int] = None
         self._last_gnss_quality: Optional[GNSSQualityResult] = None
         self._last_recovery_step: Optional[BoundedCorrectionStep] = None
+        self._current_measurement_nis: Optional[float] = None
+        self._last_update_nis: Optional[float] = None
         self._last_gnss_nis: Optional[float] = None
 
         self._ml_telemetry: dict[str, Any] = {
@@ -200,6 +202,8 @@ class NavigationCore:
         self._last_gnss_timestamp_ns = None
         self._last_gnss_quality = None
         self._last_recovery_step = None
+        self._current_measurement_nis = None
+        self._last_update_nis = None
         self._last_gnss_nis = None
 
         nom = ESKFNominalState.from_components(
@@ -383,12 +387,15 @@ class NavigationCore:
 
         # 5. GNSS Outage and FSM Mode Evaluation (Phase 10)
         outage_status = self.gnss_outage_detector.evaluate_outage(t_ns)
+        prev_mode = self.mode
         self.gnss_fsm.evaluate_transition(
             current_timestamp_ns=t_ns,
             is_outage=outage_status.is_outage,
             outage_reason=outage_status.condition.value,
         )
         self.mode = self.gnss_fsm.current_mode
+        if prev_mode == GNSSMode.REACQUIRING and self.mode == GNSSMode.DR_ONLY:
+            self.gnss_recovery_manager.reset()
 
         # 6. Covariance health check
         health = self.check_covariance_health()
@@ -428,13 +435,27 @@ class NavigationCore:
         # 1. Record fix arrival in outage detector
         self.gnss_outage_detector.record_fix_received(t_ns)
 
-        # 2. Continuous trust evaluation with latest ESKF innovation NIS
+        # 2. Pre-update innovation evaluation against unscaled baseline covariance R_base
+        pre_diag = self.gnss_model.evaluate_pre_update_innovation(
+            state=self.state,
+            lat=lat,
+            lon=lon,
+            alt=alt,
+            accuracy_h_m=accuracy_h_m,
+            accuracy_v_m=accuracy_v_m,
+        )
+        if pre_diag is not None and pre_diag.is_valid:
+            self._current_measurement_nis = float(pre_diag.nis_base)
+        else:
+            self._current_measurement_nis = None
+
+        # 3. Continuous trust evaluation using CURRENT fix pre-update NIS
         quality_res = self.gnss_trust_calculator.compute_trust(
             accuracy_m=accuracy_h_m,
             sat_count=sat_count,
             current_pos_enu=p_enu,
             timestamp_ns=t_ns,
-            nis=self._last_gnss_nis,
+            nis=self._current_measurement_nis,
         )
         self._last_gnss_quality = quality_res
 
@@ -447,7 +468,7 @@ class NavigationCore:
 
         applied = False
 
-        # 3. Handle according to current authoritative FSM mode
+        # 4. Handle according to current authoritative FSM mode
         if self.mode == GNSSMode.DR_ONLY:
             # Validate returning fix before reacquisition
             val_res = self.gnss_recovery_manager.validate_returning_fix(
@@ -457,6 +478,7 @@ class NavigationCore:
                 timestamp_ns=t_ns,
             )
             outage_status = self.gnss_outage_detector.evaluate_outage(t_ns)
+            prev_mode = self.mode
             self.gnss_fsm.evaluate_transition(
                 current_timestamp_ns=t_ns,
                 is_outage=outage_status.is_outage,
@@ -486,11 +508,13 @@ class NavigationCore:
                         timestamp_ns=t_ns,
                     )
                     if diag_p.gating is not None:
-                        self._last_gnss_nis = float(diag_p.gating.mahalanobis_sq)
-                        self.gnss_trust_calculator.update_innovation_nis(self._last_gnss_nis)
+                        self._last_update_nis = float(diag_p.gating.mahalanobis_sq)
+                        self._last_gnss_nis = self._last_update_nis
+                        self.gnss_trust_calculator.update_innovation_nis(self._last_update_nis)
                 self.last_gnss_diagnostics = (diag_p, None)
-                self.gnss_outage_detector.record_update_result(t_ns, applied=True)
-                applied = True
+                update_applied = bool(diag_p is not None and diag_p.applied)
+                self.gnss_outage_detector.record_update_result(t_ns, applied=update_applied)
+                applied = update_applied
             else:
                 # Still in DR_ONLY (e.g. fix implausible or dwell active)
                 self.gnss_outage_detector.record_update_result(t_ns, applied=False)
@@ -535,8 +559,9 @@ class NavigationCore:
                     timestamp_ns=t_ns,
                 )
                 if diag_p.gating is not None:
-                    self._last_gnss_nis = float(diag_p.gating.mahalanobis_sq)
-                    self.gnss_trust_calculator.update_innovation_nis(self._last_gnss_nis)
+                    self._last_update_nis = float(diag_p.gating.mahalanobis_sq)
+                    self._last_gnss_nis = self._last_update_nis
+                    self.gnss_trust_calculator.update_innovation_nis(self._last_update_nis)
             diag_v = None
             if v_east is not None and v_north is not None:
                 v_u = 0.0 if v_up is None else float(v_up)
@@ -550,11 +575,13 @@ class NavigationCore:
                     timestamp_ns=t_ns,
                 )
             self.last_gnss_diagnostics = (diag_p, diag_v)
-            self.gnss_outage_detector.record_update_result(t_ns, applied=True)
-            applied = True
+            update_applied = bool(diag_p is not None and diag_p.applied)
+            self.gnss_outage_detector.record_update_result(t_ns, applied=update_applied)
+            applied = update_applied
 
-            # Check if convergence achieved
+            # Check if convergence achieved or reacquisition timed out
             outage_status = self.gnss_outage_detector.evaluate_outage(t_ns)
+            prev_mode = self.mode
             self.gnss_fsm.evaluate_transition(
                 current_timestamp_ns=t_ns,
                 is_outage=outage_status.is_outage,
@@ -564,6 +591,8 @@ class NavigationCore:
                 trust_score=effective_trust,
             )
             self.mode = self.gnss_fsm.current_mode
+            if prev_mode == GNSSMode.REACQUIRING and self.mode == GNSSMode.DR_ONLY:
+                self.gnss_recovery_manager.reset()
 
         else:
             # GNSS_AIDED (nominal)
@@ -592,8 +621,9 @@ class NavigationCore:
             self.last_gnss_diagnostics = (diag_p, diag_v)
             self.gnss_outage_detector.record_update_result(t_ns, applied=diag_p.applied)
             if diag_p.gating is not None:
-                self._last_gnss_nis = float(diag_p.gating.mahalanobis_sq)
-                self.gnss_trust_calculator.update_innovation_nis(self._last_gnss_nis)
+                self._last_update_nis = float(diag_p.gating.mahalanobis_sq)
+                self._last_gnss_nis = self._last_update_nis
+                self.gnss_trust_calculator.update_innovation_nis(self._last_update_nis)
 
             # Evaluate if persistent rejection or outage occurred
             outage_status = self.gnss_outage_detector.evaluate_outage(t_ns)
@@ -643,7 +673,9 @@ class NavigationCore:
             "is_outage": outage_status.is_outage,
             "time_since_last_fix_s": outage_status.time_since_last_fix_s,
             "last_trust_score": self._last_gnss_quality.trust_score if self._last_gnss_quality else 1.0,
-            "last_eskf_nis": self._last_gnss_nis,
+            "current_measurement_nis": self._current_measurement_nis,
+            "last_update_nis": self._last_update_nis,
+            "last_eskf_nis": self._last_update_nis,
             "covariance_scale": 1.0 / max(0.05, self._last_gnss_quality.trust_score) if self._last_gnss_quality else 1.0,
             "recovery_cycles": self.gnss_recovery_manager.recovery_cycles,
             "maximum_recovery_correction_m": self.gnss_recovery_manager.maximum_correction_applied_m,

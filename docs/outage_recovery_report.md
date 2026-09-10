@@ -9,7 +9,7 @@ The implementation strictly adheres to **Master Plan Section 17** and **Trace Pa
 - **Continuous GNSS Trust & Covariance Weighting**: $S_{\text{trust}} \in [0.0, 1.0]$ continuously scales measurement noise $\mathbf{R}_{\text{eff}} = \frac{1}{\max(S_{\text{trust}}, 0.05)} \mathbf{R}_{\text{base}}$ inside `GNSS_AIDED`. No discrete `DEGRADED` state exists.
 - **Exact Three-State FSM**: Strictly `GNSS_AIDED ⇄ DR_ONLY ⇄ REACQUIRING` with zero discrete duration states and 2.0s dwell-time hysteresis.
 - **Timestamp-Based Outage Detection**: 2.0s grace period and 3.0s confirmation timeout, distinguishing missing fixes from rejected fixes.
-- **Bounded-Rate Recovery**: Bounded state correction ($v_{\text{blend}} \le 2.0\text{ m/s}$, step $\le 3.0\text{ m}$) requiring 3 consecutive convergence fixes (tolerance $\le 1.5\text{ m}$) before returning to `GNSS_AIDED`. Never directly overwrites ESKF state.
+- **Bounded-Rate Recovery**: Explicit supervisory nominal position smoothing ($v_{\text{blend}} \le 2.0\text{ m/s}$, step $\le 3.0\text{ m}$) requiring 3 consecutive convergence fixes (tolerance $\le 1.5\text{ m}$) before returning to `GNSS_AIDED`. Leaves covariance $P$ unmodified; normal GNSS ESKF updates remain authoritative upon convergence.
 - **ML Continuity**: VelocityNet (~2 Hz) and BiasNet (~1 Hz) remain 100% active during `DR_ONLY`.
 - **Rigid Dataset Categorization**: Real driving data is categorized strictly as `REAL_DATA_REPLAY` due to absence of verified ground-truth natural outage index.
 
@@ -47,10 +47,10 @@ Classification: **`SYNTHETIC_OUTAGE_ON_REAL_DATA`** (Ground truth is preserved; 
 
 | Outage Duration | Distance Traveled | Dead-Reckoning Drift | Drift % of Distance | FSM Traversal | Max Single Step | Rate Bounded? | ML Updates in DR |
 |---|---|---|---|---|---|---|---|
-| **5s** | 71.9 m | 3.18 m | **4.42%** | `DR_ONLY → GNSS_AIDED → REACQUIRING` | 3.00 m | PASSED (≤3.0m) | VNet: 7, BNet: 4 |
-| **10s** | 142.5 m | 19.32 m | **13.55%** | `DR_ONLY → GNSS_AIDED → REACQUIRING` | 3.00 m | PASSED (≤3.0m) | VNet: 17, BNet: 9 |
-| **30s** | 427.5 m | 105.25 m | **24.62%** | `DR_ONLY → GNSS_AIDED` | 0.00 m | PASSED (≤3.0m) | VNet: 86, BNet: 43 |
-| **60s** | 841.2 m | 594.98 m | **70.73%** | `DR_ONLY → GNSS_AIDED` | 0.00 m | PASSED (≤3.0m) | VNet: 146, BNet: 73 |
+| **5s** | 71.9 m | 3.18 m | **4.42%** | `DR_ONLY → REACQUIRING → GNSS_AIDED` | 3.00 m | PASSED (≤3.0m) | VNet: 7, BNet: 4 |
+| **10s** | 142.5 m | 19.32 m | **13.55%** | `DR_ONLY → REACQUIRING → GNSS_AIDED` | 3.00 m | PASSED (≤3.0m) | VNet: 17, BNet: 9 |
+| **30s** | 427.5 m | 105.25 m | **24.62%** | `DR_ONLY` | 0.00 m | PASSED (≤3.0m) | VNet: 86, BNet: 43 |
+| **60s** | 841.2 m | 594.98 m | **70.73%** | `DR_ONLY` | 0.00 m | PASSED (≤3.0m) | VNet: 146, BNet: 73 |
 
 ### 4.1 Transition & Recovery Latency Audit
 
@@ -81,14 +81,14 @@ Classification: **`SYNTHETIC_OUTAGE_ON_REAL_DATA`** (Ground truth is preserved; 
 
 | Test Suite Area | Test Count | Status | Scope / Invariants Verified |
 |---|---|---|---|
-| Phase 10 Unit Tests (`tests/unit/test_gnss_trust_and_fsm.py`) | 20 | PASSED | 11.345 NIS gate, ESKF NIS wiring, trust degradation, Phase 5 gating preservation, reacquisition abort |
+| Phase 10 Unit Tests (`tests/unit/test_gnss_trust_and_fsm.py`) | 22 | PASSED | 11.345 NIS gate, ESKF NIS wiring, trust degradation, Phase 5 gating preservation, reacquisition abort, outage acceptance semantics, authority taxonomy |
 | Phase 10 Rate Bounded (`tests/integration/test_recovery_bounded_rate.py`) | 4 | PASSED | $v \le 2.0\text{ m/s}$, step $\le 3.0\text{ m}$, 3 consecutive convergence fixes, no state overwrites |
 | Phase 10 Synthetic Outages (`tests/integration/test_outage_synthetic.py`) | 6 | PASSED | Outages at 5s, 10s, 30s, 60s; ML active during DR |
 | Phase 10 Anti-Flapping (`tests/integration/test_fsm_no_flapping.py`) | 3 | PASSED | 2.0s dwell time, noisy accuracy in `GNSS_AIDED` without flapping |
 | Phase 10 Real Data Replay (`tests/integration/test_outage_real_iovnbd.py`) | 2 | PASSED | Manifest check, `REAL_DATA_REPLAY` classification |
-| **Phase 10 Total Tests** | **35** | **PASSED** | Complete supervisory coverage |
+| **Phase 10 Total Tests** | **37** | **PASSED** | Complete supervisory coverage |
 | Phase 9 Regressions | 34 | PASSED | Frozen ML model contracts, covariance health, cadence |
-| Full Repository Suite | 378 | PASSED | Zero regressions across entire navigation stack |
+| Full Repository Suite | 384 | PASSED | Zero regressions across entire navigation stack |
 
 ---
 
@@ -98,7 +98,7 @@ Classification: **`SYNTHETIC_OUTAGE_ON_REAL_DATA`** (Ground truth is preserved; 
 - [x] Real ESKF innovation NIS (`diag_p.gating.mahalanobis_sq`) dynamically wired into `GNSSTrustScoreCalculator.compute_trust(..., nis=...)`, scaling $\mathbf{R}_{\text{eff}} = \frac{1}{\max(S_{\text{trust}}, 0.05)} \mathbf{R}_{\text{base}}$ continuously inside `GNSS_AIDED`. Phase 5 ESKF innovation gating preserved.
 - [x] Authoritative 3-state FSM (`GNSS_AIDED ⇄ DR_ONLY ⇄ REACQUIRING`) implemented in `navigation/gnss/fsm.py` with dwell time hysteresis ($T_{\text{dwell}} = 2.0\text{ s}$) and zero discrete duration states (no DEGRADED state).
 - [x] Timestamp-based outage detector implemented in `navigation/gnss/outage_detection.py` with $2.0\text{ s}$ grace period and $3.0\text{ s}$ timeout, distinguishing missing fixes from rejected fixes.
-- [x] Bounded-rate recovery implemented in `navigation/gnss/recovery.py` enforcing $v_{\text{blend}} \le 2.0\text{ m/s}$ and max single step $\le 3.0\text{ m}$; requiring 3 consecutive convergence fixes ($\le 1.5\text{ m}$) before returning to `GNSS_AIDED`, and aborting back to `DR_ONLY` on implausible returning fix. Never directly overwriting ESKF state.
+- [x] Bounded-rate recovery implemented in `navigation/gnss/recovery.py` enforcing $v_{\text{blend}} \le 2.0\text{ m/s}$ and max single step $\le 3.0\text{ m}$; requiring 3 consecutive convergence fixes ($\le 1.5\text{ m}$) before returning to `GNSS_AIDED`, and aborting back to `DR_ONLY` on implausible returning fix. Explicit supervisory nominal position smoothing without covariance mutation.
 - [x] ML models (VelocityNet and BiasNet) remain 100% active during `DR_ONLY`.
 - [x] Synthetic outages evaluated at 5s, 10s, 30s, and 60s.
 - [x] Strict data categorization: `REAL_DATA_REPLAY` vs `SYNTHETIC_OUTAGE_ON_REAL_DATA`.

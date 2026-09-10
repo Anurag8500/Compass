@@ -260,8 +260,16 @@ class GNSSRecoveryManager:
     ) -> ESKFState:
         """Apply the computed bounded position correction to the ESKF nominal state.
 
-        Does NOT mutate or corrupt the error-state covariance matrix P.
-        Ensures smooth trajectory continuity.
+        Architectural Authority & Semantics (Master Plan Section 17 & Trace Part 24):
+        - It is NOT an ML state overwrite: ML models (VelocityNet, BiasNet) provide measurement
+          predictions fused via Kalman updates with learned/propagated uncertainties.
+        - It is NOT a normal GNSS Kalman update: normal GNSS updates apply Kalman gain K to
+          reduce covariance P <- (I - KH)P.
+        - It is an explicitly bounded supervisory recovery correction (v_blend <= 2.0 m/s,
+          single step <= 3.0 m) applied strictly to the nominal position during REACQUIRING.
+        - Error-state covariance matrix P is intentionally left unmodified by this smoothing step.
+        - Normal GNSS ESKF updates remain authoritative for measurement fusion once convergence
+          (3 consecutive fixes within 1.5m horizontal tolerance) is achieved.
         """
         new_p = eskf_state.nominal.position_enu + step.delta_p_bounded
         new_nom = ESKFNominalState(

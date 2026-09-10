@@ -103,12 +103,14 @@ class GNSSTrustScoreCalculator:
         self._last_pos_enu: Optional[np.ndarray] = None
         self._last_timestamp_ns: Optional[int] = None
         self._recent_nis: Optional[float] = None
+        self._last_evaluated_nis: Optional[float] = None
 
     def reset(self) -> None:
         """Reset historical tracking states."""
         self._last_pos_enu = None
         self._last_timestamp_ns = None
         self._recent_nis = None
+        self._last_evaluated_nis = None
 
     def update_innovation_nis(self, nis: Optional[float]) -> None:
         """Record the latest ESKF GNSS update Normalized Innovation Squared (NIS)."""
@@ -116,6 +118,11 @@ class GNSSTrustScoreCalculator:
             self._recent_nis = float(nis)
         else:
             self._recent_nis = None
+
+    @property
+    def last_evaluated_nis(self) -> Optional[float]:
+        """Return the NIS value evaluated in the most recent compute_trust call."""
+        return self._last_evaluated_nis
 
     def compute_trust(
         self,
@@ -164,6 +171,7 @@ class GNSSTrustScoreCalculator:
 
         # 4. Innovation component
         eval_nis = nis if nis is not None else self._recent_nis
+        self._last_evaluated_nis = eval_nis
         innov_score, innov_reason = self._compute_innovation_component(eval_nis)
         if innov_reason:
             reason_codes.append(innov_reason)

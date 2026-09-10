@@ -18,6 +18,7 @@ from typing import List, Optional
 import numpy as np
 
 from navigation.schemas.state import GNSSMode
+from navigation.gnss.outage_detection import OutageCondition
 
 
 @dataclass(frozen=True)
@@ -27,11 +28,11 @@ class FSMConfig:
     Attributes:
         min_dwell_time_s: Minimum duration required to remain in a state before allowing
             normal exit transitions [s] (default 2.0s).
-        reacq_timeout_s: Maximum duration permitted in REACQUIRING without valid fixes
-            before falling back to DR_ONLY [s] (default 3.0s).
+        reacq_timeout_s: Maximum duration permitted in REACQUIRING without achieving
+            convergence before falling back to DR_ONLY [s] (default 10.0s).
     """
     min_dwell_time_s: float = 2.0
-    reacq_timeout_s: float = 3.0
+    reacq_timeout_s: float = 10.0
 
 
 @dataclass(frozen=True)
@@ -175,14 +176,18 @@ class GNSSModeFSM:
 
         elif self._current_mode == GNSSMode.DR_ONLY:
             # Entry to REACQUIRING when a valid returning fix is received
-            if is_returning_fix_valid and not is_outage:
+            if is_returning_fix_valid:
                 if dwell_s >= self.config.min_dwell_time_s:
                     new_mode = GNSSMode.REACQUIRING
                     transition_reason = "VALID_RETURNING_FIX_ACQUIRED"
 
         elif self._current_mode == GNSSMode.REACQUIRING:
-            # Check signal disappearance or timeout during reacquisition
-            if is_outage:
+            # Check authoritative reacquisition timeout, confirmed signal loss, or convergence
+            if dwell_s >= self.config.reacq_timeout_s:
+                # FSM-authoritative maximum duration in REACQUIRING exceeded without convergence
+                new_mode = GNSSMode.DR_ONLY
+                transition_reason = f"REACQUISITION_TIMEOUT_EXCEEDED_{dwell_s:.2f}S"
+            elif is_outage and outage_reason == OutageCondition.CONFIRMED_OUTAGE.value:
                 new_mode = GNSSMode.DR_ONLY
                 transition_reason = f"REACQUISITION_FAILED_{outage_reason}"
             elif is_recovery_converged:

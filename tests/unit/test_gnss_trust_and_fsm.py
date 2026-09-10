@@ -239,6 +239,36 @@ class TestGNSSModeFSM:
         assert trans.new_mode == GNSSMode.GNSS_AIDED
         assert fsm.current_mode == GNSSMode.GNSS_AIDED
 
+    def test_fsm_reacquiring_timeout_transitions_to_dr_only(self) -> None:
+        """Authoritative FSMConfig.reacq_timeout_s: transitions REACQUIRING -> DR_ONLY if unconverged."""
+        fsm = GNSSModeFSM(FSMConfig(min_dwell_time_s=2.0, reacq_timeout_s=10.0), initial_mode=GNSSMode.REACQUIRING, initial_timestamp_ns=0)
+
+        # At 5.0s (dwell < 10.0s), not converged: remains REACQUIRING
+        trans1 = fsm.evaluate_transition(
+            current_timestamp_ns=int(5e9),
+            is_outage=False,
+            outage_reason="NOMINAL",
+            is_returning_fix_valid=True,
+            is_recovery_converged=False,
+        )
+        assert trans1 is None
+        assert fsm.current_mode == GNSSMode.REACQUIRING
+
+        # At 10.1s (dwell >= 10.0s), not converged: authoritative timeout back to DR_ONLY
+        trans2 = fsm.evaluate_transition(
+            current_timestamp_ns=int(10.1e9),
+            is_outage=False,
+            outage_reason="NOMINAL",
+            is_returning_fix_valid=True,
+            is_recovery_converged=False,
+        )
+        assert trans2 is not None
+        assert trans2.previous_mode == GNSSMode.REACQUIRING
+        assert trans2.new_mode == GNSSMode.DR_ONLY
+        assert "REACQUISITION_TIMEOUT_EXCEEDED" in trans2.reason
+        assert fsm.current_mode == GNSSMode.DR_ONLY
+
+
 
 class TestGNSSRecoveryManager:
     """Test suite for returning-fix plausibility and bounded correction calculations."""
@@ -281,11 +311,17 @@ class TestGNSSRecoveryManager:
 
 
 class TestESKFInnovationToTrustWiringAndGating:
-    """Test suite proving real ESKF innovation NIS wiring into trust calculation,
-    continuous trust degradation, Phase 5 innovation gate preservation, and reacquisition abort.
+    """Test suite proving real current-fix ESKF innovation NIS evaluation before trust calculation,
+    timing distinction between consecutive fixes (N1 vs N2), first-fix behavior, continuous trust
+    covariance scaling, Phase 5 innovation gate preservation, and reacquisition timeout/abort.
     """
 
-    def test_eskf_nis_wired_to_trust_and_telemetry(self) -> None:
+    def test_first_gnss_fix_computes_and_uses_pre_update_nis_immediately(self) -> None:
+        """First GNSS fix k=0 must evaluate pre-update innovation against predicted ESKF state and base covariance.
+
+        Proves that trust calculation for the first fix immediately incorporates ESKF innovation,
+        rather than passing None or waiting for a second fix.
+        """
         from navigation.core import NavigationCore, NavigationCoreConfig
         core = NavigationCore(NavigationCoreConfig(
             velocitynet_enabled=False,
@@ -304,22 +340,107 @@ class TestESKFInnovationToTrustWiringAndGating:
             timestamp_ns=0,
         )
 
+        assert core._current_measurement_nis is None
+        assert core._last_update_nis is None
+
         # Fix 1: exactly at nominal position
         core.step_gnss_fix(lat0, lon0, alt0, accuracy_h_m=2.0, timestamp_ns=int(1e9))
-        diag_p, _ = core.last_gnss_diagnostics
-        assert diag_p is not None
-        assert diag_p.gating is not None
 
-        expected_nis = float(diag_p.gating.mahalanobis_sq)
-        assert core._last_gnss_nis == pytest.approx(expected_nis, rel=1e-5)
-        telem = core.get_gnss_telemetry()
-        assert "last_eskf_nis" in telem
-        assert telem["last_eskf_nis"] == pytest.approx(expected_nis, rel=1e-5)
+        # 1. Current measurement NIS was computed prior to update
+        assert core._current_measurement_nis is not None
+        assert core._current_measurement_nis == pytest.approx(0.0, abs=1e-3)
 
-        # Fix 2: verify trust calculator received this NIS
-        core.step_gnss_fix(lat0, lon0, alt0, accuracy_h_m=2.0, timestamp_ns=int(2e9))
+        # 2. Trust calculator immediately evaluated this NIS
+        assert core._last_gnss_quality is not None
         assert "ESKF_INNOVATION" in core._last_gnss_quality.available_evidence
-        assert core.gnss_trust_calculator._recent_nis == pytest.approx(expected_nis, rel=1e-5)
+        assert core.gnss_trust_calculator.last_evaluated_nis == pytest.approx(core._current_measurement_nis, rel=1e-5)
+
+        # 3. Authoritative post-update diagnostics and telemetry
+        assert core._last_update_nis is not None
+        assert core._last_gnss_nis == core._last_update_nis
+        telem = core.get_gnss_telemetry()
+        assert telem["current_measurement_nis"] == pytest.approx(core._current_measurement_nis, rel=1e-5)
+        assert telem["last_update_nis"] == pytest.approx(core._last_update_nis, rel=1e-5)
+        assert telem["last_eskf_nis"] == pytest.approx(core._last_update_nis, rel=1e-5)
+
+    def test_current_fix_nis_timing_distinguishes_consecutive_fixes(self) -> None:
+        """Fix k has NIS=N1 and fix k+1 has deliberately different NIS=N2.
+
+        Proves that trust calculation for fix k+1 evaluates N2 (current fix),
+        NOT stale N1 from fix k. Under the old 1-fix-delayed bug, fix k+1 evaluated N1.
+        """
+        from navigation.core import NavigationCore, NavigationCoreConfig
+        core = NavigationCore(NavigationCoreConfig(
+            velocitynet_enabled=False,
+            biasnet_enabled=False,
+            zupt_enabled=False,
+            gnss_enabled=True,
+        ))
+        lat0, lon0, alt0 = 52.0, -1.5, 100.0
+        core.initialize(
+            lat0=lat0,
+            lon0=lon0,
+            alt0=alt0,
+            p0_enu=np.zeros(3),
+            v0_enu=np.zeros(3),
+            q0=np.array([1.0, 0.0, 0.0, 0.0]),
+            timestamp_ns=0,
+        )
+
+        # Fix k: at origin (N1 ~ 0.0)
+        core.step_gnss_fix(lat0, lon0, alt0, accuracy_h_m=2.0, timestamp_ns=int(1e9))
+        n1 = core._current_measurement_nis
+        assert n1 is not None
+        assert n1 < 0.1
+        assert core.gnss_trust_calculator.last_evaluated_nis == pytest.approx(n1, rel=1e-5)
+
+        # Fix k+1: 4.5m offset East (within 99% chi2 gate threshold 11.345, giving N2 ~ 5.0)
+        d_lon = 4.5 / (6371000.0 * math.cos(math.radians(lat0))) * (180.0 / math.pi)
+        core.step_gnss_fix(lat0, lon0 + d_lon, alt0, accuracy_h_m=2.0, timestamp_ns=int(2e9))
+
+        n2 = core._current_measurement_nis
+        assert n2 is not None
+        assert n2 > 2.0  # Deliberately different from N1
+        assert abs(n2 - n1) > 2.0
+
+        # CRITICAL TEST: Trust calculation for fix k+1 used N2, NOT stale N1!
+        # If the code had the old 1-fix delay, last_evaluated_nis would be n1 (< 0.1).
+        assert core.gnss_trust_calculator.last_evaluated_nis == pytest.approx(n2, rel=1e-5)
+        assert core.gnss_trust_calculator.last_evaluated_nis != pytest.approx(n1, abs=0.5)
+
+    def test_sudden_nis_change_between_consecutive_fixes_scales_trust_immediately(self) -> None:
+        """A sudden NIS jump on fix k must immediately degrade trust on fix k, not fix k+1."""
+        from navigation.core import NavigationCore, NavigationCoreConfig
+        core = NavigationCore(NavigationCoreConfig(
+            velocitynet_enabled=False,
+            biasnet_enabled=False,
+            zupt_enabled=False,
+            gnss_enabled=True,
+        ))
+        lat0, lon0, alt0 = 52.0, -1.5, 100.0
+        core.initialize(
+            lat0=lat0,
+            lon0=lon0,
+            alt0=alt0,
+            p0_enu=np.zeros(3),
+            v0_enu=np.zeros(3),
+            q0=np.array([1.0, 0.0, 0.0, 0.0]),
+            timestamp_ns=0,
+        )
+
+        # Fix 1: nominal (trust ~ 1.0)
+        core.step_gnss_fix(lat0, lon0, alt0, accuracy_h_m=2.0, timestamp_ns=int(1e9))
+        trust_nominal = core._last_gnss_quality.trust_score
+        assert trust_nominal > 0.95
+
+        # Fix 2: 6.8m displacement (elevated NIS ~ 9.2, past 95% threshold 7.815, below 99% gate 11.345)
+        d_lon = 6.8 / (6371000.0 * math.cos(math.radians(lat0))) * (180.0 / math.pi)
+        core.step_gnss_fix(lat0, lon0 + d_lon, alt0, accuracy_h_m=2.0, timestamp_ns=int(2e9))
+        trust_elevated = core._last_gnss_quality.trust_score
+
+        # Immediate degradation on fix 2 without 1-cycle lag
+        assert trust_elevated < trust_nominal
+        assert core._current_measurement_nis > 7.815
 
     def test_high_eskf_nis_lowers_trust_continuously_in_aided_mode(self) -> None:
         calc = GNSSTrustScoreCalculator(TrustScoreConfig(nis_threshold_95=7.815))
@@ -341,6 +462,10 @@ class TestESKFInnovationToTrustWiringAndGating:
         assert res_high.trust_score < res_elevated.trust_score
 
     def test_phase5_gating_preservation_rejects_outlier_normally(self) -> None:
+        """Phase 5 innovation gate preservation:
+        A large outlier must still be rejected even if trust score drops;
+        low trust score cannot artificially inflate covariance to accept an invalid fix.
+        """
         from navigation.core import NavigationCore, NavigationCoreConfig
         core = NavigationCore(NavigationCoreConfig(
             velocitynet_enabled=False,
@@ -376,9 +501,11 @@ class TestESKFInnovationToTrustWiringAndGating:
         assert diag_p.gating.accepted is False
         # State position must be strictly uncorrupted
         assert np.allclose(core.state.nominal.position_enu, pos_before)
-        # Gating NIS was calculated and stored
-        assert diag_p.gating.mahalanobis_sq > 16.266
-        assert core._last_gnss_nis == pytest.approx(float(diag_p.gating.mahalanobis_sq), rel=1e-5)
+        # Baseline innovation NIS was calculated
+        assert core._current_measurement_nis > 16.266
+        # Telemetry records rejection
+        telem = core.get_gnss_telemetry()
+        assert telem["total_fixes_rejected"] >= 1
 
     def test_reacquiring_aborts_on_implausible_fix(self) -> None:
         from navigation.core import NavigationCore, NavigationCoreConfig
@@ -411,4 +538,183 @@ class TestESKFInnovationToTrustWiringAndGating:
         assert applied is False
         assert core.mode == GNSSMode.DR_ONLY
         assert core.gnss_recovery_manager.consecutive_valid_fixes == 0
+
+    def test_core_reacquisition_timeout_falls_back_to_dr_only(self) -> None:
+        """NavigationCore respects authoritative FSMConfig.reacq_timeout_s and resets recovery on timeout."""
+        from navigation.core import NavigationCore, NavigationCoreConfig
+        core = NavigationCore(NavigationCoreConfig(
+            velocitynet_enabled=False,
+            biasnet_enabled=False,
+            zupt_enabled=False,
+            gnss_enabled=True,
+        ))
+        lat0, lon0, alt0 = 52.0, -1.5, 100.0
+        core.initialize(
+            lat0=lat0,
+            lon0=lon0,
+            alt0=alt0,
+            p0_enu=np.zeros(3),
+            v0_enu=np.zeros(3),
+            q0=np.array([1.0, 0.0, 0.0, 0.0]),
+            timestamp_ns=0,
+        )
+
+        # Put into REACQUIRING
+        core.gnss_fsm.force_mode(GNSSMode.REACQUIRING, timestamp_ns=int(1e9), reason="START_REACQ")
+        core.mode = GNSSMode.REACQUIRING
+        assert core.mode == GNSSMode.REACQUIRING
+
+        # Simulate 12 seconds of IMU propagation without convergence (timeout is 10.0s)
+        # Step IMU at 13.0s (dwell = 12.0s >= 10.0s)
+        f_imu = np.array([0.0, 0.0, 9.80665])
+        w_imu = np.zeros(3)
+        core.step_imu(f_imu, w_imu, dt_s=0.01, timestamp_ns=int(13e9))
+
+        # Mode must have fallen back to DR_ONLY due to authoritative timeout
+        assert core.mode == GNSSMode.DR_ONLY
+        telem = core.get_gnss_telemetry()
+        assert telem["current_mode"] == "DR_ONLY"
+        assert any("REACQUISITION_TIMEOUT_EXCEEDED" in t["reason"] for t in telem["transition_history"])
+
+    def test_outage_detector_acceptance_semantics_and_smoothing_isolation(self) -> None:
+        """Issue 1: Bounded recovery smoothing must NEVER masquerade as accepted GNSS update.
+
+        Validates:
+        - Unconverged recovery fix: fix_received is recorded, but update_applied is False.
+        - total_fixes_accepted does NOT increment until actual ESKF measurement update occurs.
+        - Converted/converged fix performs real ESKF update, applied is True, and increments total_fixes_accepted.
+        """
+        from navigation.core import NavigationCore, NavigationCoreConfig
+        core = NavigationCore(NavigationCoreConfig(
+            velocitynet_enabled=False,
+            biasnet_enabled=False,
+            zupt_enabled=False,
+            gnss_enabled=True,
+        ))
+        lat0, lon0, alt0 = 52.0, -1.5, 100.0
+        core.initialize(
+            lat0=lat0,
+            lon0=lon0,
+            alt0=alt0,
+            p0_enu=np.zeros(3),
+            v0_enu=np.zeros(3),
+            q0=np.array([1.0, 0.0, 0.0, 0.0]),
+            timestamp_ns=0,
+        )
+
+        # 1. Normal accepted fix in GNSS_AIDED
+        applied1 = core.step_gnss_fix(lat0, lon0, alt0, accuracy_h_m=2.0, timestamp_ns=int(1e9))
+        assert applied1 is True
+        telem1 = core.get_gnss_telemetry()
+        assert telem1["total_fixes_received"] == 1
+        assert telem1["total_fixes_accepted"] == 1
+        assert telem1["total_fixes_rejected"] == 0
+
+        # 2. Put into REACQUIRING with a 5.0m target offset
+        # Target position is 5.0m away: requires multiple bounded steps to converge (tolerance 1.5m)
+        core.gnss_fsm.force_mode(GNSSMode.REACQUIRING, timestamp_ns=int(2e9), reason="ENTER_REACQ")
+        core.mode = GNSSMode.REACQUIRING
+
+        d_lon5 = 5.0 / (6371000.0 * math.cos(math.radians(lat0))) * (180.0 / math.pi)
+        target_lon = lon0 + d_lon5
+
+        # Fix 1 in REACQUIRING: step bounded to <= 2.0m, remaining error ~3.0m > 1.5m tolerance -> NOT converged
+        applied_reacq1 = core.step_gnss_fix(lat0, target_lon, alt0, accuracy_h_m=2.0, timestamp_ns=int(3e9))
+        assert applied_reacq1 is False, "Unconverged recovery fix must NOT be reported as accepted"
+        diag_p, _ = core.last_gnss_diagnostics
+        assert diag_p is None, "No ESKF measurement update should execute prior to convergence"
+        telem_reacq1 = core.get_gnss_telemetry()
+        assert telem_reacq1["total_fixes_received"] == 2
+        assert telem_reacq1["total_fixes_accepted"] == 1, "Unconverged fix must NOT increment total_fixes_accepted"
+        assert telem_reacq1["total_fixes_rejected"] == 1
+
+        # Fix 2 in REACQUIRING: another bounded step
+        applied_reacq2 = core.step_gnss_fix(lat0, target_lon, alt0, accuracy_h_m=2.0, timestamp_ns=int(4e9))
+        assert applied_reacq2 is False
+        telem_reacq2 = core.get_gnss_telemetry()
+        assert telem_reacq2["total_fixes_received"] == 3
+        assert telem_reacq2["total_fixes_accepted"] == 1
+
+        # Provide consecutive fixes at target to reach convergence (3 consecutive fixes within 1.5m)
+        applied_reacq3 = core.step_gnss_fix(lat0, target_lon, alt0, accuracy_h_m=2.0, timestamp_ns=int(5e9))
+        applied_reacq4 = core.step_gnss_fix(lat0, target_lon, alt0, accuracy_h_m=2.0, timestamp_ns=int(6e9))
+        applied_reacq5 = core.step_gnss_fix(lat0, target_lon, alt0, accuracy_h_m=2.0, timestamp_ns=int(7e9))
+
+        # Once converged, ESKF update is executed
+        assert core.gnss_recovery_manager.consecutive_valid_fixes >= 3
+        assert applied_reacq5 is True
+        diag_p_final, _ = core.last_gnss_diagnostics
+        assert diag_p_final is not None
+        assert diag_p_final.applied is True
+        telem_final = core.get_gnss_telemetry()
+        assert telem_final["total_fixes_accepted"] >= 2
+
+    def test_authority_taxonomy_ml_eskf_and_recovery_smoothing(self) -> None:
+        """Issue 2: Verify architectural distinction between ML, ESKF update, and recovery smoothing.
+
+        Distinguishes:
+        1. ML prediction: fuses velocity/bias measurement via Kalman gain with covariance reduction.
+        2. GNSS ESKF measurement update: fuses GNSS position via Kalman gain with covariance reduction.
+        3. Bounded recovery supervisory correction: modifies nominal position by bounded step
+           (<=3.0m, <=2.0m/s) without mutating error covariance P.
+        """
+        from navigation.core import NavigationCore, NavigationCoreConfig
+        from navigation.gnss.recovery import GNSSRecoveryManager, RecoveryConfig
+
+        rec_mgr = GNSSRecoveryManager(RecoveryConfig(max_displacement_rate_mps=2.0, max_single_step_m=3.0))
+
+        core = NavigationCore(NavigationCoreConfig(
+            velocitynet_enabled=False,
+            biasnet_enabled=False,
+            zupt_enabled=False,
+            gnss_enabled=True,
+        ))
+        lat0, lon0, alt0 = 52.0, -1.5, 100.0
+        core.initialize(
+            lat0=lat0,
+            lon0=lon0,
+            alt0=alt0,
+            p0_enu=np.zeros(3),
+            v0_enu=np.zeros(3),
+            q0=np.array([1.0, 0.0, 0.0, 0.0]),
+            timestamp_ns=0,
+        )
+
+        state_before = core.state
+        p_cov_before = state_before.covariance.copy()
+        pos_before = state_before.nominal.position_enu.copy()
+
+        # Compute bounded correction for an 8.0m offset target
+        target_enu = np.array([8.0, 0.0, 0.0])
+        step = rec_mgr.compute_bounded_correction(target_enu, state_before, dt_s=1.0)
+
+        # Rate bound assertions
+        assert step.is_clamped is True
+        assert step.applied_step_norm_m <= 2.01
+        assert step.delta_p_bounded[0] == pytest.approx(2.0, abs=0.01)
+
+        # Apply bounded supervisory correction
+        state_after = rec_mgr.apply_bounded_correction(state_before, step)
+
+        # 1. Nominal position IS modified by the bounded correction
+        assert not np.array_equal(state_after.nominal.position_enu, pos_before)
+        assert state_after.nominal.position_enu[0] == pytest.approx(2.0, abs=0.01)
+
+        # 2. Covariance matrix P is strictly UNTOUCHED (not mutated by smoothing step)
+        assert np.array_equal(state_after.covariance, p_cov_before)
+
+        # 3. In contrast, an actual GNSS ESKF Kalman update strictly modifies/reduces covariance P
+        state_eskf, diag_p = core.gnss_model.update_position(
+            state=state_after,
+            lat=lat0,
+            lon=lon0,
+            alt=alt0,
+            accuracy_h_m=2.0,
+            trust_score=1.0,
+            timestamp_ns=int(1e9),
+        )
+        assert diag_p.applied is True
+        # Diagonal position variance in P must have decreased due to Kalman update
+        assert state_eskf.covariance[0, 0] < p_cov_before[0, 0]
+
 
