@@ -1,0 +1,116 @@
+{
+  "outage_10s": {
+    "A_pure_eskf": {
+      "final_horizontal_error_m": 0.6160473699792406,
+      "horizontal_rmse_m": 0.425573959035952,
+      "max_horizontal_excursion_m": 0.6160473699792406,
+      "velocity_rmse_mps": 0.012007846638962302,
+      "mean_nis": 0.0,
+      "p95_nis": 0.0,
+      "updates_applied": 0
+    },
+    "B_eskf_vnet": {
+      "final_horizontal_error_m": 0.6150982803808976,
+      "horizontal_rmse_m": 0.4244021170153943,
+      "max_horizontal_excursion_m": 0.6150982803808976,
+      "velocity_rmse_mps": 0.011898751924242543,
+      "mean_nis": 0.0,
+      "p95_nis": 0.0,
+      "updates_applied": 0
+    },
+    "C_eskf_vnet_bnet": {
+      "final_horizontal_error_m": 0.6150949398043758,
+      "horizontal_rmse_m": 0.4244006864107808,
+      "max_horizontal_excursion_m": 0.6150949398043758,
+      "velocity_rmse_mps": 0.011825907468990983,
+      "mean_nis": 0.03703250896609851,
+      "p95_nis": 0.052695837076963334,
+      "updates_applied": 20
+    },
+    "D_eskf_bnet": {
+      "final_horizontal_error_m": 0.6150949398043758,
+      "horizontal_rmse_m": 0.4244006864107808,
+      "max_horizontal_excursion_m": 0.6150949398043758,
+      "velocity_rmse_mps": 0.011825907468990983,
+      "mean_nis": 0.03703250896609851,
+      "p95_nis": 0.052695837076963334,
+      "updates_applied": 20
+    }
+  },
+  "outage_30s": {
+    "A_pure_eskf": {
+      "final_horizontal_error_m": 63.88001696481597,
+      "horizontal_rmse_m": 11.288818228824024,
+      "max_horizontal_excursion_m": 63.88001696481597,
+      "velocity_rmse_mps": 3.7749291727445757,
+      "mean_nis": 0.0,
+      "p95_nis": 0.0,
+      "updates_applied": 0
+    },
+    "B_eskf_vnet": {
+      "final_horizontal_error_m": 57.45495311975508,
+      "horizontal_rmse_m": 10.030594604519484,
+      "max_horizontal_excursion_m": 57.45495311975508,
+      "velocity_rmse_mps": 3.3612461233582707,
+      "mean_nis": 5.0066266148570735,
+      "p95_nis": 13.145967012801181,
+      "updates_applied": 5
+    },
+    "C_eskf_vnet_bnet": {
+      "final_horizontal_error_m": 57.83762765617179,
+      "horizontal_rmse_m": 10.098870051557002,
+      "max_horizontal_excursion_m": 57.83762765617179,
+      "velocity_rmse_mps": 3.325234278851335,
+      "mean_nis": 1.7629896201557247,
+      "p95_nis": 11.04750547490227,
+      "updates_applied": 65
+    },
+    "D_eskf_bnet": {
+      "final_horizontal_error_m": 64.07374274269205,
+      "horizontal_rmse_m": 11.326746803126762,
+      "max_horizontal_excursion_m": 64.07374274269205,
+      "velocity_rmse_mps": 3.735451679255634,
+      "mean_nis": 1.489441095101055,
+      "p95_nis": 10.824287635401271,
+      "updates_applied": 60
+    }
+  },
+  "outage_60s": {
+    "A_pure_eskf": {
+      "final_horizontal_error_m": 5308.9501284774105,
+      "horizontal_rmse_m": 1771.215914026638,
+      "max_horizontal_excursion_m": 5308.9501284774105,
+      "velocity_rmse_mps": 133.0815734209276,
+      "mean_nis": 0.0,
+      "p95_nis": 0.0,
+      "updates_applied": 0
+    },
+    "B_eskf_vnet": {
+      "final_horizontal_error_m": 5230.277271406393,
+      "horizontal_rmse_m": 1740.1326326024778,
+      "max_horizontal_excursion_m": 5230.277271406393,
+      "velocity_rmse_mps": 131.6041427640143,
+      "mean_nis": 5.006941502824411,
+      "p95_nis": 13.146870048109026,
+      "updates_applied": 5
+    },
+    "C_eskf_vnet_bnet": {
+      "final_horizontal_error_m": 5242.738125329713,
+      "horizontal_rmse_m": 1746.4518903055564,
+      "max_horizontal_excursion_m": 5242.738125329713,
+      "velocity_rmse_mps": 131.13753904367684,
+      "mean_nis": 2.4698726348538536,
+      "p95_nis": 11.1326906216494,
+      "updates_applied": 125
+    },
+    "D_eskf_bnet": {
+      "final_horizontal_error_m": 5325.232050708652,
+      "horizontal_rmse_m": 1778.768175841761,
+      "max_horizontal_excursion_m": 5325.232050708652,
+      "velocity_rmse_mps": 132.82153640937057,
+      "mean_nis": 2.3625279859260995,
+      "p95_nis": 11.10850670472898,
+      "updates_applied": 120
+    }
+  }
+}

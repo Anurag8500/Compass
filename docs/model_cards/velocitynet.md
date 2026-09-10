@@ -138,7 +138,9 @@ All candidates were trained on the complete 226,928 Driver E dataset. Model sele
 | 2 | Candidate C | Conv1D-GRU | 14,402 | 4.600 | 3.540 | 2.874 | -0.422 | 0.6834 | 6.131 | 1.23 ms | 3.598 m/s |
 | 3 | Candidate A | 2L-GRU | 41,506 | 5.060 | 3.907 | 2.989 | +0.429 | 0.6786 | 5.697 | 0.83 ms | 3.738 m/s |
 
-### Selection Rationale
+### Selection Rationale & Two-Stage Policy
+Training checkpoints were selected by minimum Driver B validation Gaussian NLL. After each candidate was restored to its best-NLL checkpoint, candidate architecture selection was performed using the declared hierarchical validation policy, with validation RMSE as the primary metric. The deterministic hierarchical ranking policy was formalized during the final selection audit and verified against the complete Driver B candidate results. Driver A was not used in this re-selection.
+
 Candidate B was selected because it achieved the lowest validation RMSE ($4.433\text{ m/s}$ vs $4.600\text{ m/s}$ for Candidate C and $5.060\text{ m/s}$ for Candidate A), lowest validation MAE ($3.387\text{ m/s}$), competitive NLL ($2.918$ vs $2.874$ for Candidate C), best validation bias ($+0.282\text{ m/s}$), strong correlation ($0.7110$), and substantially lower CPU latency ($0.26\text{ ms}$ P50). Candidate C achieved the lowest NLL ($2.874$) but did not achieve the lowest RMSE.
 
 ---
@@ -204,7 +206,7 @@ Scenario masks are computed strictly in physical units (e.g., $|\omega_z| \le 0.
 
 *Kinematic Regime Insights*:
 - **Medium Speed Dominance**: Medium speed represents $67.6\%$ of all test driving, where VelocityNet v1.1 achieves its best performance ($5.449\text{ m/s}$ RMSE, $4.370\text{ m/s}$ MAE).
-- **Standstill Overprediction**: Near standstill ($< 2\text{ m/s}$), the model exhibits a positive bias ($+4.62\text{ m/s}$). Standstill drift must be locked by the deterministic ZUPT detector from Phase 4.
+- **Standstill Overprediction**: Near standstill ($< 2\text{ m/s}$), the model exhibits a positive bias ($+4.62\text{ m/s}$). Standstill conditions require deterministic motion-state gating; the Phase 5 gated ZUPT mechanism is the current classical mechanism used to suppress invalid neural velocity aiding near standstill.
 - **High-Speed Underprediction**: On high-speed segments ($> 15\text{ m/s}$), the model exhibits negative bias ($-7.01\text{ m/s}$). The model predicts larger uncertainty in the high-speed regime ($\sigma_v = 6.08\text{ m/s}$); however, the associated uncertainty calibration must be validated during Phase 9 before being treated as reliable.
 - **Dynamic Specific-Force Deviation Proxy**: Evaluated via $|\|\mathbf{f}\| - 9.81| > 1.5\text{ m/s}^2$. This is a heuristic physical-unit proxy based on specific-force magnitude deviation from gravity, not a direct longitudinal acceleration detector.
 
@@ -221,7 +223,7 @@ Heteroscedastic Gaussian coverage evaluated on Driver A:
 | **$\pm 3\sigma$ Coverage** | 99.7% | **95.9%** | 99.6% | $16.10\text{ m/s}$ |
 
 > [!NOTE]
-> **Dispersion Finding**: On validation Driver B, predicted uncertainty matches nominal Gaussian coverage ($97.7\%$ at $2\sigma$). Uncertainty coverage degrades on the unseen Driver A distribution ($87.6\%$ at $2\sigma$), indicating poorer calibration under the observed train/validation-to-test distribution difference. Phase 9 must empirically calibrate or conservatively inflate the neural measurement covariance before fusion ($R_v = s \cdot \sigma_v^2$). Any covariance inflation factor $s$ must be selected using Phase 9 validation procedures rather than assumed from this Phase 7 result.
+> **Dispersion Finding**: On validation Driver B, predicted uncertainty matches nominal Gaussian coverage ($97.7\%$ at $2\sigma$). Uncertainty coverage degrades on the unseen Driver A distribution ($87.6\%$ at $2\sigma$), indicating poorer calibration under the observed train/validation-to-test distribution difference. Phase 7 shows degraded uncertainty calibration on Driver A. Phase 9 must empirically calibrate or conservatively adjust the neural measurement covariance before fusion ($R_v = s \cdot \sigma_v^2$). Any covariance adjustment factor $s$ must be selected using Phase 9 validation procedures rather than assumed from this Phase 7 result.
 
 ---
 
@@ -242,9 +244,9 @@ Evaluated in single-window mode ($B=1, T=20, C=9$) over $N = 500$ real held-out 
 
 ## 13. Known Failure Modes & Engineering Constraints
 
-1. **Standstill Positive Bias**: Overpredicts forward speed when stopped ($+4.62\text{ m/s}$). Deterministic ZUPT gating (Phase 4) is mandatory in Phase 9.
+1. **Standstill Positive Bias**: Overpredicts forward speed when stopped ($+4.62\text{ m/s}$). Standstill conditions require deterministic motion-state gating; the Phase 5 gated ZUPT mechanism is the current classical mechanism used to suppress invalid neural velocity aiding near standstill.
 2. **High-Speed Underprediction**: Underestimates forward speed above $15\text{ m/s}$ (bias $-7.01\text{ m/s}$).
-3. **Out-of-Distribution Dispersion**: Uncertainty coverage degrades on unseen drivers; observation variance scaling is required for Kalman filtering.
+3. **Out-of-Distribution Dispersion**: Phase 7 shows degraded uncertainty calibration on Driver A. Phase 9 must empirically calibrate or conservatively adjust the neural measurement covariance before fusion.
 4. **Reverse Motion Inoperability**: No reverse motion data exists in the corpus; negative forward speeds must be gated out.
 
 ---

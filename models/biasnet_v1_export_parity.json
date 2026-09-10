@@ -1,0 +1,39 @@
+{
+  "model": "BiasNet v1",
+  "onnx_path": "models\\biasnet_v1.onnx",
+  "onnx_sha256": "2bd6bdc82873ab002ece44b367c45f0f74d59346383490d580c855520f82edb4",
+  "tflite_path": "models\\biasnet_v1.tflite",
+  "tflite_sha256": "c678d5db32384192c0bf27fe7abb9fd5ac20ad0e38dd5fd5d9479dfd18b3d588",
+  "parity": {
+    "num_test_samples": 500,
+    "onnx_parity": {
+      "max_abs_err": 5.662441253662109e-07,
+      "mean_abs_err": 5.52957253319164e-08,
+      "component_max_err": {
+        "dba_x": 5.662441253662109e-07,
+        "dba_y": 4.172325134277344e-07,
+        "dba_z": 2.980232238769531e-07,
+        "dbg_x": 7.450580596923828e-08,
+        "dbg_y": 7.450580596923828e-08,
+        "dbg_z": 8.940696716308594e-08
+      },
+      "tolerance": 0.0001,
+      "passed": true
+    },
+    "litert_parity": {
+      "max_abs_err": 3.5762786865234375e-07,
+      "mean_abs_err": 3.756955280209695e-08,
+      "component_max_err": {
+        "dba_x": 2.980232238769531e-07,
+        "dba_y": 3.5762786865234375e-07,
+        "dba_z": 2.384185791015625e-07,
+        "dbg_x": 7.450580596923828e-08,
+        "dbg_y": 7.450580596923828e-08,
+        "dbg_z": 7.450580596923828e-08
+      },
+      "tolerance": 0.001,
+      "passed": true
+    },
+    "overall_passed": true
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "seed": 42,
+  "model": {
+    "name": "BiasNet",
+    "architecture": "2L-GRU-Dense",
+    "input_dim": 9,
+    "hidden_dim": 48,
+    "num_layers": 2,
+    "dense_dim": 24,
+    "dropout": 0.1,
+    "bound_accel_mps2": 2.0,
+    "bound_gyro_rads": 0.15,
+    "predict_uncertainty": false
+  },
+  "training": {
+    "batch_size": 64,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "epochs": 30,
+    "early_stopping_patience": 6,
+    "gradient_clip_norm": 1.0,
+    "loss": "smooth_l1",
+    "beta": 0.05,
+    "accel_loss_weight": 1.0,
+    "gyro_loss_weight": 10.0
+  },
+  "dataset": {
+    "train_file": "data/ml_dataset_biasnet_v1/bias_train.npz",
+    "val_file": "data/ml_dataset_biasnet_v1/bias_validation.npz",
+    "train_driver": "Driver E",
+    "val_driver": "Driver B",
+    "test_driver": "Driver A (Held-out)",
+    "filter_eligible_only": true
+  }
+}

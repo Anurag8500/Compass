@@ -86,7 +86,7 @@ Screening subsets are insufficient for production model selection. All primary c
 
 ---
 
-## Section D: Model Selection Procedure
+## Section D: Model Selection Procedure & Policy Formalization
 
 Model selection was governed by an explicit, deterministic hierarchical policy applied **exclusively on Driver B validation data**:
 1. **Primary**: Lowest validation RMSE (`val_rmse`)
@@ -94,6 +94,9 @@ Model selection was governed by an explicit, deterministic hierarchical policy a
 3. **Tertiary**: Lowest validation Gaussian NLL (`val_nll`)
 4. **Quaternary**: Lowest high-speed regime RMSE (`high_speed_rmse`)
 5. **Tie-Break Sequence**: Lowest inference latency (`latency_p50_ms`), then lowest parameter count (`params`)
+
+### Two-Stage Selection Clarification
+Training checkpoints were selected by minimum Driver B validation Gaussian NLL. After each candidate was restored to its best-NLL checkpoint, candidate architecture selection was performed using the declared hierarchical validation policy, with validation RMSE as the primary metric. The deterministic hierarchical ranking policy was formalized during the final selection audit and verified against the complete Driver B candidate results. Driver A was not used in this re-selection.
 
 ### Hierarchical Outcome
 - **Rank 1: Candidate B (1D-CNN)**: Lowest `val_rmse` ($4.433\text{ m/s}$ vs $4.600\text{ m/s}$ for C and $5.060\text{ m/s}$ for A), lowest `val_mae` ($3.387\text{ m/s}$), competitive NLL ($2.918$ vs $2.874$ for C), best validation bias ($+0.282\text{ m/s}$), strong correlation ($0.7110$), and lowest latency ($0.26\text{ ms}$ P50).
@@ -235,9 +238,9 @@ Both formats passed tightened numerical parity gates across 500 real test window
 
 ## Section L: Operational Limitations & Known Failure Modes
 
-1. **Standstill Positive Bias**: Near standstill ($< 2\text{ m/s}$), the model exhibits a positive bias ($+4.62\text{ m/s}$). Standstill drift must be locked by the deterministic ZUPT detector from Phase 4.
+1. **Standstill Positive Bias**: Near standstill ($< 2\text{ m/s}$), the model exhibits a positive bias ($+4.62\text{ m/s}$). Standstill conditions require deterministic motion-state gating; the Phase 5 gated ZUPT mechanism is the current classical mechanism used to suppress invalid neural velocity aiding near standstill.
 2. **High-Speed Underprediction**: On high-speed segments ($> 15\text{ m/s}$), the model underestimates speed (bias $-7.01\text{ m/s}$).
-3. **Out-of-Distribution Dispersion**: Uncertainty coverage degrades to $87.6\%$ at $2\sigma$ on Driver A. Observation covariance scaling ($R_v = s \cdot \sigma_v^2$) is necessary for Phase 9 ESKF integration.
+3. **Out-of-Distribution Dispersion**: Uncertainty coverage degrades to $87.6\%$ at $2\sigma$ on Driver A. Phase 7 shows degraded uncertainty calibration on Driver A. Phase 9 must empirically calibrate or conservatively adjust the neural measurement covariance before fusion.
 4. **Reverse Motion Inoperability**: No reverse motion data exists in the corpus; negative forward speeds must be gated out.
 
 ---
@@ -262,7 +265,7 @@ Both formats passed tightened numerical parity gates across 500 real test window
 | 14 | **500-Window Parity Acceptance** | Real held-out test windows evaluated | ONNX err $\le 5.7\mu\text{m/s}$, LiteRT $\le 3.8\mu\text{m/s}$ | **PASS** |
 | 15 | **Deterministic Artifacts** | Valid JSON, no NaNs/Infs, SHA-256 digests | All hashes recorded and verified | **PASS** |
 | 16 | **Comprehensive Diagnostic Plots** | 5 diagnostic figures generated | Contiguous trip plotting, monotonic timestamps | **PASS** |
-| 17 | **Full Test Suite Verification** | All unit and integration tests passing | 276 passed, 0 failed | **PASS** |
+| 17 | **Full Test Suite Verification** | All unit and integration tests passing | 278 passed, 0 failed | **PASS** |
 | 18 | **Zero ESKF Modification** | Phase 0–6 frozen; zero ESKF code touched | ESKF completely untouched | **PASS** |
 
 ### Final Phase 7 Engineering Decision
