@@ -1,7 +1,7 @@
 {
   "model": "BiasNet v1",
   "onnx_path": "models\\biasnet_v1.onnx",
-  "onnx_sha256": "e165991e4efde826b244022715a192acc228cfdc365b6878a91a5701bec5de5a",
+  "onnx_sha256": "d57e64485a8722bc4041d7e73b3fed606e878c5b7ba5504e54081c4225674067",
   "tflite_path": "models\\biasnet_v1.tflite",
   "tflite_sha256": "551193b4544847c721c69d2acb572792b6c7ee37b31ad0d954015d6715a8934a",
   "parity": {

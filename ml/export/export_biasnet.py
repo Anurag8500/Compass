@@ -43,6 +43,7 @@ def export_to_onnx(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     model.eval()
 
+    torch.manual_seed(42)
     dummy_input = torch.randn(batch_size, 20, 9, dtype=torch.float32)
 
     torch.onnx.export(
@@ -201,13 +202,14 @@ def export_biasnet_pipeline(
     # Export ONNX
     print(f"Exporting to ONNX: {onnx_path}")
     export_to_onnx(model, onnx_path, batch_size=1)
-    onnx_hash = compute_file_sha256(onnx_path)
-    print(f"  ONNX SHA-256: {onnx_hash}")
 
     # Convert to LiteRT
     print(f"Converting to LiteRT: {tflite_path}")
     convert_onnx_to_litert(onnx_path, tflite_path)
+
+    onnx_hash = compute_file_sha256(onnx_path)
     tflite_hash = compute_file_sha256(tflite_path)
+    print(f"  ONNX SHA-256: {onnx_hash}")
     print(f"  LiteRT SHA-256: {tflite_hash}")
 
     # Verify parity on 500 real windows

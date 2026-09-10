@@ -63,7 +63,7 @@ Evaluated strictly once post-freeze on 956 eligible test windows:
 Evaluated during synthetic GNSS outages on real driving segment `Categorised_S1.npz`:
 - **10s Outage**: Horizontal RMSE $= 0.424\text{ m}$ (vs Pure ESKF $0.426\text{ m}$). Mean NIS $= 0.049$.
 - **30s Outage**: Horizontal RMSE $= 10.049\text{ m}$ (vs Pure ESKF $11.289\text{ m}$ and +VNet $10.031\text{ m}$), Velocity RMSE $= 3.292\text{ m/s}$ (vs Pure ESKF $3.775\text{ m/s}$ and +VNet $3.361\text{ m/s}$). Mean NIS $= 1.839$.
-- **60s Outage**: Velocity RMSE $= 130.002\text{ m/s}$ (vs Pure ESKF $133.082\text{ m/s}$ and +VNet $131.604\text{ m/s}$). Mean NIS $= 2.543$.
+- **60s Outage**: Horizontal RMSE $= 1735.228\text{ m}$ (vs Pure ESKF $1771.216\text{ m}$ and +VNet $1740.133\text{ m}$), Velocity RMSE $= 130.002\text{ m/s}$ (vs Pure ESKF $133.082\text{ m/s}$ and +VNet $131.604\text{ m/s}$). Mean NIS $= 2.543$.
 
 ## Edge Deployment & Numerical Parity
 - **Export Artifacts**:
