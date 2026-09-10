@@ -1,0 +1,198 @@
+{
+  "dataset_audit": {
+    "source_trip": "data\\cache\\iovnbd\\Categorised_S1.npz",
+    "total_duration_s": 5174.6,
+    "has_verified_outage_index": false,
+    "real_data_classification": "REAL_DATA_REPLAY",
+    "note": "IO-VNBD v1 manifests have has_real_outages=False; real data runs evaluated as REAL_DATA_REPLAY."
+  },
+  "nominal_replay": {
+    "classification": "REAL_DATA_REPLAY",
+    "duration_s": 30.0,
+    "mode_distribution": {
+      "GNSS_AIDED": 300
+    },
+    "total_fixes_received": 30,
+    "total_fixes_accepted": 30,
+    "total_fixes_rejected": 0,
+    "mean_trust_score": 0.9910485933503839,
+    "mean_covariance_scale": 1.009032258064516,
+    "fsm_transitions": 0,
+    "velocitynet_inferences": 56,
+    "biasnet_inferences": 28
+  },
+  "synthetic_outages": {
+    "5s": {
+      "classification": "SYNTHETIC_OUTAGE_ON_REAL_DATA",
+      "duration_s": 5.0,
+      "distance_traveled_m": 71.86,
+      "horizontal_drift_m": 3.18,
+      "drift_pct_of_distance": 4.42,
+      "modes_traversed": [
+        "DR_ONLY",
+        "GNSS_AIDED",
+        "REACQUIRING"
+      ],
+      "final_mode": "GNSS_AIDED",
+      "outage_entry_latency_s": 2.0,
+      "reacquisition_latency_s": 0.0,
+      "recovery_convergence_latency_s": 7.0,
+      "max_single_step_correction_m": 3.0,
+      "rate_bounded_satisfied": true,
+      "dr_only_vnet_inferences": 7,
+      "dr_only_bnet_inferences": 4,
+      "total_fsm_transitions": 3,
+      "transitions": [
+        {
+          "timestamp_ns": 502000000000,
+          "previous_mode": "GNSS_AIDED",
+          "new_mode": "DR_ONLY",
+          "reason": "OUTAGE_DETECTED_CONFIRMED_OUTAGE",
+          "trust_score": 1.0,
+          "dwell_duration_s": 12.0
+        },
+        {
+          "timestamp_ns": 504999000000,
+          "previous_mode": "DR_ONLY",
+          "new_mode": "REACQUIRING",
+          "reason": "VALID_RETURNING_FIX_ACQUIRED",
+          "trust_score": 0.9910485933503836,
+          "dwell_duration_s": 2.999
+        },
+        {
+          "timestamp_ns": 512000000000,
+          "previous_mode": "REACQUIRING",
+          "new_mode": "GNSS_AIDED",
+          "reason": "REACQUISITION_CONVERGENCE_ACHIEVED",
+          "trust_score": 0.9910485933503836,
+          "dwell_duration_s": 7.001
+        }
+      ]
+    },
+    "10s": {
+      "classification": "SYNTHETIC_OUTAGE_ON_REAL_DATA",
+      "duration_s": 10.0,
+      "distance_traveled_m": 142.53,
+      "horizontal_drift_m": 19.32,
+      "drift_pct_of_distance": 13.55,
+      "modes_traversed": [
+        "DR_ONLY",
+        "GNSS_AIDED",
+        "REACQUIRING"
+      ],
+      "final_mode": "GNSS_AIDED",
+      "outage_entry_latency_s": 2.0,
+      "reacquisition_latency_s": 0.0,
+      "recovery_convergence_latency_s": 9.0,
+      "max_single_step_correction_m": 3.0,
+      "rate_bounded_satisfied": true,
+      "dr_only_vnet_inferences": 17,
+      "dr_only_bnet_inferences": 9,
+      "total_fsm_transitions": 3,
+      "transitions": [
+        {
+          "timestamp_ns": 502000000000,
+          "previous_mode": "GNSS_AIDED",
+          "new_mode": "DR_ONLY",
+          "reason": "OUTAGE_DETECTED_CONFIRMED_OUTAGE",
+          "trust_score": 1.0,
+          "dwell_duration_s": 12.0
+        },
+        {
+          "timestamp_ns": 509999000000,
+          "previous_mode": "DR_ONLY",
+          "new_mode": "REACQUIRING",
+          "reason": "VALID_RETURNING_FIX_ACQUIRED",
+          "trust_score": 0.9910485933503836,
+          "dwell_duration_s": 7.9990000000000006
+        },
+        {
+          "timestamp_ns": 519000000000,
+          "previous_mode": "REACQUIRING",
+          "new_mode": "GNSS_AIDED",
+          "reason": "REACQUISITION_CONVERGENCE_ACHIEVED",
+          "trust_score": 0.9910485933503836,
+          "dwell_duration_s": 9.001000000000001
+        }
+      ]
+    },
+    "30s": {
+      "classification": "SYNTHETIC_OUTAGE_ON_REAL_DATA",
+      "duration_s": 30.0,
+      "distance_traveled_m": 427.51,
+      "horizontal_drift_m": 105.25,
+      "drift_pct_of_distance": 24.62,
+      "modes_traversed": [
+        "DR_ONLY",
+        "GNSS_AIDED",
+        "REACQUIRING"
+      ],
+      "final_mode": "REACQUIRING",
+      "outage_entry_latency_s": 2.0,
+      "reacquisition_latency_s": 0.0,
+      "recovery_convergence_latency_s": null,
+      "max_single_step_correction_m": 3.0,
+      "rate_bounded_satisfied": true,
+      "dr_only_vnet_inferences": 57,
+      "dr_only_bnet_inferences": 29,
+      "total_fsm_transitions": 2,
+      "transitions": [
+        {
+          "timestamp_ns": 502000000000,
+          "previous_mode": "GNSS_AIDED",
+          "new_mode": "DR_ONLY",
+          "reason": "OUTAGE_DETECTED_CONFIRMED_OUTAGE",
+          "trust_score": 1.0,
+          "dwell_duration_s": 12.0
+        },
+        {
+          "timestamp_ns": 530000000000,
+          "previous_mode": "DR_ONLY",
+          "new_mode": "REACQUIRING",
+          "reason": "VALID_RETURNING_FIX_ACQUIRED",
+          "trust_score": 0.9910485933503836,
+          "dwell_duration_s": 28.0
+        }
+      ]
+    },
+    "60s": {
+      "classification": "SYNTHETIC_OUTAGE_ON_REAL_DATA",
+      "duration_s": 60.0,
+      "distance_traveled_m": 841.2,
+      "horizontal_drift_m": 594.98,
+      "drift_pct_of_distance": 70.73,
+      "modes_traversed": [
+        "DR_ONLY",
+        "GNSS_AIDED",
+        "REACQUIRING"
+      ],
+      "final_mode": "REACQUIRING",
+      "outage_entry_latency_s": 2.0,
+      "reacquisition_latency_s": 0.0,
+      "recovery_convergence_latency_s": null,
+      "max_single_step_correction_m": 3.0,
+      "rate_bounded_satisfied": true,
+      "dr_only_vnet_inferences": 117,
+      "dr_only_bnet_inferences": 59,
+      "total_fsm_transitions": 2,
+      "transitions": [
+        {
+          "timestamp_ns": 502000000000,
+          "previous_mode": "GNSS_AIDED",
+          "new_mode": "DR_ONLY",
+          "reason": "OUTAGE_DETECTED_CONFIRMED_OUTAGE",
+          "trust_score": 1.0,
+          "dwell_duration_s": 12.0
+        },
+        {
+          "timestamp_ns": 559999000000,
+          "previous_mode": "DR_ONLY",
+          "new_mode": "REACQUIRING",
+          "reason": "VALID_RETURNING_FIX_ACQUIRED",
+          "trust_score": 0.9910485933503836,
+          "dwell_duration_s": 57.999
+        }
+      ]
+    }
+  }
+}

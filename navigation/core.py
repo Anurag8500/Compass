@@ -50,6 +50,18 @@ from navigation.ml.model_runner import (
 )
 from navigation.ml.window_buffer import CausalWindowBuffer
 from navigation.schemas.state import GNSSMode, NavigationState
+from navigation.gnss import (
+    BoundedCorrectionStep,
+    FSMConfig,
+    GNSSModeFSM,
+    GNSSOutageDetector,
+    GNSSQualityResult,
+    GNSSRecoveryManager,
+    GNSSTrustScoreCalculator,
+    OutageDetectorConfig,
+    RecoveryConfig,
+    TrustScoreConfig,
+)
 
 
 @dataclass(frozen=True)
@@ -70,6 +82,10 @@ class NavigationCoreConfig:
     velocitynet: VelocityNetConfig = field(default_factory=VelocityNetConfig)
     biasnet: BiasNetConfig = field(default_factory=BiasNetConfig)
     model_runner: ModelRunnerConfig = field(default_factory=ModelRunnerConfig)
+    trust_score: TrustScoreConfig = field(default_factory=TrustScoreConfig)
+    outage_detector: OutageDetectorConfig = field(default_factory=OutageDetectorConfig)
+    fsm: FSMConfig = field(default_factory=FSMConfig)
+    recovery: RecoveryConfig = field(default_factory=RecoveryConfig)
 
 
 @dataclass(frozen=True)
@@ -130,6 +146,15 @@ class NavigationCore:
             bnet_cfg = BiasNetConfig(enabled=False)
         self.bnet_model = BiasNetMeasurementModel(config=bnet_cfg)
 
+        # GNSS Supervisory Subsystem (Phase 10)
+        self.gnss_trust_calculator = GNSSTrustScoreCalculator(config=self.config.trust_score)
+        self.gnss_outage_detector = GNSSOutageDetector(config=self.config.outage_detector)
+        self.gnss_fsm = GNSSModeFSM(config=self.config.fsm, initial_mode=self.mode)
+        self.gnss_recovery_manager = GNSSRecoveryManager(config=self.config.recovery)
+        self._last_gnss_timestamp_ns: Optional[int] = None
+        self._last_gnss_quality: Optional[GNSSQualityResult] = None
+        self._last_recovery_step: Optional[BoundedCorrectionStep] = None
+
         self._ml_telemetry: dict[str, Any] = {
             "velocitynet": {
                 "scheduler_due": 0,
@@ -167,6 +192,13 @@ class NavigationCore:
         self.geo_ref = GeoReference(lat_ref=float(lat0), lon_ref=float(lon0), alt_ref=float(alt0))
         self.gnss_model = GNSSMeasurementModel(geo_reference=self.geo_ref, config=self.config.gnss)
         self.mode = mode
+        self.gnss_fsm.reset(initial_mode=mode, timestamp_ns=timestamp_ns)
+        self.gnss_outage_detector.reset(session_start_timestamp_ns=timestamp_ns)
+        self.gnss_trust_calculator.reset()
+        self.gnss_recovery_manager.reset()
+        self._last_gnss_timestamp_ns = None
+        self._last_gnss_quality = None
+        self._last_recovery_step = None
 
         nom = ESKFNominalState.from_components(
             position_enu=p0_enu,
@@ -214,26 +246,24 @@ class NavigationCore:
         }
 
     def check_covariance_health(self) -> CovarianceHealthDiagnostics:
-        """Verify numerical validity, symmetry, and positive semi-definiteness of covariance P."""
+        """Validate symmetry, positive definiteness, and bounds of covariance P."""
         if self.state is None:
             raise RuntimeError("NavigationCore not initialized")
 
         P = self.state.covariance
-        q = self.state.nominal.q
-
         is_finite = bool(np.all(np.isfinite(P)))
-        is_sym = bool(np.allclose(P, P.T, atol=1e-5))
+        is_sym = bool(np.allclose(P, P.T, atol=1e-7))
 
         try:
-            eigvals = np.linalg.eigvalsh(P)
-            min_eig = float(np.min(eigvals))
-            is_psd = bool(min_eig >= -1e-6)
+            eigs = np.linalg.eigvalsh(P)
+            min_eig = float(np.min(eigs))
+            is_psd = bool(min_eig > -1e-7)
         except Exception:
-            min_eig = float("-inf")
+            min_eig = float("nan")
             is_psd = False
 
-        max_diag = float(np.max(np.diag(P))) if is_finite else float("inf")
-        q_norm = float(np.linalg.norm(q))
+        max_diag = float(np.max(np.diag(P)))
+        q_norm = float(np.linalg.norm(self.state.nominal.q))
         q_norm_ok = bool(abs(q_norm - 1.0) < 1e-3)
 
         return CovarianceHealthDiagnostics(
@@ -349,7 +379,16 @@ class NavigationCore:
                     covariance_diag=self.bnet_model.R_diag,
                 )
 
-        # 5. Covariance health check
+        # 5. GNSS Outage and FSM Mode Evaluation (Phase 10)
+        outage_status = self.gnss_outage_detector.evaluate_outage(t_ns)
+        self.gnss_fsm.evaluate_transition(
+            current_timestamp_ns=t_ns,
+            is_outage=outage_status.is_outage,
+            outage_reason=outage_status.condition.value,
+        )
+        self.mode = self.gnss_fsm.current_mode
+
+        # 6. Covariance health check
         health = self.check_covariance_health()
 
         return NavigationCoreCycleOutput(
@@ -373,44 +412,173 @@ class NavigationCore:
         accuracy_h_m: Optional[float] = None,
         accuracy_v_m: Optional[float] = None,
         accuracy_speed_mps: Optional[float] = None,
-        trust_score: float = 1.0,
+        sat_count: Optional[int] = None,
+        trust_score: Optional[float] = None,
         timestamp_ns: Optional[int] = None,
     ) -> bool:
-        """Apply an incoming GNSS position/velocity fix if GNSS aiding is active."""
-        if not self.config.gnss_enabled or self.state is None or self.gnss_model is None:
+        """Apply an incoming GNSS position/velocity fix through Phase 10 supervisory pipeline."""
+        if not self.config.gnss_enabled or self.state is None or self.gnss_model is None or self.geo_ref is None:
             return False
 
-        t_ns = self.state.timestamp_ns if timestamp_ns is None else int(timestamp_ns)
+        t_ns = self.state.nominal.timestamp_ns if timestamp_ns is None else int(timestamp_ns)
+        p_enu = np.array(self.geo_ref.geodetic_to_enu(lat, lon, alt), dtype=np.float64)
 
-        # 1. Position update
-        self.state, diag_p = self.gnss_model.update_position(
-            state=self.state,
-            lat=lat,
-            lon=lon,
-            alt=alt,
-            accuracy_h_m=accuracy_h_m,
-            accuracy_v_m=accuracy_v_m,
-            trust_score=trust_score,
+        # 1. Record fix arrival in outage detector
+        self.gnss_outage_detector.record_fix_received(t_ns)
+
+        # 2. Continuous trust evaluation
+        quality_res = self.gnss_trust_calculator.compute_trust(
+            accuracy_m=accuracy_h_m,
+            sat_count=sat_count,
+            current_pos_enu=p_enu,
             timestamp_ns=t_ns,
         )
+        self._last_gnss_quality = quality_res
 
-        # 2. Velocity update (if provided)
-        diag_v: Optional[UpdateDiagnostics] = None
-        if v_east is not None and v_north is not None:
-            v_u = 0.0 if v_up is None else float(v_up)
-            self.state, diag_v = self.gnss_model.update_velocity(
-                state=self.state,
-                v_east=float(v_east),
-                v_north=float(v_north),
-                v_up=v_u,
-                accuracy_speed_mps=accuracy_speed_mps,
-                trust_score=trust_score,
+        # If caller explicitly provided a trust score (e.g. In synthetic tests), respect it
+        effective_trust = (
+            float(trust_score)
+            if (trust_score is not None and math.isfinite(trust_score))
+            else quality_res.trust_score
+        )
+
+        applied = False
+
+        # 3. Handle according to current authoritative FSM mode
+        if self.mode == GNSSMode.DR_ONLY:
+            # Validate returning fix before reacquisition
+            val_res = self.gnss_recovery_manager.validate_returning_fix(
+                gnss_pos_enu=p_enu,
+                eskf_state=self.state,
+                trust_score=effective_trust,
                 timestamp_ns=t_ns,
             )
+            outage_status = self.gnss_outage_detector.evaluate_outage(t_ns)
+            self.gnss_fsm.evaluate_transition(
+                current_timestamp_ns=t_ns,
+                is_outage=outage_status.is_outage,
+                outage_reason=outage_status.condition.value,
+                is_returning_fix_valid=val_res.is_plausible,
+                trust_score=effective_trust,
+            )
+            self.mode = self.gnss_fsm.current_mode
 
-        self.last_gnss_diagnostics = (diag_p, diag_v)
-        return diag_p.applied
+            if self.mode == GNSSMode.REACQUIRING:
+                # First reacquisition fix: apply bounded rate step
+                dt_s = (t_ns - self._last_gnss_timestamp_ns) * 1e-9 if self._last_gnss_timestamp_ns else 1.0
+                step = self.gnss_recovery_manager.compute_bounded_correction(p_enu, self.state, dt_s)
+                self.state = self.gnss_recovery_manager.apply_bounded_correction(self.state, step)
+                self._last_recovery_step = step
 
+                diag_p = None
+                if step.is_converged:
+                    self.state, diag_p = self.gnss_model.update_position(
+                        state=self.state,
+                        lat=lat,
+                        lon=lon,
+                        alt=alt,
+                        accuracy_h_m=accuracy_h_m,
+                        accuracy_v_m=accuracy_v_m,
+                        trust_score=effective_trust,
+                        timestamp_ns=t_ns,
+                    )
+                self.last_gnss_diagnostics = (diag_p, None)
+                self.gnss_outage_detector.record_update_result(t_ns, applied=True)
+                applied = True
+            else:
+                # Still in DR_ONLY (e.g. fix implausible or dwell active)
+                self.gnss_outage_detector.record_update_result(t_ns, applied=False)
+                applied = False
+
+        elif self.mode == GNSSMode.REACQUIRING:
+            # Continuing bounded recovery
+            dt_s = (t_ns - self._last_gnss_timestamp_ns) * 1e-9 if self._last_gnss_timestamp_ns else 1.0
+            step = self.gnss_recovery_manager.compute_bounded_correction(p_enu, self.state, dt_s)
+            self.state = self.gnss_recovery_manager.apply_bounded_correction(self.state, step)
+            self._last_recovery_step = step
+
+            diag_p = None
+            if step.is_converged:
+                self.state, diag_p = self.gnss_model.update_position(
+                    state=self.state,
+                    lat=lat,
+                    lon=lon,
+                    alt=alt,
+                    accuracy_h_m=accuracy_h_m,
+                    accuracy_v_m=accuracy_v_m,
+                    trust_score=effective_trust,
+                    timestamp_ns=t_ns,
+                )
+            diag_v = None
+            if v_east is not None and v_north is not None:
+                v_u = 0.0 if v_up is None else float(v_up)
+                self.state, diag_v = self.gnss_model.update_velocity(
+                    state=self.state,
+                    v_east=float(v_east),
+                    v_north=float(v_north),
+                    v_up=v_u,
+                    accuracy_speed_mps=accuracy_speed_mps,
+                    trust_score=effective_trust,
+                    timestamp_ns=t_ns,
+                )
+            self.last_gnss_diagnostics = (diag_p, diag_v)
+            self.gnss_outage_detector.record_update_result(t_ns, applied=True)
+            applied = True
+
+            # Check if convergence achieved
+            outage_status = self.gnss_outage_detector.evaluate_outage(t_ns)
+            self.gnss_fsm.evaluate_transition(
+                current_timestamp_ns=t_ns,
+                is_outage=outage_status.is_outage,
+                outage_reason=outage_status.condition.value,
+                is_returning_fix_valid=True,
+                is_recovery_converged=step.is_converged,
+                trust_score=effective_trust,
+            )
+            self.mode = self.gnss_fsm.current_mode
+
+        else:
+            # GNSS_AIDED (nominal)
+            self.state, diag_p = self.gnss_model.update_position(
+                state=self.state,
+                lat=lat,
+                lon=lon,
+                alt=alt,
+                accuracy_h_m=accuracy_h_m,
+                accuracy_v_m=accuracy_v_m,
+                trust_score=effective_trust,
+                timestamp_ns=t_ns,
+            )
+            diag_v = None
+            if v_east is not None and v_north is not None:
+                v_u = 0.0 if v_up is None else float(v_up)
+                self.state, diag_v = self.gnss_model.update_velocity(
+                    state=self.state,
+                    v_east=float(v_east),
+                    v_north=float(v_north),
+                    v_up=v_u,
+                    accuracy_speed_mps=accuracy_speed_mps,
+                    trust_score=effective_trust,
+                    timestamp_ns=t_ns,
+                )
+            self.last_gnss_diagnostics = (diag_p, diag_v)
+            self.gnss_outage_detector.record_update_result(t_ns, applied=diag_p.applied)
+            if diag_p.gating is not None:
+                self.gnss_trust_calculator.update_innovation_nis(diag_p.gating.mahalanobis_sq)
+
+            # Evaluate if persistent rejection or outage occurred
+            outage_status = self.gnss_outage_detector.evaluate_outage(t_ns)
+            self.gnss_fsm.evaluate_transition(
+                current_timestamp_ns=t_ns,
+                is_outage=outage_status.is_outage,
+                outage_reason=outage_status.condition.value,
+                trust_score=effective_trust,
+            )
+            self.mode = self.gnss_fsm.current_mode
+            applied = diag_p.applied
+
+        self._last_gnss_timestamp_ns = t_ns
+        return applied
 
     def get_navigation_state(self) -> NavigationState:
         """Serialize current state into canonical Phase 1 NavigationState schema."""
@@ -429,3 +597,25 @@ class NavigationCore:
         import copy
         return copy.deepcopy(self._ml_telemetry)
 
+    def get_gnss_telemetry(self) -> dict[str, Any]:
+        """Return standardized Phase 10 GNSS supervisory telemetry."""
+        cur_t = self.state.nominal.timestamp_ns if self.state else 0
+        outage_status = self.gnss_outage_detector.evaluate_outage(cur_t)
+        return {
+            "current_mode": self.mode.value,
+            "time_in_current_mode_s": self.gnss_fsm.time_in_current_mode_s(cur_t),
+            "transition_count": self.gnss_fsm.transition_count,
+            "transition_history": [t.to_dict() for t in self.gnss_fsm.transition_history],
+            "total_fixes_received": self.gnss_outage_detector.total_fixes_received,
+            "total_fixes_accepted": self.gnss_outage_detector.total_fixes_accepted,
+            "total_fixes_rejected": self.gnss_outage_detector.total_fixes_rejected,
+            "consecutive_rejections": outage_status.consecutive_rejections,
+            "outage_condition": outage_status.condition.value,
+            "is_outage": outage_status.is_outage,
+            "time_since_last_fix_s": outage_status.time_since_last_fix_s,
+            "last_trust_score": self._last_gnss_quality.trust_score if self._last_gnss_quality else 1.0,
+            "covariance_scale": 1.0 / max(0.05, self._last_gnss_quality.trust_score) if self._last_gnss_quality else 1.0,
+            "recovery_cycles": self.gnss_recovery_manager.recovery_cycles,
+            "maximum_recovery_correction_m": self.gnss_recovery_manager.maximum_correction_applied_m,
+            "consecutive_valid_recovery_fixes": self.gnss_recovery_manager.consecutive_valid_fixes,
+        }
