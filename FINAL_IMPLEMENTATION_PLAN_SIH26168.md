@@ -774,18 +774,16 @@ Synthetic-outage drift measurement against the PS's own benchmark durations (thi
 `docs/outage_recovery_report.md`, explicitly split into synthetic-outage results and real-outage results, with the PS's benchmark numbers referenced as the target (not yet necessarily met — that depends on NHC/map matching too, added next).
 
 #### Definition of Done
-- [x] Continuous GNSS trust score $S_{\text{trust}} \in [0.0, 1.0]$ implemented in `navigation/gnss/trust_score.py`, scaling $\mathbf{R}_{\text{eff}} = \frac{1}{\max(S_{\text{trust}}, 0.05)} \mathbf{R}_{\text{base}}$.
-- [x] Authoritative 3-state FSM (`GNSS_AIDED ⇄ DR_ONLY ⇄ REACQUIRING`) implemented in `navigation/gnss/fsm.py` with dwell time hysteresis ($T_{\text{dwell}} = 2.0\text{ s}$) and zero discrete duration states (no DEGRADED state).
-- [x] Timestamp-based outage detector implemented in `navigation/gnss/outage_detection.py` with $2.0\text{ s}$ grace period and $3.0\text{ s}$ timeout.
-- [x] Bounded-rate recovery implemented in `navigation/gnss/recovery.py` enforcing $v_{\text{blend}} \le 2.0\text{ m/s}$ and max single step $\le 3.0\text{ m}$; no direct ESKF state overwrite.
-- [x] ML models (VelocityNet and BiasNet) remain 100% active during `DR_ONLY`.
-- [x] Synthetic outage tests (5s, 10s, 30s, 60s) passing; anti-flapping passing; bounded-rate recovery passing; Phase 9 regressions 34/34 passing; full test suite 372/372 passing.
-- [x] Empirical results documented in `docs/outage_recovery_report.md` and `docs/outage_recovery_results.json`. Real data explicitly labeled `REAL_DATA_REPLAY`.
+FSM transitions correctly and without flapping in all test scenarios; recovery is measurably bounded-rate (no instant snap); synthetic and real outage results both documented, separately labeled.
 
-#### Status: COMPLETE & FROZEN (Ready for Phase 11)
+#### Failure / Recovery
+If the FSM flaps under realistic borderline-quality conditions, tune hysteresis/dwell-time parameters before proceeding — a flapping demo is a direct, visible failure of the PS's "seamless" requirement and must not be deferred to later polish.
+
+#### GitHub Commit Strategy
+Commits per module; tagged `git tag gnss-fsm-v1` once both synthetic and real outage tests pass and flapping test passes.
 
 #### Next-Phase Gate
-FSM validated; outage/recovery behavior measured on both synthetic and real data, clearly distinguished. Ready for Phase 11 (Kinematic Constraints: NHC & Gated ZUPT).
+FSM validated; outage/recovery behavior measured on both synthetic and real data, clearly distinguished.
 
 ---
 
