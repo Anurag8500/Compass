@@ -49,6 +49,16 @@ from navigation.ml.model_runner import (
     VelocityNetOutput,
 )
 from navigation.ml.window_buffer import CausalWindowBuffer
+from navigation.nhc.measurement import (
+    NHCConfig,
+    NHCMeasurementModel,
+    NHCDiagnostics,
+)
+from navigation.nhc.zupt_integration import (
+    ZUPTIntegrationConfig,
+    ZUPTIntegrator,
+    ZUPTIntegrationDiagnostics,
+)
 from navigation.schemas.state import GNSSMode, NavigationState
 
 
@@ -59,6 +69,7 @@ class NavigationCoreConfig:
     velocitynet_enabled: bool = True
     biasnet_enabled: bool = True
     zupt_enabled: bool = True
+    nhc_enabled: bool = True
     gnss_enabled: bool = True
 
     # Sub-component configurations
@@ -70,6 +81,8 @@ class NavigationCoreConfig:
     velocitynet: VelocityNetConfig = field(default_factory=VelocityNetConfig)
     biasnet: BiasNetConfig = field(default_factory=BiasNetConfig)
     model_runner: ModelRunnerConfig = field(default_factory=ModelRunnerConfig)
+    nhc: NHCConfig = field(default_factory=NHCConfig)
+    zupt_integration: ZUPTIntegrationConfig = field(default_factory=ZUPTIntegrationConfig)
 
 
 @dataclass(frozen=True)
@@ -94,6 +107,8 @@ class NavigationCoreCycleOutput:
     zupt_applied: bool = False
     velocitynet_diagnostics: Optional[VelocityNetAdapterDiagnostics] = None
     biasnet_diagnostics: Optional[BiasNetAdapterDiagnostics] = None
+    nhc_diagnostics: Optional[NHCDiagnostics] = None
+    zupt_integration_diagnostics: Optional[ZUPTIntegrationDiagnostics] = None
 
 
 class NavigationCore:
@@ -119,6 +134,10 @@ class NavigationCore:
         self.zupt_model = ZUPTMeasurementModel(config=self.config.zupt_measurement)
         self.gnss_model: Optional[GNSSMeasurementModel] = None
         self.last_gnss_diagnostics: Optional[Tuple[UpdateDiagnostics, Optional[UpdateDiagnostics]]] = None
+        
+        # Phase 11: NHC and improved ZUPT integration
+        self.nhc_model = NHCMeasurementModel(config=self.config.nhc)
+        self.zupt_integrator = ZUPTIntegrator(config=self.config.zupt_integration)
         
         vnet_cfg = self.config.velocitynet
         if not self.config.velocitynet_enabled:
@@ -191,6 +210,7 @@ class NavigationCore:
         self.window_buffer.reset()
         self.scheduler.reset()
         self.vnet_model.reset()
+        self.zupt_integrator.reset()
         self._reset_ml_telemetry()
 
     def _reset_ml_telemetry(self) -> None:
@@ -284,16 +304,42 @@ class NavigationCore:
             process_noise=self.config.process_noise,
         )
 
-        # 3. Classical Gated ZUPT check (zero-ML dependency)
+        # 3. Phase 11: Improved ZUPT integration with longer windows
         zupt_diag: Optional[ZUPTDetectorDiagnostics] = None
         zupt_applied = False
+        zupt_int_diag: Optional[ZUPTIntegrationDiagnostics] = None
+        is_stationary = False
+        
         if self.config.zupt_enabled:
+            # Update ZUPT integrator buffer
+            self.zupt_integrator.update_buffer(omega_v=w_arr, f_v=f_arr)
+            # Detect standstill with improved logic
+            is_stationary, zupt_int_diag = self.zupt_integrator.detect_standstill()
+            
+            # Also run classical detector for backward compatibility
             zupt_diag = self.zupt_detector.push(omega_v=w_arr, f_v=f_arr)
-            if zupt_diag.is_stationary:
+            
+            if is_stationary:
                 self.state, d_z = self.zupt_model.update(self.state, timestamp_ns=t_ns)
                 zupt_applied = d_z.applied
 
-        # 4. Evaluate time-based cadence for neural models
+        # 4. Phase 11: NHC measurement update (after ML, before covariance check)
+        nhc_diag: Optional[NHCDiagnostics] = None
+        gnss_trust = 1.0  # Default if no GNSS info available
+        
+        if self.config.nhc_enabled:
+            # Get GNSS trust score if available from last GNSS update
+            # This would need to be stored in NavigationCore state, using default for now
+            self.state, nhc_diag = self.nhc_model.update(
+                state=self.state,
+                is_stationary=is_stationary,
+                omega_v=w_arr,
+                f_v=f_arr,
+                timestamp_ns=t_ns,
+                gnss_trust=gnss_trust,
+            )
+
+        # 5. Evaluate time-based cadence for neural models
         run_vnet, run_bnet = self.scheduler.evaluate_cycle(t_ns)
 
         vnet_diag: Optional[VelocityNetAdapterDiagnostics] = None
@@ -349,7 +395,7 @@ class NavigationCore:
                     covariance_diag=self.bnet_model.R_diag,
                 )
 
-        # 5. Covariance health check
+        # 6. Covariance health check
         health = self.check_covariance_health()
 
         return NavigationCoreCycleOutput(
@@ -360,6 +406,8 @@ class NavigationCore:
             zupt_applied=zupt_applied,
             velocitynet_diagnostics=vnet_diag,
             biasnet_diagnostics=bnet_diag,
+            nhc_diagnostics=nhc_diag,
+            zupt_integration_diagnostics=zupt_int_diag,
         )
 
     def step_gnss_fix(
