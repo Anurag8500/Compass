@@ -218,3 +218,75 @@ def test_downstream_strictly_non_mutating_regression() -> None:
     np.testing.assert_array_equal(state.covariance, orig_cov)
     assert state.mode == "GNSS_AIDED"
     assert state.timestamp_ns == 1_500_000_000
+
+
+def test_downstream_full_core_immutability_audit() -> None:
+    """End-to-end immutability audit: running downstream MapMatcher produces ZERO feedback into NavigationCore."""
+    from navigation.core import NavigationCore, NavigationCoreConfig
+
+    rng, geo_ref = build_parallel_road_graph()
+    matcher = MapMatcher(road_graph=rng, search_radius_m=35.0, lag_epochs=4)
+
+    cfg = NavigationCoreConfig(
+        velocitynet_enabled=False,
+        biasnet_enabled=False,
+        nhc_enabled=True,
+        zupt_enabled=True,
+        gnss_enabled=True,
+    )
+
+    core_with_mm = NavigationCore(cfg)
+    core_without_mm = NavigationCore(cfg)
+
+    t0_ns = 1_000_000_000_000
+    p0 = np.array([0.0, 0.0, 0.0])
+    v0 = np.array([15.0, 0.0, 0.0])
+    q0 = np.array([1.0, 0.0, 0.0, 0.0])
+
+    core_with_mm.initialize(
+        lat0=geo_ref.lat_ref,
+        lon0=geo_ref.lon_ref,
+        alt0=0.0,
+        p0_enu=p0,
+        v0_enu=v0,
+        q0=q0,
+        gyro_bias0=np.zeros(3),
+        accel_bias0=np.zeros(3),
+        timestamp_ns=t0_ns,
+    )
+    core_without_mm.initialize(
+        lat0=geo_ref.lat_ref,
+        lon0=geo_ref.lon_ref,
+        alt0=0.0,
+        p0_enu=p0,
+        v0_enu=v0,
+        q0=q0,
+        gyro_bias0=np.zeros(3),
+        accel_bias0=np.zeros(3),
+        timestamp_ns=t0_ns,
+    )
+
+    for step in range(50):
+        t_ns = t0_ns + step * 100_000_000
+        f_m = np.array([0.0, 0.0, -9.81])
+        w_m = np.array([0.0, 0.0, 0.02])
+
+        # Step both cores with exact same sensor data
+        out_mm = core_with_mm.step_imu(f_m, w_m, dt_s=0.1, timestamp_ns=t_ns)
+        out_no_mm = core_without_mm.step_imu(f_m, w_m, dt_s=0.1, timestamp_ns=t_ns)
+
+        # Feed core_with_mm state into downstream map matcher
+        nav_state = core_with_mm.get_navigation_state()
+        mm_out = matcher.process_state(nav_state, geo_ref)
+
+        # Hard downstream isolation assertion:
+        # Every single state variable and covariance element must remain bit-for-bit identical!
+        np.testing.assert_array_equal(core_with_mm.state.nominal.position_enu, core_without_mm.state.nominal.position_enu)
+        np.testing.assert_array_equal(core_with_mm.state.nominal.velocity_enu, core_without_mm.state.nominal.velocity_enu)
+        np.testing.assert_array_equal(core_with_mm.state.nominal.q, core_without_mm.state.nominal.q)
+        np.testing.assert_array_equal(core_with_mm.state.nominal.accel_bias, core_without_mm.state.nominal.accel_bias)
+        np.testing.assert_array_equal(core_with_mm.state.nominal.gyro_bias, core_without_mm.state.nominal.gyro_bias)
+        np.testing.assert_array_equal(core_with_mm.state.covariance, core_without_mm.state.covariance)
+        assert core_with_mm.mode == core_without_mm.mode
+        assert core_with_mm.state.nominal.timestamp_ns == core_without_mm.state.nominal.timestamp_ns
+

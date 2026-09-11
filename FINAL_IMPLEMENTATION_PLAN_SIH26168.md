@@ -934,7 +934,7 @@ All Phase 12 criteria met and verified. Estimator state remains bit-for-bit iden
 # Phase 13 — Full Offline Replay Integration Test + 3-Axis Evaluation & Ablation Suite
 
 #### Objective
-The complete classical+ML stack (everything from Phase 2-12) running end-to-end in one deterministic offline replay, with the **formal 3-axis evaluation and ablation framework** run and reported, NIS uncertainty consistency verified, and the PS's own benchmark (<1.5% drift over 60s outage) evaluated against the complete system.
+The complete classical+ML stack (everything from Phase 2-12) running end-to-end in one deterministic offline replay, with the **formal 3-axis evaluation and ablation framework** run and reported, NIS uncertainty consistency verified, and the official SIH PS requirement (<10% positional drift of distance travelled during GNSS blackout, e.g. <5 m drift over 50 m in <1 min or <100 m drift over 1 km at 60 km/h) evaluated against the complete system, with dead-reckoning compliance judged primarily from estimator output.
 
 #### Why This Phase Exists
 Prior phases validated individual modules in isolation. This phase evaluates the integrated architecture. Crucially, evaluation is structured into **three distinct evaluation dimensions / axes** rather than an ambiguous linear sequence. This separation is required to rigorously answer:
@@ -950,7 +950,7 @@ The full pipeline; the held-out test split (Phase 6); real and synthetic outage 
 1. Assemble the full replay pipeline as one callable function/script, taking a raw file (or synced pair) and producing a full trajectory + metrics report.
 2. Implement the **3-Axis Evaluation Suite**:
 
-   **Axis A — Fusion & Component Contribution (Ablation Ladder at 60s Outage)**:
+   **Axis A — Fusion & Component Contribution (Ablation Ladder)**:
    - `Level 1: Pure Strapdown INS` — Baseline unconstrained inertial integration (Phase 4 baseline).
    - `Level 2: INS + Continuous GNSS` — Nominal reference trajectory and baseline tracker accuracy.
    - `Level 3: INS + GNSS + VelocityNet` — Quantifies exact dead reckoning drift reduction from ML speed aiding.
@@ -958,6 +958,14 @@ The full pipeline; the held-out test split (Phase 6); real and synthetic outage 
    - `Level 5: Level 4 + Classical NHC` — Evaluates lateral/vertical non-holonomic velocity constraints ($v_y^v \approx 0, v_z^v \approx 0$).
    - `Level 6: Level 5 + Gated ZUPT` — Adds classical stationary zero-velocity updates during detected vehicle stops.
    - `Level 7: Full System (+ Downstream Map Matching)` — Adds output-level HMM road-snapping (purely downstream, zero filter feedback).
+
+   **Dedicated GNSS-Denied Dead-Reckoning Ablation Ladder (under identical blackout conditions)**:
+   - `DR-A2: ESKF without GNSS during outage` — Pure inertial coasting without aiding during blackout.
+   - `DR-A3: DR-A2 + VelocityNet` — Quantifies learned forward velocity aiding during blackout.
+   - `DR-A4: DR-A3 + BiasNet` — Quantifies learned IMU bias compensation during blackout.
+   - `DR-A5: DR-A4 + NHC` — Quantifies non-holonomic lateral/vertical constraints during blackout.
+   - `DR-A6: DR-A5 + Gated ZUPT` — Quantifies standstill zero-velocity updates during blackout stops.
+   - `DR-A7: DR-A6 + Downstream Map Matching` — Output-tier presentation alignment (isolated from estimator state).
 
    *Key Isolations Enabled by Axis A*:
    - *Classical-only baseline* vs. *+VelocityNet* (isolates speed ML).
@@ -968,7 +976,7 @@ The full pipeline; the held-out test split (Phase 6); real and synthetic outage 
    **Axis B — GNSS Outage & Operating-Condition Analysis**:
    - `B1: Continuous GNSS` — Open-sky baseline tracking error (RMSE).
    - `B2: Short Synthetic Outages (10s, 30s)` — Urban canyon / overpass drift scaling.
-   - `B3: Standard Benchmark Outage (60s)` — Primary SIH competition metric (<1.5% distance drift).
+   - `B3: Standard Benchmark Outage (60s)` — Primary SIH competition metric (<10% distance drift).
    - `B4: Extended Outages (120s, 300s)` — Stress testing filter divergence bounds and covariance growth.
    - `B5: Real Environmental Outages` — Field test validation (underpasses, parking structures, tunnels).
    - `B6: Reacquisition & Recovery` — Convergence time, innovation Mahalanobis gate behavior, smooth covariance collapse.
@@ -980,7 +988,7 @@ The full pipeline; the held-out test split (Phase 6); real and synthetic outage 
 
 3. Implement the full metric suite (Master Plan Section 25/26): drift %, meters drift, velocity error, heading error, ATE/RTE, map-matching accuracy, inference latency, stratified by scenario/driver/vehicle/dataset-source/GNSS-state.
 4. Run the full 3-axis suite on the held-out test set, per-level and stratified.
-5. **Explicitly check Axis B3 (60s benchmark outage) against R12/R13/R14** (<1.5% distance drift) on both synthetic and real outage tests — report the result honestly with documented gap analysis if it falls short.
+5. **Explicitly check Axis B3 (60s benchmark outage) against the official SIH requirement** (<10% distance drift) on both synthetic and real outage tests — report the result honestly with documented gap analysis if it falls short.
 6. Produce position-plot figures required for the screening proposal: raw GNSS track vs. fused+snapped track vs. reference, on at least one held-out sequence.
 
 #### Repository Changes

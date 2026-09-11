@@ -143,35 +143,32 @@ A hand-constructed 3-road deterministic synthetic graph was tested:
 1. **Candidate Projection**: Accurate to $< 10^{-3}\text{ m}$.
 2. **Covariance Awareness**: Confirmed that increasing North position uncertainty dynamically inflates road-normal variance $\sigma_d^2$.
 3. **Connectivity & Directionality**: Forward travel along Road A scores $-\ln(5.0)$; disconnected jump from Road B to Road C returns $-\infty$.
-4. **Noisy Trajectory Decoding**: 100% of trajectory points correctly selected Road A followed by the turn into Road C.
-5. **Causality Verification**: Changing trajectory points at $t > t_{\text{mature}} + W$ produced 0 change in committed outputs up to $t_{\text{mature}}$.
 6. **Determinism**: 100.0% bit-for-bit identical outputs across repeated runs.
 
 ---
 
 ## 9. Real-Data Benchmark Results (IO-VNBD Session S1)
 
-The complete Phase 12 benchmark was executed on IO-VNBD Session S1 (`Categorised_S1.npz`) at $10\text{ Hz}$ sampling rate.
+The complete Phase 12 benchmark was executed on IO-VNBD Session S1 (`Categorised_S1.npz`) at $10	ext{ Hz}$ sampling rate.
 
-### SIH Problem Statement Benchmark & Target Compliance Summary
+### Table 1: Nominal & Dynamic Driving Continuous Tracking Performance
+*(Evaluated during continuous GNSS and high-dynamics driving — Metrics are 2D Position Error & RMSE)*
 
-| Scenario | Outage Duration | Distance Travelled | Final Drift (m) | Drift % | Official SIH PS Benchmark (<10.0%) | Internal Stronger Target (<1.5%) |
-|---|---|---|---|---|---|---|
-| **Scenario B (10s Outage)** | 10.0 s | 142.2 m | 7.15 m | **5.03%** | **PASS** (<10.0%) | **FAIL** (>1.5%) |
-| **Scenario B (30s Outage)** | 30.0 s | 426.6 m | 86.19 m | **20.20%** | **FAIL** (>10.0%) | **FAIL** (>1.5%) |
-| **Scenario B (60s Outage)** | 60.0 s | 839.5 m | 174.33 m | **20.77%** | **FAIL** (>10.0%) | **FAIL** (>1.5%) |
+| Scenario | Duration | Snap Rate (%) | Fallback Rate (%) | Median Snap Dist (m) | P95 Snap Dist (m) | Max Snap Dist (m) | Estimator 2D RMSE (m) | Estimator Mean Error (m) | Estimator Max Error (m) | Display 2D RMSE (m) | Display Mean Error (m) |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| **Scenario A: Continuous GNSS** | 60.0 s (600 ep) | **98.5%** | 1.5% | 1.34 m | 2.58 m | 2.84 m | **1.5496 m** | 1.5109 m | 2.4416 m | 1.8153 m | 1.7381 m |
+| **Scenario C: Sharp Turn Dynamics** | 40.0 s (400 ep) | **69.2%** | 30.8% | 2.93 m | 4.38 m | 7.45 m | **19.988 m** | 11.587 m | 57.348 m | 20.088 m | 12.782 m |
+| **Scenario D: Stop-and-Go** | 30.0 s (300 ep) | **97.0%** | 3.0% | 1.51 m | 2.31 m | 5.45 m | **1.375 m** | 1.003 m | 7.268 m | 2.205 m | 2.105 m |
+| **Scenario E: Zero Coverage** | 5.0 s (50 ep) | **0.0%** | 100.0% | 0.00 m | 0.00 m | 0.00 m | N/A | N/A | N/A | N/A | N/A |
 
-### Scenario Comparison Table
+### Table 2: GNSS Blackout Outage Dead-Reckoning Drift & Official SIH PS Benchmark Compliance
+*(Evaluated strictly over the GNSS blackout window — Drift metrics are accumulated error over distance travelled during outage)*
 
-| Scenario | Duration | Snap Rate (%) | Fallback Rate (%) | Median Snap Dist (m) | P95 Snap Dist (m) | Max Snap Dist (m) | Phase 11 Estimator RMSE (m) | Phase 12 Map-Matched Display RMSE (m) |
-|---|---|---|---|---|---|---|---|---|
-| **Scenario A: Continuous GNSS** | 60.0 s (600 epochs) | **98.5%** | 1.5% | 1.34 m | 2.58 m | 2.84 m | **1.5496 m** | 1.8153 m |
-| **Scenario B: 10s GNSS Outage** | 30.0 s (300 epochs) | **95.7%** | 4.3% | 1.97 m | 3.76 m | 6.87 m | **7.15 m** (final) | **7.15 m** (final) |
-| **Scenario B: 30s GNSS Outage** | 50.0 s (500 epochs) | **45.6%** | 54.4% | 2.42 m | 4.34 m | 7.39 m | **86.19 m** (final) | **86.19 m** (final) |
-| **Scenario B: 60s GNSS Outage** | 80.0 s (800 epochs) | **28.5%** | 71.5% | 2.42 m | 4.34 m | 7.39 m | **174.33 m** (final) | **174.33 m** (final) |
-| **Scenario C: Sharp Turn Dynamics** | 40.0 s (400 epochs) | **69.2%** | 30.8% | 2.93 m | 4.38 m | 7.45 m | **19.988 m** | 20.088 m |
-| **Scenario D: Stop-and-Go** | 30.0 s (300 epochs) | **97.0%** | 3.0% | 1.51 m | 2.31 m | 5.45 m | **1.375 m** | 2.205 m |
-| **Scenario E: Zero Coverage** | 5.0 s (50 epochs) | **0.0%** | 100.0% | 0.00 m | 0.00 m | 0.00 m | N/A | N/A |
+| Outage Scenario | Outage Duration | Travelled Distance (m) | Estimator Final Drift (m) | Estimator Max Drift (m) | Estimator Drift % | Display Final Drift (m) | Display Max Drift (m) | Display Drift % | Official SIH PS Requirement (<10.0%) | Compliance Status |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **Scenario B: 10s Outage** | 10.0 s | 142.2 m | **7.15 m** | 8.30 m | **5.03%** | 7.15 m | 8.28 m | 5.03% | Drift < 10.0% of distance | **PASS** (5.03% < 10.0%) |
+| **Scenario B: 30s Outage** | 30.0 s | 426.6 m | **86.19 m** | 86.19 m | **20.20%** | 86.19 m | 86.19 m | 20.20% | Drift < 10.0% of distance | **FAIL** (20.20% > 10.0%) |
+| **Scenario B: 60s Outage** | 60.0 s | 839.5 m | **174.33 m** | 175.24 m | **20.77%** | 174.33 m | 175.24 m | 20.77% | Drift < 10.0% of distance | **FAIL** (20.77% > 10.0%) |
 
 ### Fallback Statistics Breakdown
 
@@ -185,7 +182,7 @@ The complete Phase 12 benchmark was executed on IO-VNBD Session S1 (`Categorised
   - Snapped: 228 (28.5%)
   - Fallbacks: 572 (71.5%)
   - Breakdown: `{'AMBIGUOUS_PARALLEL_ROADS': 34, 'LOW_CONFIDENCE': 61, 'LARGE_DISPLACEMENT': 91, 'NO_CANDIDATES': 170, 'DISCONNECTED_TRANSITION': 216}`
-  - Outage Distance: 839.5 m | Drift: 174.33 m (20.77%)
+  - Outage Distance: 839.5 m | Estimator Final Drift: 174.33 m (20.77%)
 - **Scenario C (Sharp Turn)**:
   - Total Epochs: 400
   - Snapped: 277 (69.2%)
@@ -194,33 +191,36 @@ The complete Phase 12 benchmark was executed on IO-VNBD Session S1 (`Categorised
 
 ---
 
-## 10. SIH Problem Statement Benchmark vs. Internal Target Status
+## 10. Official SIH Problem Statement Benchmark Compliance
 
-The official SIH Problem Statement (PS 26168) Dead Reckoning benchmark requirement states:
+### Official SIH PS 26168 Benchmark Requirement
+The **SOLE OFFICIAL** Problem Statement benchmark requirement states:
 > *"Dead Reckoning: positional drift must be LESS THAN 10% of the total distance travelled during GNSS blackout."*
 
+Concrete Problem Statement benchmark examples include:
+- $< 5	ext{ m}$ drift over $50	ext{ m}$ of GNSS-denied travel in under 1 minute.
+- $< 100	ext{ m}$ drift over $1	ext{ km}$ at $60	ext{ km/h}$ in a GNSS-denied environment.
+
 ### Official Compliance Analysis:
-- **Scenario B (10s Outage)**:
-  - Distance Travelled: **142.2 m**
-  - Final Drift: **7.15 m**
-  - Drift Percentage: **5.03%**
-  - Status: **PASS** (5.03% is well below the official 10.0% threshold).
-- **Scenario B (30s Outage)**:
-  - Distance Travelled: **426.6 m**
-  - Final Drift: **86.19 m**
-  - Drift Percentage: **20.20%**
-  - Status: **FAIL** (20.20% exceeds the 10.0% threshold).
-- **Scenario B (60s Outage)**:
-  - Distance Travelled: **839.5 m**
-  - Final Drift: **174.33 m**
-  - Drift Percentage: **20.77%**
-  - Status: **FAIL** (20.77% exceeds the 10.0% threshold).
+1. **Primary Compliance from Estimator**: Dead-reckoning compliance is evaluated primarily on the **estimator trajectory output**, not on snapped display coordinates. Map matching is strictly downstream presentation.
+2. **Scenario B (10s Outage)**:
+   - Distance Travelled: **142.2 m**
+   - Estimator Final Drift: **7.15 m**
+   - Estimator Drift Percentage: **5.03%**
+   - Status: **PASS** (5.03% is well below the official 10.0% threshold).
+3. **Scenario B (30s Outage)**:
+   - Distance Travelled: **426.6 m**
+   - Estimator Final Drift: **86.19 m**
+   - Estimator Drift Percentage: **20.20%**
+   - Status: **FAIL** (20.20% exceeds the 10.0% threshold).
+4. **Scenario B (60s Outage)**:
+   - Distance Travelled: **839.5 m**
+   - Estimator Final Drift: **174.33 m**
+   - Estimator Drift Percentage: **20.77%**
+   - Status: **FAIL** (20.77% exceeds the 10.0% threshold).
 
-### Internal Stronger Target (<1.5%):
-The internal project roadmap defines an aspirational target of $<1.5\%>$ drift. None of the extended outage scenarios currently achieve the $<1.5\%>$ internal target. This distinction is maintained transparently: the official SIH requirement is $<10\%>$, not $<1.5\%>$.
-
-### Critical Architectural Distinction:
-Map matching operates strictly downstream on the display/output tier. When the dead reckoning filter drifts past $25	ext{ m}$, the matcher safely activates `LARGE_DISPLACEMENT` and `NO_CANDIDATES` fallbacks. Map matching **MUST NOT** be used to artificially mask dead-reckoning drift or claim dead-reckoning benchmark compliance. Dead reckoning performance is evaluated on the sensor fusion pipeline in Phase 13.
+### Critical Downstream Safeguard Principle:
+Map matching operates strictly downstream. When the dead reckoning filter drifts beyond the search gate, the matcher safely activates `LARGE_DISPLACEMENT` and `NO_CANDIDATES` fallbacks. Map matching **MUST NOT** be used to artificially mask dead-reckoning drift or claim dead-reckoning benchmark compliance. Dead reckoning performance is evaluated on the sensor fusion pipeline in Phase 13.
 
 ---
 
@@ -238,7 +238,7 @@ A detailed investigation was conducted into Scenario D (Stop-and-Go), where the 
    - This shifts the display coordinate away from the true antenna ground truth, causing an apparent numerical degradation.
 3. **Display Alignment vs. Antenna Accuracy**:
    - On navigation displays, snapping the vehicle onto the roadway ensures the user sees their vehicle on the road rather than hovering on sidewalk boundaries.
-   - The estimator filter state remains uncorrupted, and the display trade-off is an expected physical consequence of centerline mapping.
+   - The estimator filter state remains uncorrupted, and the display trade-off is an expected physical consequence of centerline mapping. Safe fallback remains available if unconstrained snapping is undesired.
 
 ---
 
@@ -247,7 +247,7 @@ A detailed investigation was conducted into Scenario D (Stop-and-Go), where the 
 To guarantee zero regression of the frozen Phase 11 baseline:
 - Pre-Phase 12 Phase 11 Estimator RMSE: `1.5496224217307877 m`
 - Post-Phase 12 Phase 11 Estimator RMSE: `1.5496224217307877 m`
-- Numerical Delta: **$0.0000000000000000\text{ m}$** (bit-for-bit identical).
+- Numerical Delta: **$0.0000000000000000	ext{ m}$** (bit-for-bit identical).
 - Downstream Feedback: **STRICTLY ZERO**. ESKF state before and after map matching evaluated identical via assertion at every epoch.
 
 ---
@@ -265,12 +265,12 @@ All 15 figures were generated automatically from the final replay output and sav
 7. `07_confidence_timeline.png`: Plot G — Confidence score and ambiguity margin timeline
 8. `08_scenario_rmse_comparison.png`: Plot H — Scenario-by-scenario RMSE comparison bar chart
 9. `09_scenario_final_drift_comparison.png`: Plot I — Final drift across 10s, 30s, 60s outages
-10. `10_drift_percentage_vs_outage.png`: Plot J — Dead reckoning drift % vs outage duration with both 10% and 1.5% thresholds
+10. `10_drift_percentage_vs_outage.png`: Plot J — Dead reckoning drift % vs outage duration with official 10% threshold
 11. `11_snap_distance_distribution.png`: Plot K — Orthogonal snap distance distribution
 12. `12_regression_audit.png`: Plot L — Point-by-point regression audit (% improved, degraded, unchanged)
-13. `13_ambiguity_diagnostic.png`: Plot M — Viterbi candidate log-scores and ambiguity diagnostic
+13. `13_ambiguity_diagnostic.png`: Plot M — Viterbi candidate log-scores, score margin, confidence, and ambiguity diagnostic
 14. `14_trajectory_zooms.png`: Plot N — 4-quadrant trajectory zoom analysis
-15. `15_benchmark_summary_table.png`: Plot O — Official SIH PS Benchmark (<10%) & Internal Target (<1.5%) Compliance Table
+15. `15_benchmark_summary_table.png`: Plot O — Official SIH PS Benchmark (<10.0% Drift) Compliance Summary Table
 
 ---
 

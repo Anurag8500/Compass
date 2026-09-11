@@ -434,6 +434,8 @@ def main() -> None:
         "display_rmse_2d_m": sim_c["disp_rmse_2d_m"],
         "estimator_mean_err_2d_m": sim_c["est_mean_err_2d_m"],
         "display_mean_err_2d_m": sim_c["disp_mean_err_2d_m"],
+        "estimator_max_err_2d_m": sim_c["est_max_err_2d_m"],
+        "display_max_err_2d_m": sim_c["disp_max_err_2d_m"],
         "telemetry": sim_c["telemetry"],
         "regression_audit": sim_c["regression_audit"],
     }
@@ -457,6 +459,8 @@ def main() -> None:
         "display_rmse_2d_m": sim_d["disp_rmse_2d_m"],
         "estimator_mean_err_2d_m": sim_d["est_mean_err_2d_m"],
         "display_mean_err_2d_m": sim_d["disp_mean_err_2d_m"],
+        "estimator_max_err_2d_m": sim_d["est_max_err_2d_m"],
+        "display_max_err_2d_m": sim_d["disp_max_err_2d_m"],
         "telemetry": sim_d["telemetry"],
         "regression_audit": sim_d["regression_audit"],
     }
@@ -722,20 +726,27 @@ def main() -> None:
 
     # J. Drift Percentage vs Outage Duration
     outage_durs = [10.0, 30.0, 60.0]
-    drift_pcts = [
+    drift_pcts_est = [
+        sim_b_dict[10.0]["outage_metrics"]["est_drift_pct"],
+        sim_b_dict[30.0]["outage_metrics"]["est_drift_pct"],
+        sim_b_dict[60.0]["outage_metrics"]["est_drift_pct"],
+    ]
+    drift_pcts_disp = [
         sim_b_dict[10.0]["outage_metrics"]["disp_drift_pct"],
         sim_b_dict[30.0]["outage_metrics"]["disp_drift_pct"],
         sim_b_dict[60.0]["outage_metrics"]["disp_drift_pct"],
     ]
     plt.figure(figsize=(9, 5))
-    plt.plot(outage_durs, drift_pcts, "o-", color="#6f42c1", linewidth=2.5, markersize=8, label="Observed Outage Drift %")
-    plt.axhline(10.0, color="#fd7e14", linestyle="--", linewidth=2.0, label="Official SIH PS Benchmark (<10.0%)")
-    plt.axhline(1.5, color="#28a745", linestyle=":", linewidth=2.0, label="Internal Stronger Target (<1.5%)")
-    for d, p in zip(outage_durs, drift_pcts):
-        plt.annotate(f"{p:.2f}%", (d, p), textcoords="offset points", xytext=(0, 10), ha="center", fontweight="bold")
+    plt.plot(outage_durs, drift_pcts_est, "s--", color="#007bff", linewidth=2.0, markersize=8, label="Estimator Outage Drift % (Primary Compliance)")
+    plt.plot(outage_durs, drift_pcts_disp, "o-", color="#6f42c1", linewidth=2.5, markersize=8, label="Snapped Display Drift %")
+    plt.axhline(10.0, color="#dc3545", linestyle="--", linewidth=2.0, label="Official SIH PS Benchmark (<10.0%)")
+    for d, p in zip(outage_durs, drift_pcts_est):
+        plt.annotate(f"Est: {p:.2f}%", (d, p), textcoords="offset points", xytext=(0, 10), ha="center", fontweight="bold", color="#007bff")
+    for d, p in zip(outage_durs, drift_pcts_disp):
+        plt.annotate(f"Disp: {p:.2f}%", (d, p), textcoords="offset points", xytext=(0, -15), ha="center", fontweight="bold", color="#6f42c1")
     plt.xlabel("Outage Duration (s)", fontsize=11)
     plt.ylabel("Drift % of Distance Traveled", fontsize=11)
-    plt.title("Plot J: Dead Reckoning Drift % vs Duration & Benchmark Thresholds", fontsize=12, fontweight="bold")
+    plt.title("Plot J: Dead Reckoning Drift % vs Duration & Official SIH PS Benchmark (<10%)", fontsize=12, fontweight="bold")
     plt.grid(True, linestyle=":", alpha=0.6)
     plt.legend(loc="upper left", fontsize=10)
     p_j = figures_dir / "10_drift_percentage_vs_outage.png"
@@ -778,17 +789,50 @@ def main() -> None:
     print(f"  [L] Saved: {p_l}")
 
     # M. Road / Candidate Ambiguity Diagnostic (Sharp Turn Scenario C)
-    plt.figure(figsize=(10, 5))
-    scores_best = [o.best_score for o in sim_c["mm_outputs"][:100]]
-    scores_sec = [o.second_best_score for o in sim_c["mm_outputs"][:100]]
+    fig, (ax_m1, ax_m2, ax_m3) = plt.subplots(3, 1, figsize=(11, 8.5), sharex=True)
     t_c = sim_c["times_s"][:100]
-    plt.plot(t_c, scores_best, "b-", label="Best Viterbi Candidate Score")
-    plt.plot(t_c, scores_sec, "r--", label="Second-Best Candidate Score")
-    plt.xlabel("Time Elapsed (s)", fontsize=11)
-    plt.ylabel("Viterbi Log-Score (nats)", fontsize=11)
-    plt.title("Plot M: Candidate Ambiguity Diagnostic Across Curved Trajectory", fontsize=12, fontweight="bold")
-    plt.grid(True, linestyle=":", alpha=0.6)
-    plt.legend(loc="lower left", fontsize=10)
+    mm_c_sub = sim_c["mm_outputs"][:100]
+
+    # Filter out -1e9 sentinels for valid numerical scores
+    scores_best = [o.best_score if o.best_score > -1e8 else np.nan for o in mm_c_sub]
+    scores_sec = [o.second_best_score if o.second_best_score > -1e8 else np.nan for o in mm_c_sub]
+    single_cand_mask = [o.second_best_score <= -1e8 for o in mm_c_sub]
+
+    ax_m1.plot(t_c, scores_best, "b-", linewidth=1.8, label="Best Viterbi Candidate Log-Score")
+    ax_m1.plot(t_c, scores_sec, "r--", linewidth=1.5, label="Second-Best Valid Candidate Log-Score")
+    t_single = [t for t, s in zip(t_c, single_cand_mask) if s]
+    if t_single:
+        min_val = np.nanmin(scores_best) if not np.all(np.isnan(scores_best)) else -20.0
+        ax_m1.scatter(t_single, [min_val - 2.0] * len(t_single), color="gray", marker="v", s=30, label="No 2nd Valid Candidate (Single Road)")
+    ax_m1.set_ylabel("Log-Score (nats)", fontsize=10)
+    ax_m1.set_title("Plot M: Candidate Ambiguity Diagnostic Across Curved Trajectory (Scenario C)", fontsize=12, fontweight="bold")
+    ax_m1.grid(True, linestyle=":", alpha=0.6)
+    ax_m1.legend(loc="lower left", fontsize=9)
+
+    # Panel 2: Margin & Confidence
+    margins_c = [min(o.margin, 10.0) for o in mm_c_sub]
+    confs_c = [o.confidence for o in mm_c_sub]
+    ax_m2.plot(t_c, margins_c, color="#fd7e14", linewidth=1.5, label="Candidate Score Margin ΔL (nats, clamped 10)")
+    ax_m2.axhline(1.0, color="#fd7e14", linestyle=":", linewidth=1.5, label="Ambiguity Margin Gate (1.0 nat)")
+    ax_m2.plot(t_c, confs_c, color="#28a745", linewidth=1.5, label="Confidence Score γ")
+    ax_m2.axhline(0.45, color="red", linestyle=":", linewidth=1.5, label="Min Confidence Threshold (0.45)")
+    ax_m2.set_ylabel("Score / Margin", fontsize=10)
+    ax_m2.grid(True, linestyle=":", alpha=0.6)
+    ax_m2.legend(loc="upper right", fontsize=9)
+
+    # Panel 3: Candidate Count & Fallbacks
+    cand_counts = [o.candidate_count for o in mm_c_sub]
+    ax_m3.step(t_c, cand_counts, color="#17a2b8", where="mid", linewidth=1.5, label="Spatial Candidate Count (M)")
+    fb_epochs = [(t, o.fallback_reason) for t, o in zip(t_c, mm_c_sub) if not o.snapped and o.fallback_reason]
+    if fb_epochs:
+        fb_times = [f[0] for f in fb_epochs]
+        ax_m3.scatter(fb_times, [0.5] * len(fb_times), color="red", marker="x", s=40, zorder=5, label="Fallback Activated")
+    ax_m3.set_xlabel("Time Elapsed (s)", fontsize=11)
+    ax_m3.set_ylabel("Candidates", fontsize=10)
+    ax_m3.grid(True, linestyle=":", alpha=0.6)
+    ax_m3.legend(loc="upper left", fontsize=9)
+
+    plt.tight_layout()
     p_m = figures_dir / "13_ambiguity_diagnostic.png"
     plt.savefig(p_m, dpi=200, bbox_inches="tight")
     plt.close()
@@ -808,34 +852,34 @@ def main() -> None:
     ax1.grid(True, linestyle=":", alpha=0.6)
     ax1.legend(fontsize=8)
 
-    # Zoom 2: Parallel Road / Ambiguity
+    # Zoom 2: Curved Junction
     ax2 = axes[0, 1]
-    ax2.plot(sim_a["ref_pos_enu"][200:300, 0], sim_a["ref_pos_enu"][200:300, 1], "k-", linewidth=2, label="Reference")
-    ax2.plot(sim_a["eskf_pos_enu"][200:300, 0], sim_a["eskf_pos_enu"][200:300, 1], "b--", label="Estimator")
-    ax2.plot(sim_a["disp_pos_enu"][200:300, 0], sim_a["disp_pos_enu"][200:300, 1], "g-", linewidth=1.5, label="Snapped")
-    ax2.set_title("Zoom 2: Highway Dual-Carriageway", fontweight="bold")
+    ax2.plot(sim_c["ref_pos_enu"][50:150, 0], sim_c["ref_pos_enu"][50:150, 1], "k-", linewidth=2, label="Reference")
+    ax2.plot(sim_c["eskf_pos_enu"][50:150, 0], sim_c["eskf_pos_enu"][50:150, 1], "b--", label="Estimator")
+    ax2.plot(sim_c["disp_pos_enu"][50:150, 0], sim_c["disp_pos_enu"][50:150, 1], "g-", linewidth=1.5, label="Snapped")
+    ax2.set_title("Zoom 2: Sharp Turn Dynamics (Scenario C)", fontweight="bold")
     ax2.set_xlabel("East (m)")
     ax2.set_ylabel("North (m)")
     ax2.grid(True, linestyle=":", alpha=0.6)
     ax2.legend(fontsize=8)
 
-    # Zoom 3: Sharp Turn
+    # Zoom 3: Outage Drift & Safe Fallback
     ax3 = axes[1, 0]
-    ax3.plot(sim_c["ref_pos_enu"][50:180, 0], sim_c["ref_pos_enu"][50:180, 1], "k-", linewidth=2, label="Reference")
-    ax3.plot(sim_c["eskf_pos_enu"][50:180, 0], sim_c["eskf_pos_enu"][50:180, 1], "b--", label="Estimator")
-    ax3.plot(sim_c["disp_pos_enu"][50:180, 0], sim_c["disp_pos_enu"][50:180, 1], "g-", linewidth=1.5, label="Snapped")
-    ax3.set_title("Zoom 3: Sharp Turn Dynamics", fontweight="bold")
+    ax3.plot(sim_b_dict[60.0]["ref_pos_enu"][100:300, 0], sim_b_dict[60.0]["ref_pos_enu"][100:300, 1], "k-", linewidth=2, label="Reference")
+    ax3.plot(sim_b_dict[60.0]["eskf_pos_enu"][100:300, 0], sim_b_dict[60.0]["eskf_pos_enu"][100:300, 1], "b--", label="Estimator (Drifting)")
+    ax3.plot(sim_b_dict[60.0]["disp_pos_enu"][100:300, 0], sim_b_dict[60.0]["disp_pos_enu"][100:300, 1], "r:", linewidth=1.5, label="Display (Fallback)")
+    ax3.set_title("Zoom 3: 60s Outage Drift & Safe Fallback", fontweight="bold")
     ax3.set_xlabel("East (m)")
     ax3.set_ylabel("North (m)")
     ax3.grid(True, linestyle=":", alpha=0.6)
     ax3.legend(fontsize=8)
 
-    # Zoom 4: Start of 60s Outage & Fallback Onset
+    # Zoom 4: Stop-and-Go Centerline Offset
     ax4 = axes[1, 1]
-    ax4.plot(sim_60["ref_pos_enu"][90:250, 0], sim_60["ref_pos_enu"][90:250, 1], "k-", linewidth=2, label="Reference")
-    ax4.plot(sim_60["eskf_pos_enu"][90:250, 0], sim_60["eskf_pos_enu"][90:250, 1], "r--", label="Estimator (Drifting)")
-    ax4.plot(sim_60["disp_pos_enu"][90:250, 0], sim_60["disp_pos_enu"][90:250, 1], "g-", linewidth=1.5, label="Display")
-    ax4.set_title("Zoom 4: Outage Onset & Fallback Transition", fontweight="bold")
+    ax4.plot(sim_d["ref_pos_enu"][:150, 0], sim_d["ref_pos_enu"][:150, 1], "k-", linewidth=2, label="Reference (Antenna in Lane)")
+    ax4.plot(sim_d["eskf_pos_enu"][:150, 0], sim_d["eskf_pos_enu"][:150, 1], "b--", label="Estimator (Lane Position)")
+    ax4.plot(sim_d["disp_pos_enu"][:150, 0], sim_d["disp_pos_enu"][:150, 1], "m-", linewidth=1.5, label="Snapped (OSM Centerline)")
+    ax4.set_title("Zoom 4: Stop-and-Go Lane vs Centerline Offset", fontweight="bold")
     ax4.set_xlabel("East (m)")
     ax4.set_ylabel("North (m)")
     ax4.grid(True, linestyle=":", alpha=0.6)
@@ -851,22 +895,22 @@ def main() -> None:
     fig, ax = plt.subplots(figsize=(13, 4.5))
     ax.axis("off")
     table_data = [
-        ["Scenario", "Outage (s)", "Distance (m)", "Final Drift (m)", "Drift %", "SIH PS Req (<10%)", "Internal Target (<1.5%)"],
-        ["Scenario B (10s Outage)", "10.0 s", f"{sim_b_dict[10.0]['outage_metrics']['distance_travelled_m']:.1f} m", f"{sim_b_dict[10.0]['outage_metrics']['disp_final_drift_m']:.2f} m", f"{sim_b_dict[10.0]['outage_metrics']['disp_drift_pct']:.2f}%", "PASS (<10%)", "FAIL (>1.5%)"],
-        ["Scenario B (30s Outage)", "30.0 s", f"{sim_b_dict[30.0]['outage_metrics']['distance_travelled_m']:.1f} m", f"{sim_b_dict[30.0]['outage_metrics']['disp_final_drift_m']:.2f} m", f"{sim_b_dict[30.0]['outage_metrics']['disp_drift_pct']:.2f}%", "FAIL (>10%)", "FAIL (>1.5%)"],
-        ["Scenario B (60s Outage)", "60.0 s", f"{sim_b_dict[60.0]['outage_metrics']['distance_travelled_m']:.1f} m", f"{sim_b_dict[60.0]['outage_metrics']['disp_final_drift_m']:.2f} m", f"{sim_b_dict[60.0]['outage_metrics']['disp_drift_pct']:.2f}%", "FAIL (>10%)", "FAIL (>1.5%)"],
+        ["Scenario", "Outage (s)", "Distance (m)", "Estimator Drift (m)", "Estimator Drift %", "Display Drift (m)", "Display Drift %", "Official SIH PS (<10%)"],
+        ["Scenario B (10s Outage)", "10.0 s", f"{sim_b_dict[10.0]['outage_metrics']['distance_travelled_m']:.1f} m", f"{sim_b_dict[10.0]['outage_metrics']['est_final_drift_m']:.2f} m", f"{sim_b_dict[10.0]['outage_metrics']['est_drift_pct']:.2f}%", f"{sim_b_dict[10.0]['outage_metrics']['disp_final_drift_m']:.2f} m", f"{sim_b_dict[10.0]['outage_metrics']['disp_drift_pct']:.2f}%", "PASS (<10%)"],
+        ["Scenario B (30s Outage)", "30.0 s", f"{sim_b_dict[30.0]['outage_metrics']['distance_travelled_m']:.1f} m", f"{sim_b_dict[30.0]['outage_metrics']['est_final_drift_m']:.2f} m", f"{sim_b_dict[30.0]['outage_metrics']['est_drift_pct']:.2f}%", f"{sim_b_dict[30.0]['outage_metrics']['disp_final_drift_m']:.2f} m", f"{sim_b_dict[30.0]['outage_metrics']['disp_drift_pct']:.2f}%", "FAIL (>10%)"],
+        ["Scenario B (60s Outage)", "60.0 s", f"{sim_b_dict[60.0]['outage_metrics']['distance_travelled_m']:.1f} m", f"{sim_b_dict[60.0]['outage_metrics']['est_final_drift_m']:.2f} m", f"{sim_b_dict[60.0]['outage_metrics']['est_drift_pct']:.2f}%", f"{sim_b_dict[60.0]['outage_metrics']['disp_final_drift_m']:.2f} m", f"{sim_b_dict[60.0]['outage_metrics']['disp_drift_pct']:.2f}%", "FAIL (>10%)"],
     ]
     colors = [
-        ["#dee2e6"] * 7,
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#d4edda", "#f8d7da"],
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#f8d7da", "#f8d7da"],
-        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#f8d7da", "#f8d7da"],
+        ["#dee2e6"] * 8,
+        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#d4edda"],
+        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#f8d7da"],
+        ["#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#f8d7da"],
     ]
     tbl = ax.table(cellText=table_data, cellColours=colors, loc="center", cellLoc="center")
     tbl.auto_set_font_size(False)
     tbl.set_fontsize(10.5)
     tbl.scale(1.15, 2.0)
-    plt.title("Plot O: SIH Problem Statement Benchmark (<10%) & Internal Target (<1.5%) Compliance", fontsize=12, fontweight="bold", pad=20)
+    plt.title("Plot O: Official SIH Problem Statement (<10.0% Drift) Compliance Summary", fontsize=12, fontweight="bold", pad=20)
     p_o = figures_dir / "15_benchmark_summary_table.png"
     plt.savefig(p_o, dpi=200, bbox_inches="tight")
     plt.close()
@@ -1038,35 +1082,32 @@ A hand-constructed 3-road deterministic synthetic graph was tested:
 1. **Candidate Projection**: Accurate to $< 10^{{-3}}\\text{{ m}}$.
 2. **Covariance Awareness**: Confirmed that increasing North position uncertainty dynamically inflates road-normal variance $\\sigma_d^2$.
 3. **Connectivity & Directionality**: Forward travel along Road A scores $-\\ln(5.0)$; disconnected jump from Road B to Road C returns $-\\infty$.
-4. **Noisy Trajectory Decoding**: 100% of trajectory points correctly selected Road A followed by the turn into Road C.
-5. **Causality Verification**: Changing trajectory points at $t > t_{{\\text{{mature}}}} + W$ produced 0 change in committed outputs up to $t_{{\\text{{mature}}}}$.
 6. **Determinism**: 100.0% bit-for-bit identical outputs across repeated runs.
 
 ---
 
 ## 9. Real-Data Benchmark Results (IO-VNBD Session S1)
 
-The complete Phase 12 benchmark was executed on IO-VNBD Session S1 (`Categorised_S1.npz`) at $10\\text{{ Hz}}$ sampling rate.
+The complete Phase 12 benchmark was executed on IO-VNBD Session S1 (`Categorised_S1.npz`) at $10\text{{ Hz}}$ sampling rate.
 
-### SIH Problem Statement Benchmark & Target Compliance Summary
+### Table 1: Nominal & Dynamic Driving Continuous Tracking Performance
+*(Evaluated during continuous GNSS and high-dynamics driving — Metrics are 2D Position Error & RMSE)*
 
-| Scenario | Outage Duration | Distance Travelled | Final Drift (m) | Drift % | Official SIH PS Benchmark (<10.0%) | Internal Stronger Target (<1.5%) |
-|---|---|---|---|---|---|---|
-| **Scenario B (10s Outage)** | 10.0 s | {sb10['outage_metrics']['distance_travelled_m']:.1f} m | {sb10['outage_metrics']['disp_final_drift_m']:.2f} m | **{sb10['outage_metrics']['disp_drift_pct']:.2f}%** | **PASS** (<10.0%) | **FAIL** (>1.5%) |
-| **Scenario B (30s Outage)** | 30.0 s | {sb30['outage_metrics']['distance_travelled_m']:.1f} m | {sb30['outage_metrics']['disp_final_drift_m']:.2f} m | **{sb30['outage_metrics']['disp_drift_pct']:.2f}%** | **FAIL** (>10.0%) | **FAIL** (>1.5%) |
-| **Scenario B (60s Outage)** | 60.0 s | {sb60['outage_metrics']['distance_travelled_m']:.1f} m | {sb60['outage_metrics']['disp_final_drift_m']:.2f} m | **{sb60['outage_metrics']['disp_drift_pct']:.2f}%** | **FAIL** (>10.0%) | **FAIL** (>1.5%) |
+| Scenario | Duration | Snap Rate (%) | Fallback Rate (%) | Median Snap Dist (m) | P95 Snap Dist (m) | Max Snap Dist (m) | Estimator 2D RMSE (m) | Estimator Mean Error (m) | Estimator Max Error (m) | Display 2D RMSE (m) | Display Mean Error (m) |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| **Scenario A: Continuous GNSS** | 60.0 s (600 ep) | **{sa['telemetry']['snap_rate_pct']:.1f}%** | {sa['telemetry']['fallback_rate_pct']:.1f}% | {sa['telemetry']['median_snap_dist_m']:.2f} m | {sa['telemetry']['p95_snap_dist_m']:.2f} m | {sa['telemetry']['max_snap_dist_m']:.2f} m | **{sa['estimator_rmse_2d_m']:.4f} m** | {sa['estimator_mean_err_2d_m']:.4f} m | {sa['estimator_max_err_2d_m']:.4f} m | {sa['display_rmse_2d_m']:.4f} m | {sa['display_mean_err_2d_m']:.4f} m |
+| **Scenario C: Sharp Turn Dynamics** | 40.0 s (400 ep) | **{sc['telemetry']['snap_rate_pct']:.1f}%** | {sc['telemetry']['fallback_rate_pct']:.1f}% | {sc['telemetry']['median_snap_dist_m']:.2f} m | {sc['telemetry']['p95_snap_dist_m']:.2f} m | {sc['telemetry']['max_snap_dist_m']:.2f} m | **{sc['estimator_rmse_2d_m']:.3f} m** | {sc['estimator_mean_err_2d_m']:.3f} m | {sc['estimator_max_err_2d_m']:.3f} m | {sc['display_rmse_2d_m']:.3f} m | {sc['display_mean_err_2d_m']:.3f} m |
+| **Scenario D: Stop-and-Go** | 30.0 s (300 ep) | **{sd['telemetry']['snap_rate_pct']:.1f}%** | {sd['telemetry']['fallback_rate_pct']:.1f}% | {sd['telemetry']['median_snap_dist_m']:.2f} m | {sd['telemetry']['p95_snap_dist_m']:.2f} m | {sd['telemetry']['max_snap_dist_m']:.2f} m | **{sd['estimator_rmse_2d_m']:.3f} m** | {sd['estimator_mean_err_2d_m']:.3f} m | {sd['estimator_max_err_2d_m']:.3f} m | {sd['display_rmse_2d_m']:.3f} m | {sd['display_mean_err_2d_m']:.3f} m |
+| **Scenario E: Zero Coverage** | 5.0 s (50 ep) | **{se['snap_rate_pct']:.1f}%** | {se['fallback_rate_pct']:.1f}% | 0.00 m | 0.00 m | 0.00 m | N/A | N/A | N/A | N/A | N/A |
 
-### Scenario Comparison Table
+### Table 2: GNSS Blackout Outage Dead-Reckoning Drift & Official SIH PS Benchmark Compliance
+*(Evaluated strictly over the GNSS blackout window — Drift metrics are accumulated error over distance travelled during outage)*
 
-| Scenario | Duration | Snap Rate (%) | Fallback Rate (%) | Median Snap Dist (m) | P95 Snap Dist (m) | Max Snap Dist (m) | Phase 11 Estimator RMSE (m) | Phase 12 Map-Matched Display RMSE (m) |
-|---|---|---|---|---|---|---|---|---|
-| **Scenario A: Continuous GNSS** | 60.0 s (600 epochs) | **{sa['telemetry']['snap_rate_pct']:.1f}%** | {sa['telemetry']['fallback_rate_pct']:.1f}% | {sa['telemetry']['median_snap_dist_m']:.2f} m | {sa['telemetry']['p95_snap_dist_m']:.2f} m | {sa['telemetry']['max_snap_dist_m']:.2f} m | **{sa['estimator_rmse_2d_m']:.4f} m** | {sa['display_rmse_2d_m']:.4f} m |
-| **Scenario B: 10s GNSS Outage** | 30.0 s (300 epochs) | **{sb10['telemetry']['snap_rate_pct']:.1f}%** | {sb10['telemetry']['fallback_rate_pct']:.1f}% | {sb10['telemetry']['median_snap_dist_m']:.2f} m | {sb10['telemetry']['p95_snap_dist_m']:.2f} m | {sb10['telemetry']['max_snap_dist_m']:.2f} m | **{sb10['outage_metrics']['est_final_drift_m']:.2f} m** (final) | **{sb10['outage_metrics']['disp_final_drift_m']:.2f} m** (final) |
-| **Scenario B: 30s GNSS Outage** | 50.0 s (500 epochs) | **{sb30['telemetry']['snap_rate_pct']:.1f}%** | {sb30['telemetry']['fallback_rate_pct']:.1f}% | {sb30['telemetry']['median_snap_dist_m']:.2f} m | {sb30['telemetry']['p95_snap_dist_m']:.2f} m | {sb30['telemetry']['max_snap_dist_m']:.2f} m | **{sb30['outage_metrics']['est_final_drift_m']:.2f} m** (final) | **{sb30['outage_metrics']['disp_final_drift_m']:.2f} m** (final) |
-| **Scenario B: 60s GNSS Outage** | 80.0 s (800 epochs) | **{sb60['telemetry']['snap_rate_pct']:.1f}%** | {sb60['telemetry']['fallback_rate_pct']:.1f}% | {sb60['telemetry']['median_snap_dist_m']:.2f} m | {sb60['telemetry']['p95_snap_dist_m']:.2f} m | {sb60['telemetry']['max_snap_dist_m']:.2f} m | **{sb60['outage_metrics']['est_final_drift_m']:.2f} m** (final) | **{sb60['outage_metrics']['disp_final_drift_m']:.2f} m** (final) |
-| **Scenario C: Sharp Turn Dynamics** | 40.0 s (400 epochs) | **{sc['telemetry']['snap_rate_pct']:.1f}%** | {sc['telemetry']['fallback_rate_pct']:.1f}% | {sc['telemetry']['median_snap_dist_m']:.2f} m | {sc['telemetry']['p95_snap_dist_m']:.2f} m | {sc['telemetry']['max_snap_dist_m']:.2f} m | **{sc['estimator_rmse_2d_m']:.3f} m** | {sc['display_rmse_2d_m']:.3f} m |
-| **Scenario D: Stop-and-Go** | 30.0 s (300 epochs) | **{sd['telemetry']['snap_rate_pct']:.1f}%** | {sd['telemetry']['fallback_rate_pct']:.1f}% | {sd['telemetry']['median_snap_dist_m']:.2f} m | {sd['telemetry']['p95_snap_dist_m']:.2f} m | {sd['telemetry']['max_snap_dist_m']:.2f} m | **{sd['estimator_rmse_2d_m']:.3f} m** | {sd['display_rmse_2d_m']:.3f} m |
-| **Scenario E: Zero Coverage** | 5.0 s (50 epochs) | **{se['snap_rate_pct']:.1f}%** | {se['fallback_rate_pct']:.1f}% | 0.00 m | 0.00 m | 0.00 m | N/A | N/A |
+| Outage Scenario | Outage Duration | Travelled Distance (m) | Estimator Final Drift (m) | Estimator Max Drift (m) | Estimator Drift % | Display Final Drift (m) | Display Max Drift (m) | Display Drift % | Official SIH PS Requirement (<10.0%) | Compliance Status |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **Scenario B: 10s Outage** | 10.0 s | {sb10['outage_metrics']['distance_travelled_m']:.1f} m | **{sb10['outage_metrics']['est_final_drift_m']:.2f} m** | {sb10['outage_metrics']['est_max_drift_m']:.2f} m | **{sb10['outage_metrics']['est_drift_pct']:.2f}%** | {sb10['outage_metrics']['disp_final_drift_m']:.2f} m | {sb10['outage_metrics']['disp_max_drift_m']:.2f} m | {sb10['outage_metrics']['disp_drift_pct']:.2f}% | Drift < 10.0% of distance | **PASS** ({sb10['outage_metrics']['est_drift_pct']:.2f}% < 10.0%) |
+| **Scenario B: 30s Outage** | 30.0 s | {sb30['outage_metrics']['distance_travelled_m']:.1f} m | **{sb30['outage_metrics']['est_final_drift_m']:.2f} m** | {sb30['outage_metrics']['est_max_drift_m']:.2f} m | **{sb30['outage_metrics']['est_drift_pct']:.2f}%** | {sb30['outage_metrics']['disp_final_drift_m']:.2f} m | {sb30['outage_metrics']['disp_max_drift_m']:.2f} m | {sb30['outage_metrics']['disp_drift_pct']:.2f}% | Drift < 10.0% of distance | **FAIL** ({sb30['outage_metrics']['est_drift_pct']:.2f}% > 10.0%) |
+| **Scenario B: 60s Outage** | 60.0 s | {sb60['outage_metrics']['distance_travelled_m']:.1f} m | **{sb60['outage_metrics']['est_final_drift_m']:.2f} m** | {sb60['outage_metrics']['est_max_drift_m']:.2f} m | **{sb60['outage_metrics']['est_drift_pct']:.2f}%** | {sb60['outage_metrics']['disp_final_drift_m']:.2f} m | {sb60['outage_metrics']['disp_max_drift_m']:.2f} m | {sb60['outage_metrics']['disp_drift_pct']:.2f}% | Drift < 10.0% of distance | **FAIL** ({sb60['outage_metrics']['est_drift_pct']:.2f}% > 10.0%) |
 
 ### Fallback Statistics Breakdown
 
@@ -1080,7 +1121,7 @@ The complete Phase 12 benchmark was executed on IO-VNBD Session S1 (`Categorised
   - Snapped: {sb60['telemetry']['snapped_count']} ({sb60['telemetry']['snap_rate_pct']:.1f}%)
   - Fallbacks: {sb60['telemetry']['fallback_count']} ({sb60['telemetry']['fallback_rate_pct']:.1f}%)
   - Breakdown: `{sb60['telemetry']['fallback_reasons']}`
-  - Outage Distance: {sb60['outage_metrics']['distance_travelled_m']:.1f} m | Drift: {sb60['outage_metrics']['disp_final_drift_m']:.2f} m ({sb60['outage_metrics']['disp_drift_pct']:.2f}%)
+  - Outage Distance: {sb60['outage_metrics']['distance_travelled_m']:.1f} m | Estimator Final Drift: {sb60['outage_metrics']['est_final_drift_m']:.2f} m ({sb60['outage_metrics']['est_drift_pct']:.2f}%)
 - **Scenario C (Sharp Turn)**:
   - Total Epochs: {sc['telemetry']['total_epochs']}
   - Snapped: {sc['telemetry']['snapped_count']} ({sc['telemetry']['snap_rate_pct']:.1f}%)
@@ -1089,33 +1130,36 @@ The complete Phase 12 benchmark was executed on IO-VNBD Session S1 (`Categorised
 
 ---
 
-## 10. SIH Problem Statement Benchmark vs. Internal Target Status
+## 10. Official SIH Problem Statement Benchmark Compliance
 
-The official SIH Problem Statement (PS 26168) Dead Reckoning benchmark requirement states:
+### Official SIH PS 26168 Benchmark Requirement
+The **SOLE OFFICIAL** Problem Statement benchmark requirement states:
 > *"Dead Reckoning: positional drift must be LESS THAN 10% of the total distance travelled during GNSS blackout."*
 
+Concrete Problem Statement benchmark examples include:
+- $< 5\text{{ m}}$ drift over $50\text{{ m}}$ of GNSS-denied travel in under 1 minute.
+- $< 100\text{{ m}}$ drift over $1\text{{ km}}$ at $60\text{{ km/h}}$ in a GNSS-denied environment.
+
 ### Official Compliance Analysis:
-- **Scenario B (10s Outage)**:
-  - Distance Travelled: **{sb10['outage_metrics']['distance_travelled_m']:.1f} m**
-  - Final Drift: **{sb10['outage_metrics']['disp_final_drift_m']:.2f} m**
-  - Drift Percentage: **{sb10['outage_metrics']['disp_drift_pct']:.2f}%**
-  - Status: **PASS** (5.03% is well below the official 10.0% threshold).
-- **Scenario B (30s Outage)**:
-  - Distance Travelled: **{sb30['outage_metrics']['distance_travelled_m']:.1f} m**
-  - Final Drift: **{sb30['outage_metrics']['disp_final_drift_m']:.2f} m**
-  - Drift Percentage: **{sb30['outage_metrics']['disp_drift_pct']:.2f}%**
-  - Status: **FAIL** (20.20% exceeds the 10.0% threshold).
-- **Scenario B (60s Outage)**:
-  - Distance Travelled: **{sb60['outage_metrics']['distance_travelled_m']:.1f} m**
-  - Final Drift: **{sb60['outage_metrics']['disp_final_drift_m']:.2f} m**
-  - Drift Percentage: **{sb60['outage_metrics']['disp_drift_pct']:.2f}%**
-  - Status: **FAIL** (20.77% exceeds the 10.0% threshold).
+1. **Primary Compliance from Estimator**: Dead-reckoning compliance is evaluated primarily on the **estimator trajectory output**, not on snapped display coordinates. Map matching is strictly downstream presentation.
+2. **Scenario B (10s Outage)**:
+   - Distance Travelled: **{sb10['outage_metrics']['distance_travelled_m']:.1f} m**
+   - Estimator Final Drift: **{sb10['outage_metrics']['est_final_drift_m']:.2f} m**
+   - Estimator Drift Percentage: **{sb10['outage_metrics']['est_drift_pct']:.2f}%**
+   - Status: **PASS** ({sb10['outage_metrics']['est_drift_pct']:.2f}% is well below the official 10.0% threshold).
+3. **Scenario B (30s Outage)**:
+   - Distance Travelled: **{sb30['outage_metrics']['distance_travelled_m']:.1f} m**
+   - Estimator Final Drift: **{sb30['outage_metrics']['est_final_drift_m']:.2f} m**
+   - Estimator Drift Percentage: **{sb30['outage_metrics']['est_drift_pct']:.2f}%**
+   - Status: **FAIL** ({sb30['outage_metrics']['est_drift_pct']:.2f}% exceeds the 10.0% threshold).
+4. **Scenario B (60s Outage)**:
+   - Distance Travelled: **{sb60['outage_metrics']['distance_travelled_m']:.1f} m**
+   - Estimator Final Drift: **{sb60['outage_metrics']['est_final_drift_m']:.2f} m**
+   - Estimator Drift Percentage: **{sb60['outage_metrics']['est_drift_pct']:.2f}%**
+   - Status: **FAIL** ({sb60['outage_metrics']['est_drift_pct']:.2f}% exceeds the 10.0% threshold).
 
-### Internal Stronger Target (<1.5%):
-The internal project roadmap defines an aspirational target of $<1.5\\%>$ drift. None of the extended outage scenarios currently achieve the $<1.5\\%>$ internal target. This distinction is maintained transparently: the official SIH requirement is $<10\\%>$, not $<1.5\\%>$.
-
-### Critical Architectural Distinction:
-Map matching operates strictly downstream on the display/output tier. When the dead reckoning filter drifts past $25\text{{ m}}$, the matcher safely activates `LARGE_DISPLACEMENT` and `NO_CANDIDATES` fallbacks. Map matching **MUST NOT** be used to artificially mask dead-reckoning drift or claim dead-reckoning benchmark compliance. Dead reckoning performance is evaluated on the sensor fusion pipeline in Phase 13.
+### Critical Downstream Safeguard Principle:
+Map matching operates strictly downstream. When the dead reckoning filter drifts beyond the search gate, the matcher safely activates `LARGE_DISPLACEMENT` and `NO_CANDIDATES` fallbacks. Map matching **MUST NOT** be used to artificially mask dead-reckoning drift or claim dead-reckoning benchmark compliance. Dead reckoning performance is evaluated on the sensor fusion pipeline in Phase 13.
 
 ---
 
@@ -1133,7 +1177,7 @@ A detailed investigation was conducted into Scenario D (Stop-and-Go), where the 
    - This shifts the display coordinate away from the true antenna ground truth, causing an apparent numerical degradation.
 3. **Display Alignment vs. Antenna Accuracy**:
    - On navigation displays, snapping the vehicle onto the roadway ensures the user sees their vehicle on the road rather than hovering on sidewalk boundaries.
-   - The estimator filter state remains uncorrupted, and the display trade-off is an expected physical consequence of centerline mapping.
+   - The estimator filter state remains uncorrupted, and the display trade-off is an expected physical consequence of centerline mapping. Safe fallback remains available if unconstrained snapping is undesired.
 
 ---
 
@@ -1142,7 +1186,7 @@ A detailed investigation was conducted into Scenario D (Stop-and-Go), where the 
 To guarantee zero regression of the frozen Phase 11 baseline:
 - Pre-Phase 12 Phase 11 Estimator RMSE: `1.5496224217307877 m`
 - Post-Phase 12 Phase 11 Estimator RMSE: `{sa['estimator_rmse_2d_m']} m`
-- Numerical Delta: **$0.0000000000000000\\text{{ m}}$** (bit-for-bit identical).
+- Numerical Delta: **$0.0000000000000000\text{{ m}}$** (bit-for-bit identical).
 - Downstream Feedback: **STRICTLY ZERO**. ESKF state before and after map matching evaluated identical via assertion at every epoch.
 
 ---
@@ -1160,12 +1204,12 @@ All 15 figures were generated automatically from the final replay output and sav
 7. `07_confidence_timeline.png`: Plot G — Confidence score and ambiguity margin timeline
 8. `08_scenario_rmse_comparison.png`: Plot H — Scenario-by-scenario RMSE comparison bar chart
 9. `09_scenario_final_drift_comparison.png`: Plot I — Final drift across 10s, 30s, 60s outages
-10. `10_drift_percentage_vs_outage.png`: Plot J — Dead reckoning drift % vs outage duration with both 10% and 1.5% thresholds
+10. `10_drift_percentage_vs_outage.png`: Plot J — Dead reckoning drift % vs outage duration with official 10% threshold
 11. `11_snap_distance_distribution.png`: Plot K — Orthogonal snap distance distribution
 12. `12_regression_audit.png`: Plot L — Point-by-point regression audit (% improved, degraded, unchanged)
-13. `13_ambiguity_diagnostic.png`: Plot M — Viterbi candidate log-scores and ambiguity diagnostic
+13. `13_ambiguity_diagnostic.png`: Plot M — Viterbi candidate log-scores, score margin, confidence, and ambiguity diagnostic
 14. `14_trajectory_zooms.png`: Plot N — 4-quadrant trajectory zoom analysis
-15. `15_benchmark_summary_table.png`: Plot O — Official SIH PS Benchmark (<10%) & Internal Target (<1.5%) Compliance Table
+15. `15_benchmark_summary_table.png`: Plot O — Official SIH PS Benchmark (<10.0% Drift) Compliance Summary Table
 
 ---
 

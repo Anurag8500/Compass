@@ -326,7 +326,8 @@ class MapMatcher:
             # Canonical NavigationState
             t_ns = nav_state.timestamp_ns if timestamp_ns is None else timestamp_ns
             pos_enu = (float(nav_state.position_local[0]), float(nav_state.position_local[1]), float(nav_state.position_local[2]))
-            cov_2x2 = np.asarray(nav_state.covariance[0:2, 0:2], dtype=np.float64)
+            cov_arr = np.asarray(nav_state.covariance, dtype=np.float64)
+            cov_2x2 = cov_arr[0:2, 0:2]
             v_horiz = math.hypot(nav_state.velocity_local[0], nav_state.velocity_local[1])
             heading_rad = float(math.atan2(nav_state.velocity_local[0], nav_state.velocity_local[1])) % (2.0 * math.pi) if v_horiz > 1.5 else None
         elif hasattr(nav_state, "nominal"):
@@ -334,7 +335,8 @@ class MapMatcher:
             t_ns = timestamp_ns if timestamp_ns is not None else getattr(nav_state, "timestamp_ns", 0)
             nom = nav_state.nominal
             pos_enu = (float(nom.position_enu[0]), float(nom.position_enu[1]), float(nom.position_enu[2]))
-            cov_2x2 = np.asarray(nav_state.covariance[0:2, 0:2], dtype=np.float64)
+            cov_arr = np.asarray(nav_state.covariance, dtype=np.float64)
+            cov_2x2 = cov_arr[0:2, 0:2]
             v_horiz = math.hypot(nom.velocity_enu[0], nom.velocity_enu[1])
             heading_rad = float(math.atan2(nom.velocity_enu[0], nom.velocity_enu[1])) % (2.0 * math.pi) if v_horiz > 1.5 else None
         else:

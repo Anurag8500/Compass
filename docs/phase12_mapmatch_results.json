@@ -156,6 +156,8 @@
     "display_rmse_2d_m": 20.088411642622166,
     "estimator_mean_err_2d_m": 11.587172347899365,
     "display_mean_err_2d_m": 12.781561244864829,
+    "estimator_max_err_2d_m": 57.34849070723458,
+    "display_max_err_2d_m": 57.34849070723458,
     "telemetry": {
       "total_epochs": 400,
       "snapped_count": 277,
@@ -185,6 +187,8 @@
     "display_rmse_2d_m": 2.2053307071514334,
     "estimator_mean_err_2d_m": 1.0030758620939786,
     "display_mean_err_2d_m": 2.104974611487679,
+    "estimator_max_err_2d_m": 7.267842631689185,
+    "display_max_err_2d_m": 7.267842631689185,
     "telemetry": {
       "total_epochs": 300,
       "snapped_count": 291,

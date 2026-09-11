@@ -1,0 +1,1751 @@
+{
+  "reproducibility": {
+    "git_commit_hash": "a4e1b51c03ddf08735579a4ec303588cf027de8c",
+    "git_is_dirty": true,
+    "timestamp_utc": "2026-09-11T13:14:33Z",
+    "python_version": "3.13.7",
+    "platform_info": "Windows 11 (AMD64)",
+    "numpy_version": "2.5.3",
+    "random_seed": 42,
+    "config_hash": "dfd1b9e06c70b476445de1287296cacd79bc099ac7d5e7129870cd64f374a6f7",
+    "map_hash": "f7ada6db184a6713e3b33432e44fd43608902b56256fe9d477dbdaac8f8d8730",
+    "velocitynet_model_hash": null,
+    "biasnet_model_hash": null
+  },
+  "axis_a_nominal_ladder": {
+    "levels": {
+      "A1_PURE_INS": {
+        "position": {
+          "rmse_2d": 650.1568745500927,
+          "rmse_3d": 667.7214590877088,
+          "mean_error": 361.88943303186016,
+          "median_error": 102.26892693061374,
+          "p95_error": 1696.733744641428,
+          "max_error": 2170.521403277647,
+          "final_position_error": 2170.521403277647,
+          "ate": 650.1568745500927,
+          "rte": 62.20635916751806
+        },
+        "velocity": {
+          "rmse_2d": 63.59133413676992,
+          "rmse_3d": 66.04357872028073,
+          "mae_2d": 40.35903983701723,
+          "bias_2d": [
+            36.256716373896616,
+            2.8096892419403017
+          ],
+          "p95_error": 147.74301524643982
+        },
+        "heading": {
+          "rmse_deg": 13.493095771377158,
+          "mae_deg": 11.142499494448725,
+          "p95_deg": 23.594944475159746,
+          "max_deg": 28.37082992035931
+        },
+        "dead_reckoning": null,
+        "map_matching": null,
+        "recovery": null,
+        "ml_diagnostics": null
+      },
+      "A2_ESKF_GNSS": {
+        "position": {
+          "rmse_2d": 1.4149304888193805,
+          "rmse_3d": 2.0026822459947624,
+          "mean_error": 1.3875868131895759,
+          "median_error": 1.3718391759773985,
+          "p95_error": 1.888363129554646,
+          "max_error": 2.2415592172022545,
+          "final_position_error": 1.327780344534186,
+          "ate": 1.4149304888193805,
+          "rte": 0.268625222424141
+        },
+        "velocity": {
+          "rmse_2d": 0.7488611744060701,
+          "rmse_3d": 0.850504596951717,
+          "mae_2d": 0.6444589731672411,
+          "bias_2d": [
+            0.33542529592506826,
+            0.11958310766676708
+          ],
+          "p95_error": 1.366311289700514
+        },
+        "heading": {
+          "rmse_deg": 24.07692098930476,
+          "mae_deg": 18.4955964044441,
+          "p95_deg": 43.908871361841626,
+          "max_deg": 45.88564689731089
+        },
+        "dead_reckoning": null,
+        "map_matching": null,
+        "recovery": null,
+        "ml_diagnostics": null
+      },
+      "A3_VELOCITYNET": {
+        "position": {
+          "rmse_2d": 1.7460231876833063,
+          "rmse_3d": 2.228569027353282,
+          "mean_error": 1.7275671437275333,
+          "median_error": 1.7485437971928564,
+          "p95_error": 2.1143076214276384,
+          "max_error": 2.2785622324561077,
+          "final_position_error": 2.2115476502886082,
+          "ate": 1.7460231876833063,
+          "rte": 0.2683525246456258
+        },
+        "velocity": {
+          "rmse_2d": 0.7100080657598843,
+          "rmse_3d": 0.8161659988447586,
+          "mae_2d": 0.6047247728265,
+          "bias_2d": [
+            0.24314675184554338,
+            0.10991564278252397
+          ],
+          "p95_error": 1.3300756336673594
+        },
+        "heading": {
+          "rmse_deg": 23.981691166695516,
+          "mae_deg": 18.423431588225515,
+          "p95_deg": 43.76873685303324,
+          "max_deg": 45.81860249800685
+        },
+        "dead_reckoning": null,
+        "map_matching": null,
+        "recovery": null,
+        "ml_diagnostics": null
+      },
+      "A4_BIASNET": {
+        "position": {
+          "rmse_2d": 1.7010033866630947,
+          "rmse_3d": 2.205569451889756,
+          "mean_error": 1.6820278831292954,
+          "median_error": 1.704270926597157,
+          "p95_error": 2.0287015027763395,
+          "max_error": 2.2744894084547123,
+          "final_position_error": 2.0847129252055345,
+          "ate": 1.7010033866630947,
+          "rte": 0.2698839905223849
+        },
+        "velocity": {
+          "rmse_2d": 0.7207994731202364,
+          "rmse_3d": 0.8250365840595112,
+          "mae_2d": 0.6142312976835413,
+          "bias_2d": [
+            0.270437852781028,
+            0.07962602149609493
+          ],
+          "p95_error": 1.3130890477703312
+        },
+        "heading": {
+          "rmse_deg": 14.628680496465954,
+          "mae_deg": 11.671908943634316,
+          "p95_deg": 25.653849311894724,
+          "max_deg": 30.08592629473812
+        },
+        "dead_reckoning": null,
+        "map_matching": null,
+        "recovery": null,
+        "ml_diagnostics": null
+      },
+      "A5_NHC": {
+        "position": {
+          "rmse_2d": 1.5499037743428958,
+          "rmse_3d": 3.1480434421262378,
+          "mean_error": 1.511208713524203,
+          "median_error": 1.5251922656359305,
+          "p95_error": 2.1286623548491908,
+          "max_error": 2.441643107329968,
+          "final_position_error": 2.0774193669282557,
+          "ate": 1.5499037743428958,
+          "rte": 0.30431882870562177
+        },
+        "velocity": {
+          "rmse_2d": 0.7107349185978566,
+          "rmse_3d": 0.798178548575724,
+          "mae_2d": 0.6047158928083423,
+          "bias_2d": [
+            0.19494461387235404,
+            -0.02686237582565792
+          ],
+          "p95_error": 1.3833867279739682
+        },
+        "heading": {
+          "rmse_deg": 3.084776702283467,
+          "mae_deg": 2.2021705847908435,
+          "p95_deg": 7.0677278047567285,
+          "max_deg": 11.721460748501567
+        },
+        "dead_reckoning": null,
+        "map_matching": null,
+        "recovery": null,
+        "ml_diagnostics": null
+      },
+      "A6_ZUPT": {
+        "position": {
+          "rmse_2d": 1.5496224217307877,
+          "rmse_3d": 3.1478022024253587,
+          "mean_error": 1.5108880333888024,
+          "median_error": 1.5251922656359305,
+          "p95_error": 2.1286623548491908,
+          "max_error": 2.441643107329968,
+          "final_position_error": 2.077336237111241,
+          "ate": 1.5496224217307877,
+          "rte": 0.3043432920962535
+        },
+        "velocity": {
+          "rmse_2d": 0.7106736708750722,
+          "rmse_3d": 0.798115446583656,
+          "mae_2d": 0.6046444744030157,
+          "bias_2d": [
+            0.1950796013680812,
+            -0.026714287840569964
+          ],
+          "p95_error": 1.3833867279739682
+        },
+        "heading": {
+          "rmse_deg": 3.0843472262439664,
+          "mae_deg": 2.2016416795701668,
+          "p95_deg": 7.0677278047567285,
+          "max_deg": 11.721460748501567
+        },
+        "dead_reckoning": null,
+        "map_matching": null,
+        "recovery": null,
+        "ml_diagnostics": null
+      },
+      "A7_MAPMATCH": {
+        "position": {
+          "rmse_2d": 1.5496224217307877,
+          "rmse_3d": 3.1478022024253587,
+          "mean_error": 1.5108880333888024,
+          "median_error": 1.5251922656359305,
+          "p95_error": 2.1286623548491908,
+          "max_error": 2.441643107329968,
+          "final_position_error": 2.077336237111241,
+          "ate": 1.5496224217307877,
+          "rte": 0.3043432920962535
+        },
+        "velocity": {
+          "rmse_2d": 0.7106736708750722,
+          "rmse_3d": 0.798115446583656,
+          "mae_2d": 0.6046444744030157,
+          "bias_2d": [
+            0.1950796013680812,
+            -0.026714287840569964
+          ],
+          "p95_error": 1.3833867279739682
+        },
+        "heading": {
+          "rmse_deg": 3.0843472262439664,
+          "mae_deg": 2.2016416795701668,
+          "p95_deg": 7.0677278047567285,
+          "max_deg": 11.721460748501567
+        },
+        "dead_reckoning": null,
+        "map_matching": {
+          "total_epochs": 600,
+          "snapped_count": 591,
+          "fallback_count": 9,
+          "snap_rate_pct": 98.5,
+          "fallback_rate_pct": 1.5,
+          "fallback_reasons": {
+            "AMBIGUOUS_PARALLEL_ROADS": 9
+          },
+          "median_snap_dist_m": 1.3371926060368786,
+          "p95_snap_dist_m": 2.575113945115571,
+          "max_snap_dist_m": 2.83785018151803,
+          "cross_track_rmse_m": 1.2639550393874948,
+          "along_track_rmse_m": 1.3029665272465585
+        },
+        "recovery": null,
+        "ml_diagnostics": null
+      }
+    },
+    "incremental_contributions": {
+      "A2_ESKF_GNSS_vs_A1_PURE_INS": {
+        "rmse_improvement_m": 648.7419440612732,
+        "drift_reduction_m": 0.0,
+        "drift_pct_reduction": 0.0
+      },
+      "A3_VELOCITYNET_vs_A2_ESKF_GNSS": {
+        "rmse_improvement_m": -0.3310926988639258,
+        "drift_reduction_m": 0.0,
+        "drift_pct_reduction": 0.0
+      },
+      "A4_BIASNET_vs_A3_VELOCITYNET": {
+        "rmse_improvement_m": 0.045019801020211636,
+        "drift_reduction_m": 0.0,
+        "drift_pct_reduction": 0.0
+      },
+      "A5_NHC_vs_A4_BIASNET": {
+        "rmse_improvement_m": 0.15109961232019886,
+        "drift_reduction_m": 0.0,
+        "drift_pct_reduction": 0.0
+      },
+      "A6_ZUPT_vs_A5_NHC": {
+        "rmse_improvement_m": 0.00028135261210815443,
+        "drift_reduction_m": 0.0,
+        "drift_pct_reduction": 0.0
+      },
+      "A7_MAPMATCH_vs_A6_ZUPT": {
+        "rmse_improvement_m": 0.0,
+        "drift_reduction_m": 0.0,
+        "drift_pct_reduction": 0.0
+      }
+    }
+  },
+  "dedicated_dr_ladder": {
+    "levels": {
+      "DR_A2_COASTING": {
+        "position": {
+          "rmse_2d": 4089.7558827230687,
+          "rmse_3d": 4396.965820136968,
+          "mean_error": 2538.4066782084383,
+          "median_error": 900.5534905173388,
+          "p95_error": 9601.524497487113,
+          "max_error": 11318.422484240722,
+          "final_position_error": 11318.422484240722,
+          "ate": 4089.7558827230687,
+          "rte": 198.57085226215506
+        },
+        "velocity": {
+          "rmse_2d": 200.50532622894696,
+          "rmse_3d": 226.69604273084906,
+          "mae_2d": 141.92052325939224,
+          "bias_2d": [
+            133.68576454087162,
+            47.21625660965537
+          ],
+          "p95_error": 410.21111523015014
+        },
+        "heading": {
+          "rmse_deg": 14.185214294197703,
+          "mae_deg": 10.094314112397075,
+          "p95_deg": 29.46924813538837,
+          "max_deg": 60.5706911561544
+        },
+        "dead_reckoning": {
+          "outage_start_s": 9.999,
+          "outage_end_s": 69.99900000000001,
+          "duration_s": 60.00000000000001,
+          "distance_travelled_m": 839.5426078824773,
+          "final_outage_drift_m": 7352.225098804274,
+          "max_outage_drift_m": 7352.225098804274,
+          "drift_percentage": 875.741746729008,
+          "max_drift_percentage": 875.741746729008,
+          "drift_rate_mps": 122.53708498007123,
+          "sih_10pct_passed": false
+        },
+        "map_matching": null,
+        "recovery": null,
+        "ml_diagnostics": null
+      },
+      "DR_A3_VELOCITYNET": {
+        "position": {
+          "rmse_2d": 215.99660419262233,
+          "rmse_3d": 263.2825643849358,
+          "mean_error": 157.6404903659317,
+          "median_error": 129.52959650957774,
+          "p95_error": 368.8114761570551,
+          "max_error": 756.2388961335815,
+          "final_position_error": 367.8471362627652,
+          "ate": 215.99660419262233,
+          "rte": 75.72180480298694
+        },
+        "velocity": {
+          "rmse_2d": 10.556523345788776,
+          "rmse_3d": 11.430237191807278,
+          "mae_2d": 8.605768410380458,
+          "bias_2d": [
+            -2.247926801052557,
+            4.190933221999794
+          ],
+          "p95_error": 20.73105273335438
+        },
+        "heading": {
+          "rmse_deg": 26.50052717928782,
+          "mae_deg": 21.68647693680919,
+          "p95_deg": 45.03534002601641,
+          "max_deg": 50.729700320042156
+        },
+        "dead_reckoning": {
+          "outage_start_s": 9.999,
+          "outage_end_s": 69.99900000000001,
+          "duration_s": 60.00000000000001,
+          "distance_travelled_m": 839.5426078824773,
+          "final_outage_drift_m": 434.6636125902681,
+          "max_outage_drift_m": 434.6636125902681,
+          "drift_percentage": 51.77385977902793,
+          "max_drift_percentage": 51.77385977902793,
+          "drift_rate_mps": 7.244393543171134,
+          "sih_10pct_passed": false
+        },
+        "map_matching": null,
+        "recovery": null,
+        "ml_diagnostics": null
+      },
+      "DR_A4_BIASNET": {
+        "position": {
+          "rmse_2d": 276.974295544874,
+          "rmse_3d": 302.3540721909739,
+          "mean_error": 196.35365234238395,
+          "median_error": 106.31163309917841,
+          "p95_error": 576.6343108854331,
+          "max_error": 783.5223857032498,
+          "final_position_error": 783.5223857032498,
+          "ate": 276.974295544874,
+          "rte": 76.89026105663795
+        },
+        "velocity": {
+          "rmse_2d": 21.769721363687523,
+          "rmse_3d": 21.947078299472643,
+          "mae_2d": 16.791497227865406,
+          "bias_2d": [
+            0.424740705614957,
+            16.543634445580164
+          ],
+          "p95_error": 39.45298037658522
+        },
+        "heading": {
+          "rmse_deg": 14.232935998456906,
+          "mae_deg": 12.176525271459916,
+          "p95_deg": 21.69880240014235,
+          "max_deg": 25.662049070233536
+        },
+        "dead_reckoning": {
+          "outage_start_s": 9.999,
+          "outage_end_s": 69.99900000000001,
+          "duration_s": 60.00000000000001,
+          "distance_travelled_m": 839.5426078824773,
+          "final_outage_drift_m": 585.4720399831742,
+          "max_outage_drift_m": 585.4720399831742,
+          "drift_percentage": 69.73702519516806,
+          "max_drift_percentage": 69.73702519516806,
+          "drift_rate_mps": 9.757867333052902,
+          "sih_10pct_passed": false
+        },
+        "map_matching": null,
+        "recovery": null,
+        "ml_diagnostics": null
+      },
+      "DR_A5_NHC": {
+        "position": {
+          "rmse_2d": 110.67342328594071,
+          "rmse_3d": 111.41684094204389,
+          "mean_error": 87.16373742139811,
+          "median_error": 85.47481103219175,
+          "p95_error": 198.79197254906703,
+          "max_error": 206.58982088563405,
+          "final_position_error": 206.256793423339,
+          "ate": 110.67342328594071,
+          "rte": 9.528598201162263
+        },
+        "velocity": {
+          "rmse_2d": 4.080397383209343,
+          "rmse_3d": 4.145547594704558,
+          "mae_2d": 3.410220897601806,
+          "bias_2d": [
+            -1.8994259980470087,
+            0.3099917168555274
+          ],
+          "p95_error": 6.653052094577682
+        },
+        "heading": {
+          "rmse_deg": 10.229060144574982,
+          "mae_deg": 7.205375082902217,
+          "p95_deg": 24.14585650963627,
+          "max_deg": 29.349847378237655
+        },
+        "dead_reckoning": {
+          "outage_start_s": 9.999,
+          "outage_end_s": 69.99900000000001,
+          "duration_s": 60.00000000000001,
+          "distance_travelled_m": 839.5426078824773,
+          "final_outage_drift_m": 174.334456426211,
+          "max_outage_drift_m": 175.24144505378808,
+          "drift_percentage": 20.76540902026679,
+          "max_drift_percentage": 20.873442682770797,
+          "drift_rate_mps": 2.905574273770183,
+          "sih_10pct_passed": false
+        },
+        "map_matching": null,
+        "recovery": null,
+        "ml_diagnostics": null
+      },
+      "DR_A6_ZUPT": {
+        "position": {
+          "rmse_2d": 110.67342328594071,
+          "rmse_3d": 111.41684094204389,
+          "mean_error": 87.16373742139811,
+          "median_error": 85.47481103219175,
+          "p95_error": 198.79197254906703,
+          "max_error": 206.58982088563405,
+          "final_position_error": 206.256793423339,
+          "ate": 110.67342328594071,
+          "rte": 9.528598201162263
+        },
+        "velocity": {
+          "rmse_2d": 4.080397383209343,
+          "rmse_3d": 4.145547594704558,
+          "mae_2d": 3.410220897601806,
+          "bias_2d": [
+            -1.8994259980470087,
+            0.3099917168555274
+          ],
+          "p95_error": 6.653052094577682
+        },
+        "heading": {
+          "rmse_deg": 10.229060144574982,
+          "mae_deg": 7.205375082902217,
+          "p95_deg": 24.14585650963627,
+          "max_deg": 29.349847378237655
+        },
+        "dead_reckoning": {
+          "outage_start_s": 9.999,
+          "outage_end_s": 69.99900000000001,
+          "duration_s": 60.00000000000001,
+          "distance_travelled_m": 839.5426078824773,
+          "final_outage_drift_m": 174.334456426211,
+          "max_outage_drift_m": 175.24144505378808,
+          "drift_percentage": 20.76540902026679,
+          "max_drift_percentage": 20.873442682770797,
+          "drift_rate_mps": 2.905574273770183,
+          "sih_10pct_passed": false
+        },
+        "map_matching": null,
+        "recovery": null,
+        "ml_diagnostics": null
+      },
+      "DR_A7_MAPMATCH": {
+        "position": {
+          "rmse_2d": 110.67342328594071,
+          "rmse_3d": 111.41684094204389,
+          "mean_error": 87.16373742139811,
+          "median_error": 85.47481103219175,
+          "p95_error": 198.79197254906703,
+          "max_error": 206.58982088563405,
+          "final_position_error": 206.256793423339,
+          "ate": 110.67342328594071,
+          "rte": 9.528598201162263
+        },
+        "velocity": {
+          "rmse_2d": 4.080397383209343,
+          "rmse_3d": 4.145547594704558,
+          "mae_2d": 3.410220897601806,
+          "bias_2d": [
+            -1.8994259980470087,
+            0.3099917168555274
+          ],
+          "p95_error": 6.653052094577682
+        },
+        "heading": {
+          "rmse_deg": 10.229060144574982,
+          "mae_deg": 7.205375082902217,
+          "p95_deg": 24.14585650963627,
+          "max_deg": 29.349847378237655
+        },
+        "dead_reckoning": {
+          "outage_start_s": 9.999,
+          "outage_end_s": 69.99900000000001,
+          "duration_s": 60.00000000000001,
+          "distance_travelled_m": 839.5426078824773,
+          "final_outage_drift_m": 174.334456426211,
+          "max_outage_drift_m": 175.24144505378808,
+          "drift_percentage": 20.76540902026679,
+          "max_drift_percentage": 20.873442682770797,
+          "drift_rate_mps": 2.905574273770183,
+          "sih_10pct_passed": false
+        },
+        "map_matching": {
+          "total_epochs": 800,
+          "snapped_count": 228,
+          "fallback_count": 572,
+          "snap_rate_pct": 28.499999999999996,
+          "fallback_rate_pct": 71.5,
+          "fallback_reasons": {
+            "AMBIGUOUS_PARALLEL_ROADS": 34,
+            "LOW_CONFIDENCE": 61,
+            "LARGE_DISPLACEMENT": 91,
+            "NO_CANDIDATES": 170,
+            "DISCONNECTED_TRANSITION": 216
+          },
+          "median_snap_dist_m": 2.4212365751314873,
+          "p95_snap_dist_m": 4.343270995727356,
+          "max_snap_dist_m": 7.392314923032748,
+          "cross_track_rmse_m": 20.37716575316672,
+          "along_track_rmse_m": 108.80539337084016
+        },
+        "recovery": null,
+        "ml_diagnostics": null
+      }
+    },
+    "incremental_contributions": {
+      "DR_A3_VELOCITYNET_vs_DR_A2_COASTING": {
+        "rmse_improvement_m": 3873.7592785304464,
+        "drift_reduction_m": 6917.561486214006,
+        "drift_pct_reduction": 823.9678869499801
+      },
+      "DR_A4_BIASNET_vs_DR_A3_VELOCITYNET": {
+        "rmse_improvement_m": -60.97769135225167,
+        "drift_reduction_m": -150.80842739290614,
+        "drift_pct_reduction": -17.96316541614013
+      },
+      "DR_A5_NHC_vs_DR_A4_BIASNET": {
+        "rmse_improvement_m": 166.30087225893328,
+        "drift_reduction_m": 411.13758355696325,
+        "drift_pct_reduction": 48.97161617490127
+      },
+      "DR_A6_ZUPT_vs_DR_A5_NHC": {
+        "rmse_improvement_m": 0.0,
+        "drift_reduction_m": 0.0,
+        "drift_pct_reduction": 0.0
+      },
+      "DR_A7_MAPMATCH_vs_DR_A6_ZUPT": {
+        "rmse_improvement_m": 0.0,
+        "drift_reduction_m": 0.0,
+        "drift_pct_reduction": 0.0
+      }
+    }
+  },
+  "axis_b_operating_conditions": {
+    "B1_CONTINUOUS_GNSS": {
+      "position": {
+        "rmse_2d": 1.5496224217307877,
+        "rmse_3d": 3.1478022024253587,
+        "mean_error": 1.5108880333888024,
+        "median_error": 1.5251922656359305,
+        "p95_error": 2.1286623548491908,
+        "max_error": 2.441643107329968,
+        "final_position_error": 2.077336237111241,
+        "ate": 1.5496224217307877,
+        "rte": 0.3043432920962535
+      },
+      "velocity": {
+        "rmse_2d": 0.7106736708750722,
+        "rmse_3d": 0.798115446583656,
+        "mae_2d": 0.6046444744030157,
+        "bias_2d": [
+          0.1950796013680812,
+          -0.026714287840569964
+        ],
+        "p95_error": 1.3833867279739682
+      },
+      "heading": {
+        "rmse_deg": 3.0843472262439664,
+        "mae_deg": 2.2016416795701668,
+        "p95_deg": 7.0677278047567285,
+        "max_deg": 11.721460748501567
+      },
+      "dead_reckoning": null,
+      "map_matching": {
+        "total_epochs": 600,
+        "snapped_count": 591,
+        "fallback_count": 9,
+        "snap_rate_pct": 98.5,
+        "fallback_rate_pct": 1.5,
+        "fallback_reasons": {
+          "AMBIGUOUS_PARALLEL_ROADS": 9
+        },
+        "median_snap_dist_m": 1.3371926060368786,
+        "p95_snap_dist_m": 2.575113945115571,
+        "max_snap_dist_m": 2.83785018151803,
+        "cross_track_rmse_m": 1.2639550393874948,
+        "along_track_rmse_m": 1.3029665272465585
+      },
+      "recovery": null,
+      "ml_diagnostics": null
+    },
+    "B2_OUTAGE_10S": {
+      "position": {
+        "rmse_2d": 3.561744966805527,
+        "rmse_3d": 4.2665614322703425,
+        "mean_error": 2.811144311199264,
+        "median_error": 1.9323940942919697,
+        "p95_error": 8.08588443857251,
+        "max_error": 9.960281700871839,
+        "final_position_error": 1.510617524855502,
+        "ate": 3.561744966805527,
+        "rte": 1.7172090306432444
+      },
+      "velocity": {
+        "rmse_2d": 0.9804176567113474,
+        "rmse_3d": 1.1280603274746062,
+        "mae_2d": 0.8365453206851172,
+        "bias_2d": [
+          0.3790137370950178,
+          -0.03390431432160117
+        ],
+        "p95_error": 1.8837901051714185
+      },
+      "heading": {
+        "rmse_deg": 3.9759866263049473,
+        "mae_deg": 2.966063766190128,
+        "p95_deg": 9.694606912028545,
+        "max_deg": 11.912135785790884
+      },
+      "dead_reckoning": {
+        "outage_start_s": 9.999,
+        "outage_end_s": 19.999000000000002,
+        "duration_s": 10.000000000000002,
+        "distance_travelled_m": 142.21417803354194,
+        "final_outage_drift_m": 7.151950742393724,
+        "max_outage_drift_m": 8.297359521864813,
+        "drift_percentage": 5.028999809503452,
+        "max_drift_percentage": 5.834410912186152,
+        "drift_rate_mps": 0.7151950742393722,
+        "sih_10pct_passed": true
+      },
+      "map_matching": {
+        "total_epochs": 300,
+        "snapped_count": 287,
+        "fallback_count": 13,
+        "snap_rate_pct": 95.66666666666667,
+        "fallback_rate_pct": 4.333333333333334,
+        "fallback_reasons": {
+          "AMBIGUOUS_PARALLEL_ROADS": 13
+        },
+        "median_snap_dist_m": 1.966422253059768,
+        "p95_snap_dist_m": 3.762057871846433,
+        "max_snap_dist_m": 6.86500402912795,
+        "cross_track_rmse_m": 0.9176850403909326,
+        "along_track_rmse_m": 3.070833017223239
+      },
+      "recovery": null,
+      "ml_diagnostics": null
+    },
+    "B3_OUTAGE_30S": {
+      "position": {
+        "rmse_2d": 56.104403267735115,
+        "rmse_3d": 56.73648087687136,
+        "mean_error": 41.30564877324266,
+        "median_error": 33.84130732676539,
+        "p95_error": 101.47036520936092,
+        "max_error": 113.24697299400775,
+        "final_position_error": 113.24697299400775,
+        "ate": 56.104403267735115,
+        "rte": 4.3702108554443555
+      },
+      "velocity": {
+        "rmse_2d": 3.296398541316654,
+        "rmse_3d": 3.370563062633137,
+        "mae_2d": 2.525925814416947,
+        "bias_2d": [
+          -0.39977413722554966,
+          -0.24128050327213946
+        ],
+        "p95_error": 6.769663196312432
+      },
+      "heading": {
+        "rmse_deg": 11.977781638148212,
+        "mae_deg": 8.977143891093979,
+        "p95_deg": 25.120801443165544,
+        "max_deg": 29.349847378237655
+      },
+      "dead_reckoning": {
+        "outage_start_s": 9.999,
+        "outage_end_s": 40.0,
+        "duration_s": 30.000999999999998,
+        "distance_travelled_m": 426.587189838188,
+        "final_outage_drift_m": 86.18972589404797,
+        "max_outage_drift_m": 86.18972589404797,
+        "drift_percentage": 20.20448057212905,
+        "max_drift_percentage": 20.20448057212905,
+        "drift_rate_mps": 2.8728950999649334,
+        "sih_10pct_passed": false
+      },
+      "map_matching": {
+        "total_epochs": 500,
+        "snapped_count": 228,
+        "fallback_count": 272,
+        "snap_rate_pct": 45.6,
+        "fallback_rate_pct": 54.400000000000006,
+        "fallback_reasons": {
+          "AMBIGUOUS_PARALLEL_ROADS": 18,
+          "LOW_CONFIDENCE": 58,
+          "LARGE_DISPLACEMENT": 60,
+          "NO_CANDIDATES": 110,
+          "DISCONNECTED_TRANSITION": 26
+        },
+        "median_snap_dist_m": 2.4212365751314873,
+        "p95_snap_dist_m": 4.343270995727356,
+        "max_snap_dist_m": 7.392314923032748,
+        "cross_track_rmse_m": 20.369440496606018,
+        "along_track_rmse_m": 52.35615897009577
+      },
+      "recovery": null,
+      "ml_diagnostics": null
+    },
+    "B4_OUTAGE_60S": {
+      "position": {
+        "rmse_2d": 110.67342328594071,
+        "rmse_3d": 111.41684094204389,
+        "mean_error": 87.16373742139811,
+        "median_error": 85.47481103219175,
+        "p95_error": 198.79197254906703,
+        "max_error": 206.58982088563405,
+        "final_position_error": 206.256793423339,
+        "ate": 110.67342328594071,
+        "rte": 9.528598201162263
+      },
+      "velocity": {
+        "rmse_2d": 4.080397383209343,
+        "rmse_3d": 4.145547594704558,
+        "mae_2d": 3.410220897601806,
+        "bias_2d": [
+          -1.8994259980470087,
+          0.3099917168555274
+        ],
+        "p95_error": 6.653052094577682
+      },
+      "heading": {
+        "rmse_deg": 10.229060144574982,
+        "mae_deg": 7.205375082902217,
+        "p95_deg": 24.14585650963627,
+        "max_deg": 29.349847378237655
+      },
+      "dead_reckoning": {
+        "outage_start_s": 9.999,
+        "outage_end_s": 69.99900000000001,
+        "duration_s": 60.00000000000001,
+        "distance_travelled_m": 839.5426078824773,
+        "final_outage_drift_m": 174.334456426211,
+        "max_outage_drift_m": 175.24144505378808,
+        "drift_percentage": 20.76540902026679,
+        "max_drift_percentage": 20.873442682770797,
+        "drift_rate_mps": 2.905574273770183,
+        "sih_10pct_passed": false
+      },
+      "map_matching": {
+        "total_epochs": 800,
+        "snapped_count": 228,
+        "fallback_count": 572,
+        "snap_rate_pct": 28.499999999999996,
+        "fallback_rate_pct": 71.5,
+        "fallback_reasons": {
+          "AMBIGUOUS_PARALLEL_ROADS": 34,
+          "LOW_CONFIDENCE": 61,
+          "LARGE_DISPLACEMENT": 91,
+          "NO_CANDIDATES": 170,
+          "DISCONNECTED_TRANSITION": 216
+        },
+        "median_snap_dist_m": 2.4212365751314873,
+        "p95_snap_dist_m": 4.343270995727356,
+        "max_snap_dist_m": 7.392314923032748,
+        "cross_track_rmse_m": 20.37716575316672,
+        "along_track_rmse_m": 108.80539337084016
+      },
+      "recovery": null,
+      "ml_diagnostics": null
+    },
+    "B5_OUTAGE_120S": {
+      "position": {
+        "rmse_2d": 1426.7842033216064,
+        "rmse_3d": 1987.52845502939,
+        "mean_error": 628.7513465146458,
+        "median_error": 169.15609564967883,
+        "p95_error": 4066.4579369119983,
+        "max_error": 6313.922925905539,
+        "final_position_error": 6313.922925905539,
+        "ate": 1426.7842033216064,
+        "rte": 104.94755763609255
+      },
+      "velocity": {
+        "rmse_2d": 106.36467208720144,
+        "rmse_3d": 142.02818162726518,
+        "mae_2d": 50.668572456568526,
+        "bias_2d": [
+          44.310169801163035,
+          -10.417739719489765
+        ],
+        "p95_error": 287.49991812780416
+      },
+      "heading": {
+        "rmse_deg": 17.043804283699426,
+        "mae_deg": 11.79839961528932,
+        "p95_deg": 31.503915623786224,
+        "max_deg": 72.68245758674678
+      },
+      "dead_reckoning": {
+        "outage_start_s": 9.999,
+        "outage_end_s": 129.999,
+        "duration_s": 120.0,
+        "distance_travelled_m": 1496.2374235109705,
+        "final_outage_drift_m": 3272.1163543945236,
+        "max_outage_drift_m": 3272.1163543945236,
+        "drift_percentage": 218.68964797821957,
+        "max_drift_percentage": 218.68964797821957,
+        "drift_rate_mps": 27.26763628662103,
+        "sih_10pct_passed": false
+      },
+      "map_matching": {
+        "total_epochs": 1400,
+        "snapped_count": 234,
+        "fallback_count": 1166,
+        "snap_rate_pct": 16.714285714285715,
+        "fallback_rate_pct": 83.28571428571429,
+        "fallback_reasons": {
+          "AMBIGUOUS_PARALLEL_ROADS": 46,
+          "LOW_CONFIDENCE": 89,
+          "LARGE_DISPLACEMENT": 125,
+          "NO_CANDIDATES": 502,
+          "DISCONNECTED_TRANSITION": 404
+        },
+        "median_snap_dist_m": 2.426675029365019,
+        "p95_snap_dist_m": 4.734335255363082,
+        "max_snap_dist_m": 7.392314923032748,
+        "cross_track_rmse_m": 406.2917651420969,
+        "along_track_rmse_m": 1367.7135135466217
+      },
+      "recovery": null,
+      "ml_diagnostics": null
+    },
+    "B6_OUTAGE_300S": {
+      "position": {
+        "rmse_2d": 20896.384911395,
+        "rmse_3d": 43888.42667671236,
+        "mean_error": 14992.945645714959,
+        "median_error": 15199.564414962806,
+        "p95_error": 39566.52749150351,
+        "max_error": 44221.20016466688,
+        "final_position_error": 16324.517054222604,
+        "ate": 20896.384911395,
+        "rte": 955.4872298573383
+      },
+      "velocity": {
+        "rmse_2d": 331.4872893435559,
+        "rmse_3d": 776.0222030161499,
+        "mae_2d": 239.49706135574482,
+        "bias_2d": [
+          80.86263048176447,
+          39.382920768597096
+        ],
+        "p95_error": 652.4727487881215
+      },
+      "heading": {
+        "rmse_deg": 77.99819371992925,
+        "mae_deg": 53.26704766791916,
+        "p95_deg": 170.06863601050102,
+        "max_deg": 179.9738744429817
+      },
+      "dead_reckoning": {
+        "outage_start_s": 9.999,
+        "outage_end_s": 310.0,
+        "duration_s": 300.001,
+        "distance_travelled_m": 3155.7195975106115,
+        "final_outage_drift_m": 16501.831142818108,
+        "max_outage_drift_m": 44221.20016466688,
+        "drift_percentage": 522.9181691502494,
+        "max_drift_percentage": 1401.303214631324,
+        "drift_rate_mps": 55.00592045632551,
+        "sih_10pct_passed": false
+      },
+      "map_matching": {
+        "total_epochs": 3200,
+        "snapped_count": 234,
+        "fallback_count": 2966,
+        "snap_rate_pct": 7.3125,
+        "fallback_rate_pct": 92.6875,
+        "fallback_reasons": {
+          "AMBIGUOUS_PARALLEL_ROADS": 46,
+          "LOW_CONFIDENCE": 89,
+          "LARGE_DISPLACEMENT": 125,
+          "NO_CANDIDATES": 2302,
+          "DISCONNECTED_TRANSITION": 404
+        },
+        "median_snap_dist_m": 2.426675029365019,
+        "p95_snap_dist_m": 4.734335255363082,
+        "max_snap_dist_m": 7.392314923032748,
+        "cross_track_rmse_m": 6401.981263280817,
+        "along_track_rmse_m": 19891.544392265387
+      },
+      "recovery": null,
+      "ml_diagnostics": null
+    },
+    "B7_SHARP_TURN": {
+      "position": {
+        "rmse_2d": 19.987859497105987,
+        "rmse_3d": 20.199585818433864,
+        "mean_error": 11.587172347899365,
+        "median_error": 1.9620638756654178,
+        "p95_error": 47.85159748890981,
+        "max_error": 57.34849070723458,
+        "final_position_error": 57.34849070723458,
+        "ate": 19.987859497105987,
+        "rte": 3.152134596437833
+      },
+      "velocity": {
+        "rmse_2d": 3.792925619418626,
+        "rmse_3d": 3.853751211399623,
+        "mae_2d": 2.7139663880656464,
+        "bias_2d": [
+          -0.773915317709308,
+          -1.4029655870171966
+        ],
+        "p95_error": 8.201025600720385
+      },
+      "heading": {
+        "rmse_deg": 11.697553253130977,
+        "mae_deg": 8.860013121108508,
+        "p95_deg": 19.796636750517795,
+        "max_deg": 21.946659867458
+      },
+      "dead_reckoning": null,
+      "map_matching": {
+        "total_epochs": 400,
+        "snapped_count": 277,
+        "fallback_count": 123,
+        "snap_rate_pct": 69.25,
+        "fallback_rate_pct": 30.75,
+        "fallback_reasons": {
+          "LOW_CONFIDENCE": 48,
+          "AMBIGUOUS_PARALLEL_ROADS": 3,
+          "LARGE_DISPLACEMENT": 29,
+          "NO_CANDIDATES": 43
+        },
+        "median_snap_dist_m": 2.9310826107592964,
+        "p95_snap_dist_m": 4.375875945365065,
+        "max_snap_dist_m": 7.449946976253144,
+        "cross_track_rmse_m": 18.08330996869817,
+        "along_track_rmse_m": 8.748610341043833
+      },
+      "recovery": null,
+      "ml_diagnostics": null
+    },
+    "B8_STOP_AND_GO": {
+      "position": {
+        "rmse_2d": 1.374853690596947,
+        "rmse_3d": 1.5478217967589512,
+        "mean_error": 1.0030758620939786,
+        "median_error": 0.7525939422449923,
+        "p95_error": 2.6981566968456048,
+        "max_error": 7.267842631689185,
+        "final_position_error": 7.267842631689185,
+        "ate": 1.374853690596947,
+        "rte": 0.9321517556912654
+      },
+      "velocity": {
+        "rmse_2d": 1.2299635213050844,
+        "rmse_3d": 1.2409992270729264,
+        "mae_2d": 0.5794109020467746,
+        "bias_2d": [
+          0.20106201488926354,
+          0.12147580242027274
+        ],
+        "p95_error": 2.6640213727906747
+      },
+      "heading": {
+        "rmse_deg": 4.489931109542884,
+        "mae_deg": 1.7087835582258584,
+        "p95_deg": 14.967581991888636,
+        "max_deg": 20.511373871570864
+      },
+      "dead_reckoning": null,
+      "map_matching": {
+        "total_epochs": 300,
+        "snapped_count": 291,
+        "fallback_count": 9,
+        "snap_rate_pct": 97.0,
+        "fallback_rate_pct": 3.0,
+        "fallback_reasons": {
+          "AMBIGUOUS_PARALLEL_ROADS": 8,
+          "LOW_CONFIDENCE": 1
+        },
+        "median_snap_dist_m": 1.5140854486559014,
+        "p95_snap_dist_m": 2.3117325040011125,
+        "max_snap_dist_m": 5.44778934189822,
+        "cross_track_rmse_m": 1.857802819329218,
+        "along_track_rmse_m": 1.1882980318074459
+      },
+      "recovery": null,
+      "ml_diagnostics": null
+    },
+    "B9_PARALLEL_ROADS": {
+      "position": {
+        "rmse_2d": 1.5496224217307877,
+        "rmse_3d": 3.1478022024253587,
+        "mean_error": 1.5108880333888024,
+        "median_error": 1.5251922656359305,
+        "p95_error": 2.1286623548491908,
+        "max_error": 2.441643107329968,
+        "final_position_error": 2.077336237111241,
+        "ate": 1.5496224217307877,
+        "rte": 0.3043432920962535
+      },
+      "velocity": {
+        "rmse_2d": 0.7106736708750722,
+        "rmse_3d": 0.798115446583656,
+        "mae_2d": 0.6046444744030157,
+        "bias_2d": [
+          0.1950796013680812,
+          -0.026714287840569964
+        ],
+        "p95_error": 1.3833867279739682
+      },
+      "heading": {
+        "rmse_deg": 3.0843472262439664,
+        "mae_deg": 2.2016416795701668,
+        "p95_deg": 7.0677278047567285,
+        "max_deg": 11.721460748501567
+      },
+      "dead_reckoning": null,
+      "map_matching": {
+        "total_epochs": 600,
+        "snapped_count": 591,
+        "fallback_count": 9,
+        "snap_rate_pct": 98.5,
+        "fallback_rate_pct": 1.5,
+        "fallback_reasons": {
+          "AMBIGUOUS_PARALLEL_ROADS": 9
+        },
+        "median_snap_dist_m": 1.3371926060368786,
+        "p95_snap_dist_m": 2.575113945115571,
+        "max_snap_dist_m": 2.83785018151803,
+        "cross_track_rmse_m": 1.2639550393874948,
+        "along_track_rmse_m": 1.3029665272465585
+      },
+      "recovery": null,
+      "ml_diagnostics": null
+    },
+    "B10_ZERO_COVERAGE": {
+      "position": {
+        "rmse_2d": 1.949185882418246,
+        "rmse_3d": 2.114224769336517,
+        "mean_error": 1.9167174582986986,
+        "median_error": 2.0982210877285175,
+        "p95_error": 2.3037572743153194,
+        "max_error": 2.441643107329968,
+        "final_position_error": 2.1303470674061282,
+        "ate": 1.949185882418246,
+        "rte": 0.3749444877338722
+      },
+      "velocity": {
+        "rmse_2d": 0.6013481561748126,
+        "rmse_3d": 0.6521664188225323,
+        "mae_2d": 0.532764048108357,
+        "bias_2d": [
+          -0.06843961351749002,
+          0.44950461425602944
+        ],
+        "p95_error": 0.9924613225990935
+      },
+      "heading": {
+        "rmse_deg": 2.789974260923519,
+        "mae_deg": 2.3553314281911386,
+        "p95_deg": 4.370245454096237,
+        "max_deg": 6.078364394739224
+      },
+      "dead_reckoning": null,
+      "map_matching": {
+        "total_epochs": 50,
+        "snapped_count": 50,
+        "fallback_count": 0,
+        "snap_rate_pct": 100.0,
+        "fallback_rate_pct": 0.0,
+        "fallback_reasons": {},
+        "median_snap_dist_m": 2.023002948366912,
+        "p95_snap_dist_m": 2.5304743480182728,
+        "max_snap_dist_m": 2.6018392602325116,
+        "cross_track_rmse_m": 0.6193415654900314,
+        "along_track_rmse_m": 1.7745160465243939
+      },
+      "recovery": null,
+      "ml_diagnostics": null
+    },
+    "B11_RECOVERY": {
+      "position": {
+        "rmse_2d": 110.67342328594071,
+        "rmse_3d": 111.41684094204389,
+        "mean_error": 87.16373742139811,
+        "median_error": 85.47481103219175,
+        "p95_error": 198.79197254906703,
+        "max_error": 206.58982088563405,
+        "final_position_error": 206.256793423339,
+        "ate": 110.67342328594071,
+        "rte": 9.528598201162263
+      },
+      "velocity": {
+        "rmse_2d": 4.080397383209343,
+        "rmse_3d": 4.145547594704558,
+        "mae_2d": 3.410220897601806,
+        "bias_2d": [
+          -1.8994259980470087,
+          0.3099917168555274
+        ],
+        "p95_error": 6.653052094577682
+      },
+      "heading": {
+        "rmse_deg": 10.229060144574982,
+        "mae_deg": 7.205375082902217,
+        "p95_deg": 24.14585650963627,
+        "max_deg": 29.349847378237655
+      },
+      "dead_reckoning": {
+        "outage_start_s": 9.999,
+        "outage_end_s": 69.99900000000001,
+        "duration_s": 60.00000000000001,
+        "distance_travelled_m": 839.5426078824773,
+        "final_outage_drift_m": 174.334456426211,
+        "max_outage_drift_m": 175.24144505378808,
+        "drift_percentage": 20.76540902026679,
+        "max_drift_percentage": 20.873442682770797,
+        "drift_rate_mps": 2.905574273770183,
+        "sih_10pct_passed": false
+      },
+      "map_matching": {
+        "total_epochs": 800,
+        "snapped_count": 228,
+        "fallback_count": 572,
+        "snap_rate_pct": 28.499999999999996,
+        "fallback_rate_pct": 71.5,
+        "fallback_reasons": {
+          "AMBIGUOUS_PARALLEL_ROADS": 34,
+          "LOW_CONFIDENCE": 61,
+          "LARGE_DISPLACEMENT": 91,
+          "NO_CANDIDATES": 170,
+          "DISCONNECTED_TRANSITION": 216
+        },
+        "median_snap_dist_m": 2.4212365751314873,
+        "p95_snap_dist_m": 4.343270995727356,
+        "max_snap_dist_m": 7.392314923032748,
+        "cross_track_rmse_m": 20.37716575316672,
+        "along_track_rmse_m": 108.80539337084016
+      },
+      "recovery": null,
+      "ml_diagnostics": null
+    },
+    "B12_REAL_OUTAGE": {
+      "position": {
+        "rmse_2d": 1333.2049613216736,
+        "rmse_3d": 1378.0907152184818,
+        "mean_error": 872.5193743527484,
+        "median_error": 356.1077619618018,
+        "p95_error": 2951.4250776619497,
+        "max_error": 3237.0598684676697,
+        "final_position_error": 3237.0598684676697,
+        "ate": 1333.2049613216736,
+        "rte": 89.9653308967441
+      },
+      "velocity": {
+        "rmse_2d": 89.85594746808852,
+        "rmse_3d": 93.0820100099277,
+        "mae_2d": 71.6753000612601,
+        "bias_2d": [
+          -9.788100296087716,
+          -66.17936753586055
+        ],
+        "p95_error": 154.43987444570465
+      },
+      "heading": {
+        "rmse_deg": 33.83907282534876,
+        "mae_deg": 30.9171936432077,
+        "p95_deg": 45.988287946802544,
+        "max_deg": 48.15681646481266
+      },
+      "dead_reckoning": {
+        "outage_start_s": 5.001,
+        "outage_end_s": 25.001,
+        "duration_s": 20.0,
+        "distance_travelled_m": 271.0971130752548,
+        "final_outage_drift_m": 359.3449269805404,
+        "max_outage_drift_m": 359.3449269805404,
+        "drift_percentage": 132.55210389525195,
+        "max_drift_percentage": 132.55210389525195,
+        "drift_rate_mps": 17.96724634902702,
+        "sih_10pct_passed": false
+      },
+      "map_matching": {
+        "total_epochs": 500,
+        "snapped_count": 0,
+        "fallback_count": 500,
+        "snap_rate_pct": 0.0,
+        "fallback_rate_pct": 100.0,
+        "fallback_reasons": {
+          "NO_CANDIDATES": 500
+        },
+        "median_snap_dist_m": 0.0,
+        "p95_snap_dist_m": 0.0,
+        "max_snap_dist_m": 0.0,
+        "cross_track_rmse_m": 1290.9262256962495,
+        "along_track_rmse_m": 333.0839964668997
+      },
+      "recovery": null,
+      "ml_diagnostics": null
+    }
+  },
+  "axis_c_output_processing": {
+    "C1_RAW_ESKF": {
+      "position": {
+        "rmse_2d": 1.7010033866630947,
+        "rmse_3d": 2.205569451889756,
+        "mean_error": 1.6820278831292954,
+        "median_error": 1.704270926597157,
+        "p95_error": 2.0287015027763395,
+        "max_error": 2.2744894084547123,
+        "final_position_error": 2.0847129252055345,
+        "ate": 1.7010033866630947,
+        "rte": 0.2698839905223849
+      },
+      "velocity": {
+        "rmse_2d": 0.7207994731202364,
+        "rmse_3d": 0.8250365840595112,
+        "mae_2d": 0.6142312976835413,
+        "bias_2d": [
+          0.270437852781028,
+          0.07962602149609493
+        ],
+        "p95_error": 1.3130890477703312
+      },
+      "heading": {
+        "rmse_deg": 14.628680496465954,
+        "mae_deg": 11.671908943634316,
+        "p95_deg": 25.653849311894724,
+        "max_deg": 30.08592629473812
+      },
+      "dead_reckoning": null,
+      "map_matching": null,
+      "recovery": null,
+      "ml_diagnostics": null
+    },
+    "C2_ESKF_KINEMATIC_CONSTRAINTS": {
+      "position": {
+        "rmse_2d": 1.5496224217307877,
+        "rmse_3d": 3.1478022024253587,
+        "mean_error": 1.5108880333888024,
+        "median_error": 1.5251922656359305,
+        "p95_error": 2.1286623548491908,
+        "max_error": 2.441643107329968,
+        "final_position_error": 2.077336237111241,
+        "ate": 1.5496224217307877,
+        "rte": 0.3043432920962535
+      },
+      "velocity": {
+        "rmse_2d": 0.7106736708750722,
+        "rmse_3d": 0.798115446583656,
+        "mae_2d": 0.6046444744030157,
+        "bias_2d": [
+          0.1950796013680812,
+          -0.026714287840569964
+        ],
+        "p95_error": 1.3833867279739682
+      },
+      "heading": {
+        "rmse_deg": 3.0843472262439664,
+        "mae_deg": 2.2016416795701668,
+        "p95_deg": 7.0677278047567285,
+        "max_deg": 11.721460748501567
+      },
+      "dead_reckoning": null,
+      "map_matching": null,
+      "recovery": null,
+      "ml_diagnostics": null
+    },
+    "C3_ESKF_DOWNSTREAM_MAPMATCH": {
+      "position": {
+        "rmse_2d": 1.5496224217307877,
+        "rmse_3d": 3.1478022024253587,
+        "mean_error": 1.5108880333888024,
+        "median_error": 1.5251922656359305,
+        "p95_error": 2.1286623548491908,
+        "max_error": 2.441643107329968,
+        "final_position_error": 2.077336237111241,
+        "ate": 1.5496224217307877,
+        "rte": 0.3043432920962535
+      },
+      "velocity": {
+        "rmse_2d": 0.7106736708750722,
+        "rmse_3d": 0.798115446583656,
+        "mae_2d": 0.6046444744030157,
+        "bias_2d": [
+          0.1950796013680812,
+          -0.026714287840569964
+        ],
+        "p95_error": 1.3833867279739682
+      },
+      "heading": {
+        "rmse_deg": 3.0843472262439664,
+        "mae_deg": 2.2016416795701668,
+        "p95_deg": 7.0677278047567285,
+        "max_deg": 11.721460748501567
+      },
+      "dead_reckoning": null,
+      "map_matching": {
+        "total_epochs": 600,
+        "snapped_count": 591,
+        "fallback_count": 9,
+        "snap_rate_pct": 98.5,
+        "fallback_rate_pct": 1.5,
+        "fallback_reasons": {
+          "AMBIGUOUS_PARALLEL_ROADS": 9
+        },
+        "median_snap_dist_m": 1.3371926060368786,
+        "p95_snap_dist_m": 2.575113945115571,
+        "max_snap_dist_m": 2.83785018151803,
+        "cross_track_rmse_m": 1.2639550393874948,
+        "along_track_rmse_m": 1.3029665272465585
+      },
+      "recovery": null,
+      "ml_diagnostics": null
+    }
+  },
+  "synthetic_benchmarks": {
+    "benchmark_1_50m": {
+      "target": "< 5m drift over 50m in <1 min",
+      "data_source": "IO-VNBD S1 real IMU, synthetic 10s blackout at ~5 m/s",
+      "distance_m": 142.21417803354194,
+      "final_drift_m": 7.151950742393724,
+      "drift_pct": 5.028999809503452,
+      "passed": false
+    },
+    "benchmark_2_1km_60kmh": {
+      "target": "< 100m drift over 1km at 60 km/h (60s blackout)",
+      "data_source": "IO-VNBD S1 real IMU, controlled synthetic 60s blackout at ~14 m/s",
+      "distance_m": 839.5426078824773,
+      "final_drift_m": 174.334456426211,
+      "drift_pct": 20.76540902026679,
+      "passed": false,
+      "label": "CONTROLLED_SYNTHETIC"
+    }
+  },
+  "multi_session_cross_validation": {
+    "Session_S1": {
+      "position": {
+        "rmse_2d": 3.561744966805527,
+        "rmse_3d": 4.2665614322703425,
+        "mean_error": 2.811144311199264,
+        "median_error": 1.9323940942919697,
+        "p95_error": 8.08588443857251,
+        "max_error": 9.960281700871839,
+        "final_position_error": 1.510617524855502,
+        "ate": 3.561744966805527,
+        "rte": 1.7172090306432444
+      },
+      "velocity": {
+        "rmse_2d": 0.9804176567113474,
+        "rmse_3d": 1.1280603274746062,
+        "mae_2d": 0.8365453206851172,
+        "bias_2d": [
+          0.3790137370950178,
+          -0.03390431432160117
+        ],
+        "p95_error": 1.8837901051714185
+      },
+      "heading": {
+        "rmse_deg": 3.9759866263049473,
+        "mae_deg": 2.966063766190128,
+        "p95_deg": 9.694606912028545,
+        "max_deg": 11.912135785790884
+      },
+      "dead_reckoning": {
+        "outage_start_s": 9.999,
+        "outage_end_s": 19.999000000000002,
+        "duration_s": 10.000000000000002,
+        "distance_travelled_m": 142.21417803354194,
+        "final_outage_drift_m": 7.151950742393724,
+        "max_outage_drift_m": 8.297359521864813,
+        "drift_percentage": 5.028999809503452,
+        "max_drift_percentage": 5.834410912186152,
+        "drift_rate_mps": 0.7151950742393722,
+        "sih_10pct_passed": true
+      },
+      "map_matching": {
+        "total_epochs": 300,
+        "snapped_count": 287,
+        "fallback_count": 13,
+        "snap_rate_pct": 95.66666666666667,
+        "fallback_rate_pct": 4.333333333333334,
+        "fallback_reasons": {
+          "AMBIGUOUS_PARALLEL_ROADS": 13
+        },
+        "median_snap_dist_m": 1.966422253059768,
+        "p95_snap_dist_m": 3.762057871846433,
+        "max_snap_dist_m": 6.86500402912795,
+        "cross_track_rmse_m": 0.9176850403909326,
+        "along_track_rmse_m": 3.070833017223239
+      },
+      "recovery": null,
+      "ml_diagnostics": null
+    },
+    "Session_S2": {
+      "position": {
+        "rmse_2d": 1219.778240527915,
+        "rmse_3d": 1753.0537712843245,
+        "mean_error": 879.6470747266947,
+        "median_error": 609.0424145935431,
+        "p95_error": 2452.7290113800773,
+        "max_error": 2661.8014180525142,
+        "final_position_error": 2661.8014180525142,
+        "ate": 1219.778240527915,
+        "rte": 104.65839161032036
+      },
+      "velocity": {
+        "rmse_2d": 103.70125023929974,
+        "rmse_3d": 191.78172956850108,
+        "mae_2d": 88.76420138711504,
+        "bias_2d": [
+          -73.11041964357105,
+          -50.23548411075264
+        ],
+        "p95_error": 146.9353912363609
+      },
+      "heading": {
+        "rmse_deg": 124.29795225896173,
+        "mae_deg": 101.0489794416405,
+        "p95_deg": 161.12378958312513,
+        "max_deg": 161.32293353075144
+      },
+      "dead_reckoning": {
+        "outage_start_s": 10.0,
+        "outage_end_s": 19.999000000000002,
+        "duration_s": 9.999000000000002,
+        "distance_travelled_m": 0.5626221250716075,
+        "final_outage_drift_m": 1224.2236589843285,
+        "max_outage_drift_m": 1224.2236589843285,
+        "drift_percentage": 122422.36589843285,
+        "max_drift_percentage": 122422.36589843285,
+        "drift_rate_mps": 122.43460935936876,
+        "sih_10pct_passed": false
+      },
+      "map_matching": {
+        "total_epochs": 300,
+        "snapped_count": 43,
+        "fallback_count": 257,
+        "snap_rate_pct": 14.333333333333334,
+        "fallback_rate_pct": 85.66666666666667,
+        "fallback_reasons": {
+          "AMBIGUOUS_PARALLEL_ROADS": 34,
+          "LOW_CONFIDENCE": 33,
+          "LARGE_DISPLACEMENT": 15,
+          "DISCONNECTED_TRANSITION": 64,
+          "NO_CANDIDATES": 111
+        },
+        "median_snap_dist_m": 2.2870103850554715,
+        "p95_snap_dist_m": 6.6791759190608175,
+        "max_snap_dist_m": 7.401977660635474,
+        "cross_track_rmse_m": 675.0850330798709,
+        "along_track_rmse_m": 1015.9251603552567
+      },
+      "recovery": null,
+      "ml_diagnostics": null
+    },
+    "Session_S3a": {
+      "position": {
+        "rmse_2d": 1222.8733337614349,
+        "rmse_3d": 1346.768778997848,
+        "mean_error": 853.504510582887,
+        "median_error": 551.9564564625376,
+        "p95_error": 2637.246178109,
+        "max_error": 2961.494630640869,
+        "final_position_error": 2961.494630640869,
+        "ate": 1222.8733337614349,
+        "rte": 139.46738010365482
+      },
+      "velocity": {
+        "rmse_2d": 128.54242217089234,
+        "rmse_3d": 156.71530449674225,
+        "mae_2d": 103.83679048968787,
+        "bias_2d": [
+          -103.14490236300657,
+          -5.780363271655681
+        ],
+        "p95_error": 230.4081215945338
+      },
+      "heading": {
+        "rmse_deg": 129.9280808341424,
+        "mae_deg": 102.0286515283119,
+        "p95_deg": 178.81746874721165,
+        "max_deg": 179.79720694817263
+      },
+      "dead_reckoning": {
+        "outage_start_s": 10.0,
+        "outage_end_s": 20.0,
+        "duration_s": 10.0,
+        "distance_travelled_m": 124.84943263291954,
+        "final_outage_drift_m": 1103.3929039298707,
+        "max_outage_drift_m": 1103.3929039298707,
+        "drift_percentage": 883.7788692032348,
+        "max_drift_percentage": 883.7788692032348,
+        "drift_rate_mps": 110.33929039298707,
+        "sih_10pct_passed": false
+      },
+      "map_matching": {
+        "total_epochs": 300,
+        "snapped_count": 0,
+        "fallback_count": 300,
+        "snap_rate_pct": 0.0,
+        "fallback_rate_pct": 100.0,
+        "fallback_reasons": {
+          "NO_CANDIDATES": 274,
+          "LARGE_DISPLACEMENT": 3,
+          "AMBIGUOUS_PARALLEL_ROADS": 5,
+          "LOW_CONFIDENCE": 3,
+          "DISCONNECTED_TRANSITION": 15
+        },
+        "median_snap_dist_m": 0.0,
+        "p95_snap_dist_m": 0.0,
+        "max_snap_dist_m": 0.0,
+        "cross_track_rmse_m": 91.83112553905502,
+        "along_track_rmse_m": 1219.4204503808503
+      },
+      "recovery": null,
+      "ml_diagnostics": null
+    },
+    "Session_S3c": {
+      "position": {
+        "rmse_2d": 247.7058195277165,
+        "rmse_3d": 253.90807863739656,
+        "mean_error": 157.57749732818903,
+        "median_error": 51.467514795492704,
+        "p95_error": 610.5812556553263,
+        "max_error": 741.1948856291334,
+        "final_position_error": 741.1948856291334,
+        "ate": 247.7058195277165,
+        "rte": 41.11622140447636
+      },
+      "velocity": {
+        "rmse_2d": 42.31138875061557,
+        "rmse_3d": 43.18496196468722,
+        "mae_2d": 32.19379360180164,
+        "bias_2d": [
+          -10.84851268429381,
+          -23.528045376153127
+        ],
+        "p95_error": 83.99909278914777
+      },
+      "heading": {
+        "rmse_deg": 30.55868005586159,
+        "mae_deg": 27.51143896624948,
+        "p95_deg": 42.238946436318486,
+        "max_deg": 42.79656373342518
+      },
+      "dead_reckoning": {
+        "outage_start_s": 10.0,
+        "outage_end_s": 20.0,
+        "duration_s": 10.0,
+        "distance_travelled_m": 143.7451659356538,
+        "final_outage_drift_m": 120.7459335026473,
+        "max_outage_drift_m": 121.11222474627385,
+        "drift_percentage": 83.99999590713063,
+        "max_drift_percentage": 84.25481577619705,
+        "drift_rate_mps": 12.074593350264731,
+        "sih_10pct_passed": false
+      },
+      "map_matching": {
+        "total_epochs": 300,
+        "snapped_count": 0,
+        "fallback_count": 300,
+        "snap_rate_pct": 0.0,
+        "fallback_rate_pct": 100.0,
+        "fallback_reasons": {
+          "NO_CANDIDATES": 300
+        },
+        "median_snap_dist_m": 0.0,
+        "p95_snap_dist_m": 0.0,
+        "max_snap_dist_m": 0.0,
+        "cross_track_rmse_m": 206.6163666847321,
+        "along_track_rmse_m": 136.63034086870297
+      },
+      "recovery": null,
+      "ml_diagnostics": null
+    },
+    "Session_S4": {
+      "position": {
+        "rmse_2d": 630.7315256153398,
+        "rmse_3d": 656.7010589484696,
+        "mean_error": 413.1022575636768,
+        "median_error": 198.04625701233604,
+        "p95_error": 1425.2765803679156,
+        "max_error": 1667.2899215222371,
+        "final_position_error": 1667.2899215222371,
+        "ate": 630.7315256153398,
+        "rte": 73.53549637121237
+      },
+      "velocity": {
+        "rmse_2d": 76.43616799301341,
+        "rmse_3d": 81.41247796201607,
+        "mae_2d": 56.819857236070796,
+        "bias_2d": [
+          -11.018551212137732,
+          55.60814479592671
+        ],
+        "p95_error": 152.23460753998438
+      },
+      "heading": {
+        "rmse_deg": 10.182507384189634,
+        "mae_deg": 8.646085372933646,
+        "p95_deg": 17.754207498171,
+        "max_deg": 20.99653817530891
+      },
+      "dead_reckoning": {
+        "outage_start_s": 9.999,
+        "outage_end_s": 19.999000000000002,
+        "duration_s": 10.000000000000002,
+        "distance_travelled_m": 1.7841161201184985,
+        "final_outage_drift_m": 493.8424808595602,
+        "max_outage_drift_m": 493.8424808595602,
+        "drift_percentage": 27679.951730202396,
+        "max_drift_percentage": 27679.951730202396,
+        "drift_rate_mps": 49.38424808595602,
+        "sih_10pct_passed": false
+      },
+      "map_matching": {
+        "total_epochs": 300,
+        "snapped_count": 0,
+        "fallback_count": 300,
+        "snap_rate_pct": 0.0,
+        "fallback_rate_pct": 100.0,
+        "fallback_reasons": {
+          "NO_CANDIDATES": 298,
+          "LARGE_DISPLACEMENT": 1,
+          "LOW_CONFIDENCE": 1
+        },
+        "median_snap_dist_m": 0.0,
+        "p95_snap_dist_m": 0.0,
+        "max_snap_dist_m": 0.0,
+        "cross_track_rmse_m": 619.7168391143954,
+        "along_track_rmse_m": 117.35968951525301
+      },
+      "recovery": null,
+      "ml_diagnostics": null
+    }
+  },
+  "aggregate_report": {
+    "continuous_rmse_stats": {
+      "count": 17,
+      "mean": 1605.2028752445585,
+      "std": 4851.555804240119,
+      "median": 110.67342328594071,
+      "p95": 5320.704344936271,
+      "min_val": 1.374853690596947,
+      "max_val": 20896.384911395
+    },
+    "outage_drift_stats": {
+      "count": 12,
+      "mean": 1960.3883284750693,
+      "std": 4472.804972994491,
+      "median": 266.8396917033757,
+      "p95": 9225.488009185126,
+      "min_val": 7.151950742393724,
+      "max_val": 16501.831142818108
+    },
+    "outage_drift_pct_stats": {
+      "count": 12,
+      "mean": 12668.004142750084,
+      "std": 33947.022124379604,
+      "median": 108.27604990119129,
+      "p95": 70314.03810590605,
+      "min_val": 5.028999809503452,
+      "max_val": 122422.36589843285
+    },
+    "snap_rate_stats": {
+      "count": 17,
+      "mean": 46.79667366946779,
+      "std": 41.250056569588466,
+      "median": 28.499999999999996,
+      "p95": 98.8,
+      "min_val": 0.0,
+      "max_val": 100.0
+    },
+    "sih_pass_rate_pct": 16.666666666666664,
+    "total_scenarios_evaluated": 17,
+    "total_passed_scenarios": 2
+  }
+}
