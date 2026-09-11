@@ -105,11 +105,18 @@ class TransitionModel:
         d_curr_prog = max(0.0, c_curr.distance_along_edge_m)
         d_total = d_prev_rem + d_inter + d_curr_prog
 
-        # Plausibility check: vehicle cannot travel faster than max_speed_mps plus
-        # the geometric candidate search radius span (2 * R_search = 70.0 m)
+        # Physically justified transition gate (evaluated when delta_t_s is known):
+        # Kinematic travel distance + candidate projection offsets + discrete road geometry tolerance.
+        # Rejects impossible multi-block leaps or disconnected U-turn loops while preserving
+        # legitimate connected junction turns and highway transitions.
         if delta_t_s is not None and delta_t_s > 0.0:
-            max_possible_dist = self.max_speed_mps * delta_t_s + 70.0
-            if d_total > max_possible_dist:
+            d_kinematic = self.max_speed_mps * delta_t_s
+            proj_uncertainty = c_prev.distance_to_road_m + c_curr.distance_to_road_m
+            geom_tol = 10.0  # Discretization and junction chord allowance
+
+            if d_inter > d_kinematic + proj_uncertainty + geom_tol:
+                return None
+            if d_total > d_kinematic + proj_uncertainty + geom_tol:
                 return None
 
         return d_total

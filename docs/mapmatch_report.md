@@ -153,6 +153,14 @@ A hand-constructed 3-road deterministic synthetic graph was tested:
 
 The complete Phase 12 benchmark was executed on IO-VNBD Session S1 (`Categorised_S1.npz`) at $10\text{ Hz}$ sampling rate.
 
+### SIH Problem Statement Benchmark & Target Compliance Summary
+
+| Scenario | Outage Duration | Distance Travelled | Final Drift (m) | Drift % | Official SIH PS Benchmark (<10.0%) | Internal Stronger Target (<1.5%) |
+|---|---|---|---|---|---|---|
+| **Scenario B (10s Outage)** | 10.0 s | 142.2 m | 7.15 m | **5.03%** | **PASS** (<10.0%) | **FAIL** (>1.5%) |
+| **Scenario B (30s Outage)** | 30.0 s | 426.6 m | 86.19 m | **20.20%** | **FAIL** (>10.0%) | **FAIL** (>1.5%) |
+| **Scenario B (60s Outage)** | 60.0 s | 839.5 m | 174.33 m | **20.77%** | **FAIL** (>10.0%) | **FAIL** (>1.5%) |
+
 ### Scenario Comparison Table
 
 | Scenario | Duration | Snap Rate (%) | Fallback Rate (%) | Median Snap Dist (m) | P95 Snap Dist (m) | Max Snap Dist (m) | Phase 11 Estimator RMSE (m) | Phase 12 Map-Matched Display RMSE (m) |
@@ -160,7 +168,7 @@ The complete Phase 12 benchmark was executed on IO-VNBD Session S1 (`Categorised
 | **Scenario A: Continuous GNSS** | 60.0 s (600 epochs) | **98.5%** | 1.5% | 1.34 m | 2.58 m | 2.84 m | **1.5496 m** | 1.8153 m |
 | **Scenario B: 10s GNSS Outage** | 30.0 s (300 epochs) | **95.7%** | 4.3% | 1.97 m | 3.76 m | 6.87 m | **7.15 m** (final) | **7.15 m** (final) |
 | **Scenario B: 30s GNSS Outage** | 50.0 s (500 epochs) | **45.6%** | 54.4% | 2.42 m | 4.34 m | 7.39 m | **86.19 m** (final) | **86.19 m** (final) |
-| **Scenario B: 60s GNSS Outage** | 80.0 s (800 epochs) | **28.6%** | 71.4% | 2.42 m | 4.54 m | 7.39 m | **174.33 m** (final) | **174.33 m** (final) |
+| **Scenario B: 60s GNSS Outage** | 80.0 s (800 epochs) | **28.5%** | 71.5% | 2.42 m | 4.34 m | 7.39 m | **174.33 m** (final) | **174.33 m** (final) |
 | **Scenario C: Sharp Turn Dynamics** | 40.0 s (400 epochs) | **69.2%** | 30.8% | 2.93 m | 4.38 m | 7.45 m | **19.988 m** | 20.088 m |
 | **Scenario D: Stop-and-Go** | 30.0 s (300 epochs) | **97.0%** | 3.0% | 1.51 m | 2.31 m | 5.45 m | **1.375 m** | 2.205 m |
 | **Scenario E: Zero Coverage** | 5.0 s (50 epochs) | **0.0%** | 100.0% | 0.00 m | 0.00 m | 0.00 m | N/A | N/A |
@@ -174,9 +182,9 @@ The complete Phase 12 benchmark was executed on IO-VNBD Session S1 (`Categorised
   - Breakdown: `{'AMBIGUOUS_PARALLEL_ROADS': 9}`
 - **Scenario B (60s Outage)**:
   - Total Epochs: 800
-  - Snapped: 229 (28.6%)
-  - Fallbacks: 571 (71.4%)
-  - Breakdown: `{'AMBIGUOUS_PARALLEL_ROADS': 36, 'LOW_CONFIDENCE': 68, 'LARGE_DISPLACEMENT': 90, 'NO_CANDIDATES': 170, 'DISCONNECTED_TRANSITION': 207}`
+  - Snapped: 228 (28.5%)
+  - Fallbacks: 572 (71.5%)
+  - Breakdown: `{'AMBIGUOUS_PARALLEL_ROADS': 34, 'LOW_CONFIDENCE': 61, 'LARGE_DISPLACEMENT': 91, 'NO_CANDIDATES': 170, 'DISCONNECTED_TRANSITION': 216}`
   - Outage Distance: 839.5 m | Drift: 174.33 m (20.77%)
 - **Scenario C (Sharp Turn)**:
   - Total Epochs: 400
@@ -186,27 +194,55 @@ The complete Phase 12 benchmark was executed on IO-VNBD Session S1 (`Categorised
 
 ---
 
-## 10. Honest Evaluation: Display Alignment vs. Estimator Accuracy
+## 10. SIH Problem Statement Benchmark vs. Internal Target Status
 
-A critical question of Section 19 and the Phase 12 specification is:
-*"Does map matching improve numerical accuracy, only display alignment, or both?"*
+The official SIH Problem Statement (PS 26168) Dead Reckoning benchmark requirement states:
+> *"Dead Reckoning: positional drift must be LESS THAN 10% of the total distance travelled during GNSS blackout."*
 
-### The Honest Empirical Finding:
-1. **Numerical Accuracy (RMSE vs VBOX Antenna)**:
-   - In Scenario A (Continuous GNSS), the Phase 11 estimator position RMSE was **$1.5496\text{ m}$**.
-   - The map-matched display position RMSE was **$1.8153\text{ m}$** ($+0.266\text{ m}$ difference).
-   - *Why?* OpenStreetMap road polylines represent the geometric road **centerline**. Real vehicles drive in a specific travel lane, typically $1.2\text{ m}$ to $2.0\text{ m}$ to the side of the centerline. Snapping to the centerline pulls the coordinate toward the center of the road, introducing a small, expected cross-track offset from the roof-mounted VBOX antenna.
-2. **Short Outages (10s Outage)**:
-   - On the 10s outage segment, map matching improved position error on **46.0%** of epochs, reducing mean error by **$-0.234\text{ m}$**.
-3. **Display / Presentation Alignment**:
-   - For UI presentation, turn-by-turn navigation, and visual map rendering, map matching eliminates visual cross-track jitter and places the vehicle squarely on the road.
-   - For internal navigation estimation, the ESKF remains uncorrupted.
+### Official Compliance Analysis:
+- **Scenario B (10s Outage)**:
+  - Distance Travelled: **142.2 m**
+  - Final Drift: **7.15 m**
+  - Drift Percentage: **5.03%**
+  - Status: **PASS** (5.03% is well below the official 10.0% threshold).
+- **Scenario B (30s Outage)**:
+  - Distance Travelled: **426.6 m**
+  - Final Drift: **86.19 m**
+  - Drift Percentage: **20.20%**
+  - Status: **FAIL** (20.20% exceeds the 10.0% threshold).
+- **Scenario B (60s Outage)**:
+  - Distance Travelled: **839.5 m**
+  - Final Drift: **174.33 m**
+  - Drift Percentage: **20.77%**
+  - Status: **FAIL** (20.77% exceeds the 10.0% threshold).
 
-**Official Conclusion**: Map matching provides **high-fidelity display alignment (98.5% snap rate with 1.34 m median offset)** and **drastically reduces cross-track display drift**, but does not replace precise centimeter-level GNSS antenna tracking due to centerline-versus-lane offsets.
+### Internal Stronger Target (<1.5%):
+The internal project roadmap defines an aspirational target of $<1.5\%>$ drift. None of the extended outage scenarios currently achieve the $<1.5\%>$ internal target. This distinction is maintained transparently: the official SIH requirement is $<10\%>$, not $<1.5\%>$.
+
+### Critical Architectural Distinction:
+Map matching operates strictly downstream on the display/output tier. When the dead reckoning filter drifts past $25	ext{ m}$, the matcher safely activates `LARGE_DISPLACEMENT` and `NO_CANDIDATES` fallbacks. Map matching **MUST NOT** be used to artificially mask dead-reckoning drift or claim dead-reckoning benchmark compliance. Dead reckoning performance is evaluated on the sensor fusion pipeline in Phase 13.
 
 ---
 
-## 11. Preserved Phase 11 Baseline Verification
+## 11. Detailed Investigation: Stop-and-Go (Scenario D) & Centerline Effects
+
+A detailed investigation was conducted into Scenario D (Stop-and-Go), where the estimator RMSE is **1.375 m** while the map-matched display RMSE is **2.205 m**, with 93.0% of epochs showing a positive error delta:
+
+1. **Centerline Offset vs. Travel Lane**:
+   - OpenStreetMap represents roadways as 1D linear centerlines.
+   - Real vehicles drive within a specific travel lane, typically $1.5	ext{ m}$ to $2.4	ext{ m}$ offset from the centerline.
+   - Ground-truth evaluation is performed against a roof-mounted VBOX antenna centered over the vehicle in its lane.
+2. **High-Precision Estimator during Stop**:
+   - During stationary periods, ZUPT locks the velocity to zero and position error remains $< 0.5	ext{ m}$ from true antenna position.
+   - Snapping the vehicle onto the OSM centerline forcefully shifts the displayed coordinate by the lane offset ($2.39	ext{ m}$).
+   - This shifts the display coordinate away from the true antenna ground truth, causing an apparent numerical degradation.
+3. **Display Alignment vs. Antenna Accuracy**:
+   - On navigation displays, snapping the vehicle onto the roadway ensures the user sees their vehicle on the road rather than hovering on sidewalk boundaries.
+   - The estimator filter state remains uncorrupted, and the display trade-off is an expected physical consequence of centerline mapping.
+
+---
+
+## 12. Preserved Phase 11 Baseline Verification
 
 To guarantee zero regression of the frozen Phase 11 baseline:
 - Pre-Phase 12 Phase 11 Estimator RMSE: `1.5496224217307877 m`
@@ -216,9 +252,9 @@ To guarantee zero regression of the frozen Phase 11 baseline:
 
 ---
 
-## 12. Generated Diagnostic Figures (A through N)
+## 13. Generated Publication Diagnostic Figures (A through O)
 
-All 14 figures were generated automatically from the final replay output and saved to `docs/phase12_figures/`:
+All 15 figures were generated automatically from the final replay output and saved to `docs/phase12_figures/`:
 
 1. `01_full_trajectory_comparison.png`: Plot A — Full trajectory comparison with fallback markings
 2. `02_position_error_timeline.png`: Plot B — Position error timeline across 60s outage
@@ -229,19 +265,22 @@ All 14 figures were generated automatically from the final replay output and sav
 7. `07_confidence_timeline.png`: Plot G — Confidence score and ambiguity margin timeline
 8. `08_scenario_rmse_comparison.png`: Plot H — Scenario-by-scenario RMSE comparison bar chart
 9. `09_scenario_final_drift_comparison.png`: Plot I — Final drift across 10s, 30s, 60s outages
-10. `10_drift_percentage_vs_outage.png`: Plot J — Drift % vs outage duration with 1.5% benchmark line
+10. `10_drift_percentage_vs_outage.png`: Plot J — Dead reckoning drift % vs outage duration with both 10% and 1.5% thresholds
 11. `11_snap_distance_distribution.png`: Plot K — Orthogonal snap distance distribution
 12. `12_regression_audit.png`: Plot L — Point-by-point regression audit (% improved, degraded, unchanged)
 13. `13_ambiguity_diagnostic.png`: Plot M — Viterbi candidate log-scores and ambiguity diagnostic
 14. `14_trajectory_zooms.png`: Plot N — 4-quadrant trajectory zoom analysis
+15. `15_benchmark_summary_table.png`: Plot O — Official SIH PS Benchmark (<10%) & Internal Target (<1.5%) Compliance Table
 
 ---
 
-## 13. Final Acceptance Verdict
+## 14. Final Acceptance Verdict
 
 Phase 12 is **COMPLETE AND FROZEN**:
-- Correctness bugs (Viterbi timestamp, mature epoch candidate isolation, directed edge semantics) are permanently resolved.
-- Safety safeguards are rigorously validated with zero forced snaps in difficult conditions.
-- Strict causality with mature window buffer ($W=8$) is preserved without future observation contamination.
-- Phase 11 remains bit-for-bit identical ($1.5496224217307877\text{ m}$).
+- Transition gate uses physically justified kinematic and projection uncertainty bounds.
+- Directed edge semantics strictly enforced.
+- Viterbi timestamp resolution and mature-epoch metadata isolation verified.
+- Strict causality with mature window buffer ($W=8$) preserved without future lookahead.
+- Anti-catastrophic-snap safeguards active with graceful fallbacks.
+- Phase 11 baseline remains bit-for-bit identical ($1.5496224217307877\text{ m}$).
 - Numerical outputs in `docs/phase12_mapmatch_results.json` and `docs/mapmatch_report.md` are 100% synchronized.

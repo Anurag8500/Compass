@@ -113,9 +113,9 @@
     "outage_60s": {
       "outage_duration_s": 60.0,
       "estimator_rmse_2d_m": 110.67342328594071,
-      "display_rmse_2d_m": 110.68287713563544,
+      "display_rmse_2d_m": 110.69707543885384,
       "estimator_mean_err_2d_m": 87.16373742139811,
-      "display_mean_err_2d_m": 87.13471611666264,
+      "display_mean_err_2d_m": 87.14260961340051,
       "outage_metrics": {
         "distance_travelled_m": 839.5426078824775,
         "est_final_drift_m": 174.334456426211,
@@ -127,27 +127,27 @@
       },
       "telemetry": {
         "total_epochs": 800,
-        "snapped_count": 229,
-        "fallback_count": 571,
-        "snap_rate_pct": 28.625,
-        "fallback_rate_pct": 71.375,
+        "snapped_count": 228,
+        "fallback_count": 572,
+        "snap_rate_pct": 28.499999999999996,
+        "fallback_rate_pct": 71.5,
         "fallback_reasons": {
-          "AMBIGUOUS_PARALLEL_ROADS": 36,
-          "LOW_CONFIDENCE": 68,
-          "LARGE_DISPLACEMENT": 90,
+          "AMBIGUOUS_PARALLEL_ROADS": 34,
+          "LOW_CONFIDENCE": 61,
+          "LARGE_DISPLACEMENT": 91,
           "NO_CANDIDATES": 170,
-          "DISCONNECTED_TRANSITION": 207
+          "DISCONNECTED_TRANSITION": 216
         },
-        "median_snap_dist_m": 2.4228543426631868,
-        "p95_snap_dist_m": 4.544524382073221,
+        "median_snap_dist_m": 2.4212365751314873,
+        "p95_snap_dist_m": 4.343270995727356,
         "max_snap_dist_m": 7.392314923032748
       },
       "regression_audit": {
-        "improved_pct": 15.125,
+        "improved_pct": 15.0,
         "degraded_pct": 12.125,
-        "unchanged_pct": 72.75,
+        "unchanged_pct": 72.875,
         "max_degradation_m": 6.755788518869892,
-        "mean_delta_m": -0.029021304735483585
+        "mean_delta_m": -0.02112780799762093
       }
     }
   },
