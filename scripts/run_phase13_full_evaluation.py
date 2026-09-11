@@ -297,21 +297,15 @@ def main() -> None:
 
     # 8. Multi-Session Cross-Validation (S1, S2, S3a, S3c, S4)
     print("\n[Step 7/8] Running Multi-Session Cross-Validation...")
-    session_files = {
-        "Session_S1": Path("data/cache/iovnbd/Categorised_S1.npz"),
-        "Session_S2": Path("data/cache/iovnbd/Categorised_S2.npz"),
-        "Session_S3a": Path("data/cache/iovnbd/Categorised_S3a.npz"),
-        "Session_S3c": Path("data/cache/iovnbd/Categorised_S3c.npz"),
-        "Session_S4": Path("data/cache/iovnbd/Categorised_S4.npz"),
-    }
     multi_session_results: Dict[str, Any] = {}
     session_configs = {
-        # start_idx chosen to ensure there's enough data for a proper 10s outage + recovery
+        # (filepath, start_idx, duration_steps, outage_start_rel_steps, outage_duration_steps)
+        # Session start indices chosen for valid initial stationary calibration and orientation initialization
         "Session_S1":  (Path("data/cache/iovnbd/Categorised_S1.npz"),  4900, 300, 100, 100),
-        "Session_S2":  (Path("data/cache/iovnbd/Categorised_S2.npz"),  4000, 300, 100, 100),
-        "Session_S3a": (Path("data/cache/iovnbd/Categorised_S3a.npz"), 1500, 300, 100, 100),
-        "Session_S3c": (Path("data/cache/iovnbd/Categorised_S3c.npz"), 2000, 300, 100, 100),
-        "Session_S4":  (Path("data/cache/iovnbd/Categorised_S4.npz"),  4000, 300, 100, 100),
+        "Session_S2":  (Path("data/cache/iovnbd/Categorised_S2.npz"),   100, 300, 100, 100),
+        "Session_S3a": (Path("data/cache/iovnbd/Categorised_S3a.npz"),    0, 300, 100, 100),
+        "Session_S3c": (Path("data/cache/iovnbd/Categorised_S3c.npz"),    0, 300, 100, 100),
+        "Session_S4":  (Path("data/cache/iovnbd/Categorised_S4.npz"),  4900, 300, 100, 100),
     }
     for s_name, (s_p, s_start, s_dur, s_out_start, s_out_dur) in session_configs.items():
         if s_p.exists():
