@@ -50,6 +50,7 @@ def eskf_update(
     R: np.ndarray,
     gating: Optional[MahalanobisGating] = None,
     timestamp_ns: Optional[int] = None,
+    constrain_longitudinal_velocity: bool = False,
 ) -> Tuple[ESKFState, UpdateDiagnostics]:
     """Execute generic gated ESKF measurement update.
 
@@ -154,6 +155,16 @@ def eskf_update(
 
     # 5. Error state correction delta_x = K y
     delta_x = K @ y  # Shape (15,)
+
+    if constrain_longitudinal_velocity:
+        # Simon-Chia projection to prevent longitudinal velocity modifications
+        # We want D @ delta_x = 0, where D selects the forward velocity component.
+        R_n_v = state.nominal.R_v_n.T
+        D = np.zeros(15, dtype=np.float64)
+        D[3:6] = R_n_v[0, :]  # Forward vehicle axis expressed in ENU
+        
+        # Strict geometric projection (unweighted)
+        delta_x = delta_x - D * float(np.dot(D, delta_x))
 
     # 6. Joseph form covariance update:
     # P_new = (I - K H) P (I - K H)^T + K R K^T

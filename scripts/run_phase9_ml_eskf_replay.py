@@ -14,8 +14,8 @@ anchored at the segment's starting geodetic position (lat0, lon0, alt0).
 No mixing of trip-global and segment-local coordinates is permitted.
 
 Outputs:
-    docs/ml_eskf_integration_results.json
-    docs/ml_eskf_integration_report.md
+    docs/phase11_improvements_results.json
+    docs/phase11_improvements_report.md
 """
 
 from __future__ import annotations
@@ -480,7 +480,7 @@ def main() -> None:
         raise FileNotFoundError(f"Driving dataset not found at {trip_path}")
 
     print("=" * 80)
-    print("PHASE 9 — ML -> ESKF INTEGRATION OFFLINE REPLAY")
+    print("PHASE 11 — NHC + ZUPT PERFORMANCE EVALUATION")
     print(f"Loading IO-VNBD dataset: {trip_path}")
     print("=" * 80)
 
@@ -536,41 +536,19 @@ def main() -> None:
             velocitynet_enabled=False,
             biasnet_enabled=False,
         ),
-        "B_eskf_vnet": NavigationCoreConfig(
-            velocitynet_enabled=True,
-            biasnet_enabled=False,
-        ),
-        "C_eskf_bnet": NavigationCoreConfig(
-            velocitynet_enabled=False,
-            biasnet_enabled=True,
-        ),
-        "D_eskf_vnet_bnet": NavigationCoreConfig(
-            velocitynet_enabled=True,
-            biasnet_enabled=True,
-        ),
     }
 
     all_results: Dict[str, Any] = {
         "metadata": {
-            "phase": "Phase 9",
-            "title": "ML -> ESKF Integration and Real GNSS-Denied Offline Replay",
+            "phase": "Phase 11",
+            "title": "NHC + ZUPT Performance Evaluation",
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
             "dataset": "Categorised_S1.npz",
             "frame_convention": "One segment-local ENU frame per segment anchored at segment initial fix",
             "models": {
-                "velocitynet": {
-                    "version": "v1.1",
-                    "onnx_path": "models/velocitynet_v1_1.onnx",
-                    "onnx_sha256": compute_file_sha256(root / "models" / "velocitynet_v1_1.onnx"),
-                },
-                "biasnet": {
-                    "version": "v1.0",
-                    "onnx_path": "models/biasnet_v1.onnx",
-                    "onnx_sha256": compute_file_sha256(root / "models" / "biasnet_v1.onnx"),
-                },
                 "normalization": {
                     "path": "data/ml_dataset_v1/normalization.json",
-                    "sha256": compute_file_sha256(root / "data" / "ml_dataset_v1" / "normalization.json"),
+                    "sha256": "N/A",
                 },
             },
         },
@@ -636,7 +614,7 @@ def main() -> None:
         all_results["scenarios"][scen_name] = scen_results
 
     # Save machine-readable results
-    json_path = root / "docs" / "ml_eskf_integration_results.json"
+    json_path = root / "docs" / "phase11_improvements_results.json"
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(all_results, f, indent=2)
     print(f"\nSaved machine-readable results to {json_path}")
@@ -659,9 +637,9 @@ def main() -> None:
         print("-" * 130)
 
     # Generate Markdown Report
-    report_path = root / "docs" / "ml_eskf_integration_report.md"
+    report_path = root / "docs" / "phase11_improvements_report.md"
     generate_markdown_report(all_results, report_path)
-    print(f"Generated comprehensive integration report at {report_path}")
+    print(f"Generated comprehensive improvements report at {report_path}")
 
 
 def generate_markdown_report(data: Dict[str, Any], out_path: Path) -> None:
@@ -670,14 +648,11 @@ def generate_markdown_report(data: Dict[str, Any], out_path: Path) -> None:
     meta = data["metadata"]
 
     lines = [
-        "# Phase 9 — ML → ESKF Integration & Real GNSS-Denied Offline Replay Report",
+        "# Phase 11 — NHC + ZUPT Evaluation Report",
         "",
         f"**Date/Timestamp**: {meta['timestamp']}  ",
         f"**Replay Dataset**: `{meta['dataset']}`  ",
         f"**Frame Convention**: `{meta['frame_convention']}`  ",
-        f"**VelocityNet Hash**: `{meta['models']['velocitynet']['onnx_sha256']}`  ",
-        f"**BiasNet Hash**: `{meta['models']['biasnet']['onnx_sha256']}`  ",
-        f"**Normalization Hash**: `{meta['models']['normalization']['sha256']}`  ",
         "",
         "---",
         "",
@@ -769,7 +744,7 @@ def generate_markdown_report(data: Dict[str, Any], out_path: Path) -> None:
         lines.append("| Condition | Horizontal RMSE (m) | Final Horizontal Error (m) | Max Excursion (m) | Velocity RMSE (m/s) | Yaw Error (deg) | VNet Acc/Rej | BNet Acc/Rej | GNSS Fixes | Cov Health |")
         lines.append("|---|---|---|---|---|---|---|---|---|---|")
 
-        for c_key in ["A_pure_eskf", "B_eskf_vnet", "C_eskf_bnet", "D_eskf_vnet_bnet"]:
+        for c_key in ["A_pure_eskf"]:
             if c_key not in scen_data:
                 continue
             r = scen_data[c_key]

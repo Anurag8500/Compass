@@ -17,6 +17,7 @@ import numpy as np
 
 from navigation.eskf.state import ESKFState
 from navigation.eskf.update import UpdateDiagnostics, eskf_update
+from navigation.alignment import AlignmentConfidence
 from navigation.nhc.skid_detection import (
     NHCStatus,
     SkidDetectorConfig,
@@ -176,7 +177,8 @@ class NHCMeasurementModel:
         omega_v: Optional[np.ndarray] = None,
         f_v: Optional[np.ndarray] = None,
         timestamp_ns: Optional[int] = None,
-        gnss_trust: float = 1.0,
+        gnss_trust_score: float = 1.0,
+        alignment_confidence: AlignmentConfidence = AlignmentConfidence.UNKNOWN,
     ) -> Tuple[ESKFState, NHCDiagnostics]:
         """Evaluate consistency, apply relaxation/skipping, and update ESKF state.
 
@@ -186,7 +188,8 @@ class NHCMeasurementModel:
             omega_v: (3,) Vehicle-frame angular velocity [rad/s].
             f_v: (3,) Vehicle-frame specific force [m/s²].
             timestamp_ns: Current update timestamp in nanoseconds.
-            gnss_trust: GNSS trust score [0.0, 1.0] for adaptive relaxation.
+            gnss_trust_score: GNSS trust score [0.0, 1.0] for adaptive relaxation.
+            alignment_confidence: Observability confidence of mounting orientation.
 
         Returns:
             Tuple of (updated_or_unmodified_state, NHCDiagnostics).
@@ -239,12 +242,31 @@ class NHCMeasurementModel:
                 effective_sigma_vz=sigma_vz,
             )
 
-        # 4. Innovation and innovation covariance
+        # 4. Alignment Observability Gate
+        if alignment_confidence == AlignmentConfidence.UNKNOWN:
+            return state, NHCDiagnostics(
+                status=NHCStatus.SKIPPED_UNALIGNED_FRAME,
+                applied=False,
+                reason="SKIPPED_UNALIGNED_FRAME",
+                innovation=z - h_val,
+                predicted_v_v=v_v,
+                nis=0.0,
+                covariance_inflation=1.0,
+                effective_sigma_vy=sigma_vy,
+                effective_sigma_vz=sigma_vz,
+            )
+
+        # 5. GNSS-aided authority modulation and alignment uncertainty inflation
+        scale_gnss = (1.0 + 3.0 * max(0.0, min(1.0, float(gnss_trust_score)))) ** 2
+        scale_align = 2.25 if alignment_confidence == AlignmentConfidence.LOW_CONFIDENCE else 1.0
+        R_base = R_base * (scale_gnss * scale_align)
+
+        # 6. Innovation and innovation covariance
         y = z - h_val  # y = [-vy_v, -vz_v]
         P = state.covariance
         S = H @ P @ H.T + R_base
 
-        # 5. Evaluate normalized innovation squared (Mahalanobis distance squared)
+        # 7. Evaluate normalized innovation squared (Mahalanobis distance squared)
         try:
             # Solve S^-1 @ y numerically without explicit inversion
             S_inv_y = np.linalg.solve(S, y)
@@ -252,13 +274,13 @@ class NHCMeasurementModel:
         except Exception:
             nis = float("inf")
 
-        # 6. Conservative consistency & dynamic relaxation evaluation
+        # 8. Conservative consistency & dynamic relaxation evaluation
         eval_res = self.skid_detector.evaluate(
             nis=nis,
             omega_v=omega_v,
             f_v=f_v,
             forward_speed=forward_speed,
-            gnss_trust=gnss_trust,
+            gnss_trust=gnss_trust_score,
         )
 
         if not eval_res.applied:
@@ -286,6 +308,7 @@ class NHCMeasurementModel:
             R=R_eff,
             gating=None,  # Already evaluated and gated via SkidSlipDetector
             timestamp_ns=timestamp_ns,
+            constrain_longitudinal_velocity=True,  # Simon-Chia constraint
         )
 
         return updated_state, NHCDiagnostics(

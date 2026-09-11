@@ -59,6 +59,7 @@ from navigation.nhc.zupt_integration import (
     ZUPTIntegrator,
     ZUPTIntegrationDiagnostics,
 )
+from navigation.alignment import DynamicAlignment
 from navigation.schemas.state import GNSSMode, NavigationState
 
 
@@ -127,7 +128,9 @@ class NavigationCore:
         self.scheduler = MLCadenceScheduler(config=self.config.cadence)
         
         # ML Model runner
-        self.model_runner = ONNXModelRunner(config=self.config.model_runner)
+        self.model_runner: Optional[ONNXModelRunner] = None
+        if self.config.velocitynet_enabled or self.config.biasnet_enabled:
+            self.model_runner = ONNXModelRunner(config=self.config.model_runner)
 
         # Measurement adapters
         self.zupt_detector = ClassicalZUPTDetector(config=self.config.zupt_detector)
@@ -138,6 +141,7 @@ class NavigationCore:
         # Phase 11: NHC and improved ZUPT integration
         self.nhc_model = NHCMeasurementModel(config=self.config.nhc)
         self.zupt_integrator = ZUPTIntegrator(config=self.config.zupt_integration)
+        self.dynamic_alignment = DynamicAlignment()
         
         vnet_cfg = self.config.velocitynet
         if not self.config.velocitynet_enabled:
@@ -328,6 +332,12 @@ class NavigationCore:
         gnss_trust = 1.0  # Default if no GNSS info available
         
         if self.config.nhc_enabled:
+            # Evaluate dynamic alignment observability
+            R_n_v = self.state.nominal.R_v_n.T
+            v_v = R_n_v @ self.state.nominal.velocity_enu
+            forward_speed = float(abs(v_v[0]))
+            alignment_confidence = self.dynamic_alignment.update(f_v=f_arr, gnss_speed=forward_speed)
+
             # Get GNSS trust score if available from last GNSS update
             # This would need to be stored in NavigationCore state, using default for now
             self.state, nhc_diag = self.nhc_model.update(
@@ -336,14 +346,15 @@ class NavigationCore:
                 omega_v=w_arr,
                 f_v=f_arr,
                 timestamp_ns=t_ns,
-                gnss_trust=gnss_trust,
+                gnss_trust_score=gnss_trust,
+                alignment_confidence=alignment_confidence,
             )
 
         # 5. Evaluate time-based cadence for neural models
         run_vnet, run_bnet = self.scheduler.evaluate_cycle(t_ns)
 
         vnet_diag: Optional[VelocityNetAdapterDiagnostics] = None
-        if run_vnet and self.config.velocitynet_enabled:
+        if run_vnet and self.config.velocitynet_enabled and self.model_runner is not None:
             self._ml_telemetry["velocitynet"]["scheduler_due"] += 1
             has_win, raw_feats, win_ts, reason = self.window_buffer.get_causal_window(current_timestamp_ns=t_ns)
             if has_win and raw_feats is not None:
@@ -370,7 +381,7 @@ class NavigationCore:
                 )
 
         bnet_diag: Optional[BiasNetAdapterDiagnostics] = None
-        if run_bnet and self.config.biasnet_enabled:
+        if run_bnet and self.config.biasnet_enabled and self.model_runner is not None:
             self._ml_telemetry["biasnet"]["scheduler_due"] += 1
             has_win, raw_feats, win_ts, reason = self.window_buffer.get_causal_window(current_timestamp_ns=t_ns)
             if has_win and raw_feats is not None:

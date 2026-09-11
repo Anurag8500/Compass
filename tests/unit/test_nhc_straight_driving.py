@@ -10,6 +10,7 @@ from navigation.nhc.measurement import (
     NHCStatus,
 )
 from navigation.eskf.state import ESKFNominalState, ESKFState
+from navigation.alignment import AlignmentConfidence
 
 
 class TestNHCMeasurementModel:
@@ -138,7 +139,11 @@ class TestNHCMeasurementModel:
         )
         state = ESKFState(nominal=nom, covariance=np.eye(15) * 0.1)
         
-        updated_state, diag = model.update(state, is_stationary=False)
+        updated_state, diag = model.update(
+            state,
+            is_stationary=False,
+            alignment_confidence=AlignmentConfidence.HIGH_CONFIDENCE
+        )
         
         # Should apply normally during straight driving
         assert diag.applied == True
