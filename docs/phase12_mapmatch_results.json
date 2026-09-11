@@ -1,0 +1,166 @@
+{
+  "metadata": {
+    "phase": "Phase 12 Downstream Map Matching",
+    "dataset": "IO-VNBD Categorised_S1.npz",
+    "map": "OpenStreetMap Coventry/Warwick Extract (offline JSON)",
+    "rate_hz": 10.0
+  },
+  "scenario_a_continuous_gnss": {
+    "estimator_rmse_2d_m": 1.5496224217307877,
+    "display_rmse_2d_m": 1.8152972518896182,
+    "estimator_max_err_2d_m": 2.441643107329968,
+    "display_max_err_2d_m": 2.8899095471792093,
+    "telemetry": {
+      "total_epochs": 600,
+      "snapped_count": 591,
+      "fallback_count": 9,
+      "snap_rate_pct": 98.5,
+      "fallback_rate_pct": 1.5,
+      "fallback_reasons": {
+        "AMBIGUOUS_PARALLEL_ROADS": 9
+      },
+      "median_snap_dist_m": 1.3371926060368786,
+      "p95_snap_dist_m": 2.575113945115571,
+      "max_snap_dist_m": 2.83785018151803
+    },
+    "regression_audit": {
+      "improved_pct": 24.666666666666668,
+      "degraded_pct": 61.83333333333333,
+      "unchanged_pct": 13.5,
+      "max_degradation_m": 1.4004859291344312,
+      "mean_delta_m": 0.22720207539851855
+    }
+  },
+  "scenario_b_outages": {
+    "outage_10s": {
+      "outage_duration_s": 10.0,
+      "outage_metrics": {
+        "distance_travelled_m": 142.214178033542,
+        "est_final_drift_m": 7.151950742393724,
+        "disp_final_drift_m": 7.151950742393724,
+        "est_max_drift_m": 8.297359521864813,
+        "disp_max_drift_m": 8.27619352365149,
+        "est_drift_pct": 5.02899980950345,
+        "disp_drift_pct": 5.02899980950345
+      },
+      "telemetry": {
+        "total_epochs": 300,
+        "snapped_count": 287,
+        "fallback_count": 13,
+        "snap_rate_pct": 95.66666666666667,
+        "fallback_rate_pct": 4.333333333333334,
+        "fallback_reasons": {
+          "AMBIGUOUS_PARALLEL_ROADS": 13
+        },
+        "median_snap_dist_m": 1.966422253059768,
+        "p95_snap_dist_m": 3.762057871846433,
+        "max_snap_dist_m": 6.86500402912795
+      },
+      "regression_audit": {
+        "improved_pct": 46.0,
+        "degraded_pct": 39.0,
+        "unchanged_pct": 15.0,
+        "max_degradation_m": 0.6659642462528297,
+        "mean_delta_m": -0.23379791600518995
+      }
+    },
+    "outage_30s": {
+      "outage_duration_s": 30.0,
+      "outage_metrics": {
+        "distance_travelled_m": 426.58718983818807,
+        "est_final_drift_m": 86.18972589404797,
+        "disp_final_drift_m": 86.18972589404797,
+        "est_max_drift_m": 86.18972589404797,
+        "disp_max_drift_m": 86.18972589404797,
+        "est_drift_pct": 20.204480572129047,
+        "disp_drift_pct": 20.204480572129047
+      },
+      "telemetry": {
+        "total_epochs": 500,
+        "snapped_count": 237,
+        "fallback_count": 263,
+        "snap_rate_pct": 47.4,
+        "fallback_rate_pct": 52.6,
+        "fallback_reasons": {
+          "AMBIGUOUS_PARALLEL_ROADS": 14,
+          "LOW_CONFIDENCE": 79,
+          "LARGE_DISPLACEMENT": 60,
+          "NO_CANDIDATES": 110
+        },
+        "median_snap_dist_m": 2.4228543426631868,
+        "p95_snap_dist_m": 4.6862298912765405,
+        "max_snap_dist_m": 7.392314923032748
+      },
+      "regression_audit": {
+        "improved_pct": 25.4,
+        "degraded_pct": 19.6,
+        "unchanged_pct": 55.00000000000001,
+        "max_degradation_m": 6.755788518869892,
+        "mean_delta_m": -0.0743899214744069
+      }
+    },
+    "outage_60s": {
+      "outage_duration_s": 60.0,
+      "outage_metrics": {
+        "distance_travelled_m": 839.5426078824775,
+        "est_final_drift_m": 174.334456426211,
+        "disp_final_drift_m": 174.334456426211,
+        "est_max_drift_m": 175.24144505378808,
+        "disp_max_drift_m": 175.24144505378808,
+        "est_drift_pct": 20.76540902026679,
+        "disp_drift_pct": 20.76540902026679
+      },
+      "telemetry": {
+        "total_epochs": 800,
+        "snapped_count": 240,
+        "fallback_count": 560,
+        "snap_rate_pct": 30.0,
+        "fallback_rate_pct": 70.0,
+        "fallback_reasons": {
+          "AMBIGUOUS_PARALLEL_ROADS": 28,
+          "LOW_CONFIDENCE": 107,
+          "LARGE_DISPLACEMENT": 90,
+          "NO_CANDIDATES": 170,
+          "DISCONNECTED_TRANSITION": 165
+        },
+        "median_snap_dist_m": 2.437028133567723,
+        "p95_snap_dist_m": 5.638604925455036,
+        "max_snap_dist_m": 7.392314923032748
+      },
+      "regression_audit": {
+        "improved_pct": 16.0,
+        "degraded_pct": 12.5,
+        "unchanged_pct": 71.5,
+        "max_degradation_m": 6.755788518869892,
+        "mean_delta_m": -0.038843329537702295
+      }
+    }
+  },
+  "scenario_c_sharp_turn": {
+    "estimator_rmse_2d_m": 19.987859497105987,
+    "display_rmse_2d_m": 20.088411642622166,
+    "telemetry": {
+      "total_epochs": 400,
+      "snapped_count": 277,
+      "fallback_count": 123,
+      "snap_rate_pct": 69.25,
+      "fallback_rate_pct": 30.75,
+      "fallback_reasons": {
+        "LOW_CONFIDENCE": 48,
+        "AMBIGUOUS_PARALLEL_ROADS": 3,
+        "LARGE_DISPLACEMENT": 29,
+        "NO_CANDIDATES": 43
+      },
+      "median_snap_dist_m": 2.9310826107592964,
+      "p95_snap_dist_m": 4.375875945365065,
+      "max_snap_dist_m": 7.449946976253144
+    },
+    "regression_audit": {
+      "improved_pct": 8.5,
+      "degraded_pct": 59.25,
+      "unchanged_pct": 32.25,
+      "max_degradation_m": 4.096216574644433,
+      "mean_delta_m": 1.1943888969654646
+    }
+  }
+}
