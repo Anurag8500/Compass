@@ -8,8 +8,6 @@
   "scenario_a_continuous_gnss": {
     "estimator_rmse_2d_m": 1.5496224217307877,
     "display_rmse_2d_m": 1.8152972518896182,
-    "estimator_mean_err_2d_m": 1.5108880333888024,
-    "display_mean_err_2d_m": 1.7380901087873208,
     "estimator_max_err_2d_m": 2.441643107329968,
     "display_max_err_2d_m": 2.8899095471792093,
     "telemetry": {
@@ -36,10 +34,6 @@
   "scenario_b_outages": {
     "outage_10s": {
       "outage_duration_s": 10.0,
-      "estimator_rmse_2d_m": 3.561744966805527,
-      "display_rmse_2d_m": 3.2050212562517726,
-      "estimator_mean_err_2d_m": 2.811144311199264,
-      "display_mean_err_2d_m": 2.5773463951940743,
       "outage_metrics": {
         "distance_travelled_m": 142.214178033542,
         "est_final_drift_m": 7.151950742393724,
@@ -72,10 +66,6 @@
     },
     "outage_30s": {
       "outage_duration_s": 30.0,
-      "estimator_rmse_2d_m": 56.104403267735115,
-      "display_rmse_2d_m": 56.179012880672026,
-      "estimator_mean_err_2d_m": 41.30564877324266,
-      "display_mean_err_2d_m": 41.27184428044647,
       "outage_metrics": {
         "distance_travelled_m": 426.58718983818807,
         "est_final_drift_m": 86.18972589404797,
@@ -87,35 +77,30 @@
       },
       "telemetry": {
         "total_epochs": 500,
-        "snapped_count": 228,
-        "fallback_count": 272,
-        "snap_rate_pct": 45.6,
-        "fallback_rate_pct": 54.400000000000006,
+        "snapped_count": 237,
+        "fallback_count": 263,
+        "snap_rate_pct": 47.4,
+        "fallback_rate_pct": 52.6,
         "fallback_reasons": {
-          "AMBIGUOUS_PARALLEL_ROADS": 18,
-          "LOW_CONFIDENCE": 58,
+          "AMBIGUOUS_PARALLEL_ROADS": 14,
+          "LOW_CONFIDENCE": 79,
           "LARGE_DISPLACEMENT": 60,
-          "NO_CANDIDATES": 110,
-          "DISCONNECTED_TRANSITION": 26
+          "NO_CANDIDATES": 110
         },
-        "median_snap_dist_m": 2.4212365751314873,
-        "p95_snap_dist_m": 4.343270995727356,
+        "median_snap_dist_m": 2.4228543426631868,
+        "p95_snap_dist_m": 4.6862298912765405,
         "max_snap_dist_m": 7.392314923032748
       },
       "regression_audit": {
-        "improved_pct": 24.0,
-        "degraded_pct": 19.400000000000002,
-        "unchanged_pct": 56.599999999999994,
+        "improved_pct": 25.4,
+        "degraded_pct": 19.6,
+        "unchanged_pct": 55.00000000000001,
         "max_degradation_m": 6.755788518869892,
-        "mean_delta_m": -0.03380449279619347
+        "mean_delta_m": -0.0743899214744069
       }
     },
     "outage_60s": {
       "outage_duration_s": 60.0,
-      "estimator_rmse_2d_m": 110.67342328594071,
-      "display_rmse_2d_m": 110.68287713563544,
-      "estimator_mean_err_2d_m": 87.16373742139811,
-      "display_mean_err_2d_m": 87.13471611666264,
       "outage_metrics": {
         "distance_travelled_m": 839.5426078824775,
         "est_final_drift_m": 174.334456426211,
@@ -127,35 +112,33 @@
       },
       "telemetry": {
         "total_epochs": 800,
-        "snapped_count": 229,
-        "fallback_count": 571,
-        "snap_rate_pct": 28.625,
-        "fallback_rate_pct": 71.375,
+        "snapped_count": 240,
+        "fallback_count": 560,
+        "snap_rate_pct": 30.0,
+        "fallback_rate_pct": 70.0,
         "fallback_reasons": {
-          "AMBIGUOUS_PARALLEL_ROADS": 36,
-          "LOW_CONFIDENCE": 68,
+          "AMBIGUOUS_PARALLEL_ROADS": 28,
+          "LOW_CONFIDENCE": 107,
           "LARGE_DISPLACEMENT": 90,
           "NO_CANDIDATES": 170,
-          "DISCONNECTED_TRANSITION": 207
+          "DISCONNECTED_TRANSITION": 165
         },
-        "median_snap_dist_m": 2.4228543426631868,
-        "p95_snap_dist_m": 4.544524382073221,
+        "median_snap_dist_m": 2.437028133567723,
+        "p95_snap_dist_m": 5.638604925455036,
         "max_snap_dist_m": 7.392314923032748
       },
       "regression_audit": {
-        "improved_pct": 15.125,
-        "degraded_pct": 12.125,
-        "unchanged_pct": 72.75,
+        "improved_pct": 16.0,
+        "degraded_pct": 12.5,
+        "unchanged_pct": 71.5,
         "max_degradation_m": 6.755788518869892,
-        "mean_delta_m": -0.029021304735483585
+        "mean_delta_m": -0.038843329537702295
       }
     }
   },
   "scenario_c_sharp_turn": {
     "estimator_rmse_2d_m": 19.987859497105987,
     "display_rmse_2d_m": 20.088411642622166,
-    "estimator_mean_err_2d_m": 11.587172347899365,
-    "display_mean_err_2d_m": 12.781561244864829,
     "telemetry": {
       "total_epochs": 400,
       "snapped_count": 277,
@@ -179,46 +162,5 @@
       "max_degradation_m": 4.096216574644433,
       "mean_delta_m": 1.1943888969654646
     }
-  },
-  "scenario_d_stop_and_go": {
-    "estimator_rmse_2d_m": 1.374853690596947,
-    "display_rmse_2d_m": 2.2053307071514334,
-    "estimator_mean_err_2d_m": 1.0030758620939786,
-    "display_mean_err_2d_m": 2.104974611487679,
-    "telemetry": {
-      "total_epochs": 300,
-      "snapped_count": 291,
-      "fallback_count": 9,
-      "snap_rate_pct": 97.0,
-      "fallback_rate_pct": 3.0,
-      "fallback_reasons": {
-        "AMBIGUOUS_PARALLEL_ROADS": 8,
-        "LOW_CONFIDENCE": 1
-      },
-      "median_snap_dist_m": 1.5140854486559014,
-      "p95_snap_dist_m": 2.3117325040011125,
-      "max_snap_dist_m": 5.44778934189822
-    },
-    "regression_audit": {
-      "improved_pct": 3.6666666666666665,
-      "degraded_pct": 93.0,
-      "unchanged_pct": 3.3333333333333335,
-      "max_degradation_m": 2.174901738306715,
-      "mean_delta_m": 1.1018987493937005
-    }
-  },
-  "scenario_e_zero_coverage": {
-    "total_epochs": 50,
-    "snapped_count": 0,
-    "fallback_count": 50,
-    "snap_rate_pct": 0.0,
-    "fallback_rate_pct": 100.0,
-    "fallback_reason": "NO_CANDIDATES",
-    "exact_identity_confirmed": true
-  },
-  "scenario_f_parallel_road_ambiguity": {
-    "observed_ambiguity_fallbacks": 9,
-    "safeguard_activated": true,
-    "action_taken": "Emitted exact estimator coordinates; suppressed erratic oscillation between dual carriageways"
   }
 }

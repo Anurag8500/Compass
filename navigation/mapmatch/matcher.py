@@ -131,9 +131,15 @@ class MapMatcher:
         commit: ViterbiCommit,
         estimator_lat_lon: Tuple[float, float],
         estimator_enu: Tuple[float, float, float],
-        candidate_count: int,
+        candidate_count: Optional[int] = None,
     ) -> MapMatchOutput:
-        """Apply anti-catastrophic-snap safeguards and construct output."""
+        """Apply anti-catastrophic-snap safeguards and construct output.
+
+        Strictly causal and mature: evaluates the committed mature epoch using
+        the committed epoch's own metadata (candidate_count, scores, margin)
+        without contamination from current or subsequent ingestion epochs.
+        """
+        cand_count = commit.candidate_count if candidate_count is None else candidate_count
         cand = commit.candidate
 
         # Check 1: Empty candidate / no coverage
@@ -152,7 +158,7 @@ class MapMatcher:
                 distance_to_road_m=None,
                 road_heading_rad=None,
                 fallback_reason=reason,
-                candidate_count=candidate_count,
+                candidate_count=cand_count,
                 best_score=commit.best_score,
                 second_best_score=commit.second_best_score,
                 margin=commit.margin,
@@ -179,7 +185,7 @@ class MapMatcher:
                 distance_to_road_m=snap_dist,
                 road_heading_rad=cand.edge_azimuth_rad,
                 fallback_reason="LARGE_DISPLACEMENT",
-                candidate_count=candidate_count,
+                candidate_count=cand_count,
                 best_score=commit.best_score,
                 second_best_score=commit.second_best_score,
                 margin=commit.margin,
@@ -187,8 +193,8 @@ class MapMatcher:
             )
 
         # Check 3: Parallel-road ambiguity margin check
-        # If there are multiple candidates and the margin is too narrow
-        if candidate_count > 1 and commit.margin < self.ambiguity_margin:
+        # Evaluated using the mature epoch's candidate count and margin
+        if cand_count > 1 and commit.margin < self.ambiguity_margin:
             res_schema = MapMatchResult(
                 snapped=False,
                 confidence=0.2,
@@ -207,7 +213,7 @@ class MapMatcher:
                 distance_to_road_m=snap_dist,
                 road_heading_rad=cand.edge_azimuth_rad,
                 fallback_reason="AMBIGUOUS_PARALLEL_ROADS",
-                candidate_count=candidate_count,
+                candidate_count=cand_count,
                 best_score=commit.best_score,
                 second_best_score=commit.second_best_score,
                 margin=commit.margin,
@@ -229,7 +235,7 @@ class MapMatcher:
                 distance_to_road_m=snap_dist,
                 road_heading_rad=cand.edge_azimuth_rad,
                 fallback_reason="DISCONNECTED_TRANSITION",
-                candidate_count=candidate_count,
+                candidate_count=cand_count,
                 best_score=commit.best_score,
                 second_best_score=commit.second_best_score,
                 margin=commit.margin,
@@ -262,7 +268,7 @@ class MapMatcher:
                 distance_to_road_m=snap_dist,
                 road_heading_rad=cand.edge_azimuth_rad,
                 fallback_reason="LOW_CONFIDENCE",
-                candidate_count=candidate_count,
+                candidate_count=cand_count,
                 best_score=commit.best_score,
                 second_best_score=commit.second_best_score,
                 margin=commit.margin,
@@ -299,7 +305,7 @@ class MapMatcher:
             distance_to_road_m=snap_dist,
             road_heading_rad=cand.edge_azimuth_rad,
             fallback_reason=None,
-            candidate_count=candidate_count,
+            candidate_count=cand_count,
             best_score=commit.best_score,
             second_best_score=commit.second_best_score,
             margin=commit.margin,
@@ -358,9 +364,9 @@ class MapMatcher:
             )
             emissions.append(log_e)
 
-        # Step causal fixed-lag Viterbi
+        # Step causal fixed-lag Viterbi with effective timestamp t_ns
         commit = self.viterbi.step(
-            timestamp_ns=timestamp_ns,
+            timestamp_ns=t_ns,
             traj_pos_enu=e2d,
             candidates=candidates,
             log_emissions=emissions,
@@ -379,7 +385,6 @@ class MapMatcher:
             commit=commit,
             estimator_lat_lon=comm_lat_lon,
             estimator_enu=comm_enu,
-            candidate_count=len(candidates),
         )
 
     def flush_remaining(self, geo_ref: GeoReference) -> List[MapMatchOutput]:
@@ -394,7 +399,6 @@ class MapMatcher:
                 commit=commit,
                 estimator_lat_lon=comm_lat_lon,
                 estimator_enu=comm_enu,
-                candidate_count=1 if commit.candidate else 0,
             )
             outputs.append(out)
         return outputs

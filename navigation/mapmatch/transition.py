@@ -60,18 +60,13 @@ class TransitionModel:
         # Case A: Same directed edge
         if c_prev.edge_id == c_curr.edge_id:
             d_along = c_curr.distance_along_edge_m - c_prev.distance_along_edge_m
-            if d_along >= 0.0:
-                return d_along
+            if d_along >= -1.0:
+                return max(0.0, d_along)
             else:
-                # Moving backward along edge
-                edge_data = self.road_graph.graph.edges.get((c_prev.u, c_prev.v), {})
-                oneway = edge_data.get("oneway", False)
-                if oneway:
-                    # Illegal backward motion on one-way road
-                    return None
-                else:
-                    # Bidirectional road slight jitter or reverse travel
-                    return abs(d_along)
+                # In a directed graph, each directed edge has an encoded travel direction.
+                # Backward travel along any directed edge beyond projection jitter is rejected.
+                # For bidirectional roads, legitimate reverse travel must use the matching reverse directed edge.
+                return None
 
         # Case B: Different edges
         # Remaining distance along previous edge to its target node v_prev
@@ -110,9 +105,10 @@ class TransitionModel:
         d_curr_prog = max(0.0, c_curr.distance_along_edge_m)
         d_total = d_prev_rem + d_inter + d_curr_prog
 
-        # Plausibility check: vehicle cannot travel faster than max_speed_mps
+        # Plausibility check: vehicle cannot travel faster than max_speed_mps plus
+        # the geometric candidate search radius span (2 * R_search = 70.0 m)
         if delta_t_s is not None and delta_t_s > 0.0:
-            max_possible_dist = self.max_speed_mps * delta_t_s + 20.0
+            max_possible_dist = self.max_speed_mps * delta_t_s + 70.0
             if d_total > max_possible_dist:
                 return None
 

@@ -32,6 +32,8 @@ class ViterbiCommit:
     margin: float
     is_mature: bool
     fallback_reason: Optional[str] = None
+    candidate_count: int = 0
+    second_best_candidate: Optional[RoadCandidate] = None
 
 
 @dataclass
@@ -216,6 +218,8 @@ class FixedLagViterbi:
                 margin=0.0,
                 is_mature=True,
                 fallback_reason="NO_CANDIDATES",
+                candidate_count=len(oldest.candidates),
+                second_best_candidate=None,
             )
 
         # Follow backpointers down to oldest epoch
@@ -229,6 +233,7 @@ class FixedLagViterbi:
         oldest_choice_idx = path_indices[0]
 
         oldest = self._buffer.popleft()
+        mature_cand_count = len(oldest.candidates)
 
         if oldest_choice_idx < 0 or oldest_choice_idx >= len(oldest.candidates):
             return ViterbiCommit(
@@ -241,18 +246,26 @@ class FixedLagViterbi:
                 margin=0.0,
                 is_mature=True,
                 fallback_reason="NO_CANDIDATES",
+                candidate_count=mature_cand_count,
+                second_best_candidate=None,
             )
 
         committed_cand = oldest.candidates[oldest_choice_idx]
         best_score = float(oldest.viterbi_scores[oldest_choice_idx])
 
-        # Compute margin between committed candidate and best alternative in oldest epoch
-        other_scores = [float(oldest.viterbi_scores[k]) for k in range(len(oldest.candidates)) if k != oldest_choice_idx]
-        if other_scores:
-            second_score = max(other_scores)
+        # Compute margin and identify second-best candidate in the mature oldest epoch
+        other_candidates = [
+            (k, float(oldest.viterbi_scores[k]))
+            for k in range(len(oldest.candidates))
+            if k != oldest_choice_idx
+        ]
+        if other_candidates:
+            second_cand_idx, second_score = max(other_candidates, key=lambda item: item[1])
+            second_best_cand = oldest.candidates[second_cand_idx]
             margin = max(0.0, best_score - second_score) if second_score > LOG_ZERO else 100.0
         else:
             second_score = LOG_ZERO
+            second_best_cand = None
             margin = 100.0
 
         return ViterbiCommit(
@@ -265,6 +278,8 @@ class FixedLagViterbi:
             margin=margin,
             is_mature=True,
             fallback_reason=None,
+            candidate_count=mature_cand_count,
+            second_best_candidate=second_best_cand,
         )
 
     def flush_remaining(self) -> List[ViterbiCommit]:
