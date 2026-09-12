@@ -28,6 +28,13 @@ This `docs/notes/` directory contains **fourteen phase documentation Markdown do
 | [Phase 4 — Conceptual](./conceptual/phase_4.md) | 4 | Strapdown INS, quaternion propagation, ablation baseline |
 | [Phase 5 — Conceptual](./conceptual/phase_5.md) | 5 | ESKF, GNSS/ZUPT fusion, gating, covariance reset |
 | [Phase 6 — Conceptual](./conceptual/phase_6.md) | 6 | ML dataset, causal windowing, driver split, normalization |
+| [Phase 7 — Conceptual](./conceptual/phase_7.md) | 7 | VelocityNet pseudo-velocity learning, 1D-CNN, causal EMA |
+| [Phase 8 — Conceptual](./conceptual/phase_8.md) | 8 | BiasNet inverse optimization, identifiability gating, bias learning |
+| [Phase 9 — Conceptual](./conceptual/phase_9.md) | 9 | ML-to-ESKF integration, filter authority, cadence scheduling |
+| [Phase 10 — Conceptual](./conceptual/phase_10.md) | 10 | GNSS trust scoring, outage detection, 3-state FSM, recovery |
+| [Phase 11 — Conceptual](./conceptual/phase_11.md) | 11 | Non-Holonomic Constraints (NHC), Simon-Chia projection, skid relaxation |
+| [Phase 12 — Conceptual](./conceptual/phase_12.md) | 12 | Downstream OSM map matching, HMM, online fixed-lag Viterbi |
+| [Phase 13 — Conceptual](./conceptual/phase_13.md) | 13 | Full system integration, 3-axis evaluation, SIH PS 26168 compliance |
 
 ### Set B: Implementation Walkthroughs
 > *Start here if you want to understand HOW we built it, step by step.*
