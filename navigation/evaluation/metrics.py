@@ -314,12 +314,32 @@ def compute_trajectory_metrics(
 
         snap_dists = [o.distance_to_road_m for o in mm_outputs if o.snapped and o.distance_to_road_m is not None]
 
-        # Cross-track & along-track displacement relative to reference
+        # Cross-track & along-track displacement relative to reference trajectory
         disp_pos = np.array([o.display_enu for o in mm_outputs])
         ref_sub = np.asarray(ref_pos_enu[:total], dtype=np.float64)
         err_vec = disp_pos[:, :2] - ref_sub[:, :2]
-        cross_track = float(np.sqrt(np.mean(err_vec[:, 1] ** 2)))
-        along_track = float(np.sqrt(np.mean(err_vec[:, 0] ** 2)))
+
+        tangents = None
+        if ref_headings_rad is not None and len(ref_headings_rad) >= total:
+            headings = np.asarray(ref_headings_rad[:total], dtype=np.float64)
+            tangents = np.column_stack([np.cos(headings), np.sin(headings)])
+        else:
+            ref_vel_sub = np.asarray(ref_vel_enu[:total, :2], dtype=np.float64)
+            vel_norms = np.linalg.norm(ref_vel_sub, axis=1, keepdims=True)
+            valid_speed = (vel_norms > 1e-3).squeeze()
+            if np.any(valid_speed):
+                tangents = np.zeros_like(ref_vel_sub)
+                tangents[valid_speed] = ref_vel_sub[valid_speed] / vel_norms[valid_speed]
+
+        if tangents is not None:
+            normals = np.column_stack([-tangents[:, 1], tangents[:, 0]])
+            err_along = np.sum(err_vec * tangents, axis=1)
+            err_cross = np.sum(err_vec * normals, axis=1)
+            along_track = float(np.sqrt(np.mean(err_along ** 2)))
+            cross_track = float(np.sqrt(np.mean(err_cross ** 2)))
+        else:
+            along_track = float("nan")
+            cross_track = float("nan")
 
         mm_m = MapMatchMetrics(
             total_epochs=total,

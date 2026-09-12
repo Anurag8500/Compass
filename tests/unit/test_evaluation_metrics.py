@@ -58,11 +58,13 @@ def test_synthetic_50m_and_1km_generators() -> None:
     gen = SyntheticTrajectoryGenerator()
     b1 = gen.generate_50m_benchmark()
     assert b1["distance_travelled_m"] == pytest.approx(50.0, abs=0.5)
-    assert b1["duration_s"] < 60.0
+    assert b1["blackout_duration_s"] == pytest.approx(50.0, abs=0.1)
+    assert b1["total_duration_s"] == pytest.approx(60.0, abs=0.1)
 
     b2 = gen.generate_1km_60kmh_benchmark()
     assert b2["distance_travelled_m"] == pytest.approx(1000.0, abs=1.0)
-    assert b2["duration_s"] == pytest.approx(60.0, abs=0.1)
+    assert b2["blackout_duration_s"] == pytest.approx(60.0, abs=0.1)
+    assert b2["total_duration_s"] == pytest.approx(70.0, abs=0.1)
     assert b2["is_synthetic"] is True
 
 

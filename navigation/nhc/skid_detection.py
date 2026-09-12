@@ -125,51 +125,79 @@ class SkidSlipDetector:
 
         is_dynamic = bool(high_yaw or high_lat_accel)
 
-        # 2. Severe innovation inconsistency check -> SKIP
-        if nis > self.config.severe_gate_threshold:
+        # If inertial readings are not provided, we cannot confirm non-dynamic conditions.
+        # Fall back to conservative severe gate threshold to prevent unverified updates.
+        has_inertial = (omega_v is not None and f_v is not None)
+        if not has_inertial and nis > self.config.severe_gate_threshold:
             return SkidEvaluationResult(
                 status=NHCStatus.SKIPPED,
                 applied=False,
                 inflation_factor=1.0,
                 nis=nis,
                 reason="SKIPPED_SEVERE_INNOVATION",
-                is_kinematically_dynamic=is_dynamic,
+                is_kinematically_dynamic=False,
             )
 
-        # 3. Dynamic cornering check with high NIS -> SKIP
-        if is_dynamic and nis > self.config.chi2_gate_threshold:
+        # 2. Dynamic maneuvers (skid or sharp cornering):
+        # When high yaw rate or high lateral acceleration is detected, elevated NIS
+        # represents true tire slip / cornering forces and must be skipped to avoid corrupting attitude.
+        if is_dynamic:
+            if nis > self.config.severe_gate_threshold:
+                return SkidEvaluationResult(
+                    status=NHCStatus.SKIPPED,
+                    applied=False,
+                    inflation_factor=1.0,
+                    nis=nis,
+                    reason="SKIPPED_SEVERE_INNOVATION",
+                    is_kinematically_dynamic=True,
+                )
+            if nis > self.config.chi2_gate_threshold:
+                return SkidEvaluationResult(
+                    status=NHCStatus.SKIPPED,
+                    applied=False,
+                    inflation_factor=1.0,
+                    nis=nis,
+                    reason="SKIPPED_DYNAMIC_CORNERING_INCONSISTENCY",
+                    is_kinematically_dynamic=True,
+                )
+            # Moderate dynamic motion with low NIS: accept with conservative relaxation
+            return SkidEvaluationResult(
+                status=NHCStatus.RELAXED,
+                applied=True,
+                inflation_factor=2.0,
+                nis=nis,
+                reason="ACCEPTED_RELAXED_KINEMATIC",
+                is_kinematically_dynamic=True,
+            )
+
+        # 3. Non-dynamic motion (normal road driving without high yaw rate or lateral acceleration):
+        # On dry asphalt during straight or gentle driving, lateral tire slip is physically impossible.
+        # Elevated NIS is unambiguous proof of HEADING MISALIGNMENT (gyro bias drift).
+        # Reject extreme statistical anomalies (nis > 64.0, ~8-sigma) for numerical safety.
+        if nis > 64.0:
             return SkidEvaluationResult(
                 status=NHCStatus.SKIPPED,
                 applied=False,
                 inflation_factor=1.0,
                 nis=nis,
-                reason="SKIPPED_DYNAMIC_CORNERING_INCONSISTENCY",
-                is_kinematically_dynamic=True,
+                reason="SKIPPED_EXTREME_INNOVATION",
+                is_kinematically_dynamic=False,
             )
 
-        # 4. Elevated NIS or moderate dynamic motion -> RELAX (adaptive covariance inflation)
-        if nis > self.config.chi2_gate_threshold or is_dynamic:
-            # Scale covariance smoothly with NIS ratio
+        if nis > self.config.chi2_gate_threshold:
+            # Adaptively inflate covariance to allow smooth attitude correction without filter shock
             nis_ratio = nis / max(self.config.chi2_gate_threshold, 1e-3)
             inflation = min(self.config.max_inflation_factor, max(1.0, float(nis_ratio)))
-            
-            # If dynamic motion alone triggered relaxation
-            if is_dynamic and nis <= self.config.chi2_gate_threshold:
-                inflation = max(2.0, inflation)
-                reason = "ACCEPTED_RELAXED_KINEMATIC"
-            else:
-                reason = "ACCEPTED_RELAXED_INNOVATION"
-
             return SkidEvaluationResult(
                 status=NHCStatus.RELAXED,
                 applied=True,
                 inflation_factor=inflation,
                 nis=nis,
-                reason=reason,
-                is_kinematically_dynamic=is_dynamic,
+                reason="ACCEPTED_RELAXED_HEADING",
+                is_kinematically_dynamic=False,
             )
 
-        # 5. Normal statistically consistent measurement -> ACCEPT with base covariance
+        # 4. Normal statistically consistent measurement -> ACCEPT with base covariance
         return SkidEvaluationResult(
             status=NHCStatus.NORMAL,
             applied=True,

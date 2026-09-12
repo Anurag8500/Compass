@@ -64,6 +64,17 @@ class DynamicMountingAligner:
         self._epoch_count: int = 0
         self.state = DynamicAlignmentState()
 
+    def set_prealigned(self, mounting_yaw_deg: float = 0.0) -> None:
+        """Explicitly set pre-aligned status for pre-aligned devices or synthetic benchmarks."""
+        self.state = DynamicAlignmentState(
+            confidence=AlignmentConfidence.CONFIDENT,
+            mounting_yaw_deg=float(mounting_yaw_deg),
+            accumulated_epochs=self.min_epochs_confident,
+            mean_resultant_length=1.0,
+            circular_dispersion_deg=0.0,
+            is_frozen=False,
+        )
+
     def freeze(self) -> None:
         """Freeze alignment during GNSS outage or degraded navigation."""
         self.state.is_frozen = True

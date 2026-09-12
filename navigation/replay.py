@@ -39,6 +39,7 @@ class ReplayConfig:
     enable_map_matching: bool = True
     map_matching_lag_epochs: int = 8
     map_matching_search_radius_m: float = 35.0
+    assume_prealigned: bool = False
 
 
 @dataclass
@@ -68,6 +69,7 @@ def run_offline_replay(
     core_config: NavigationCoreConfig,
     replay_config: ReplayConfig,
     road_graph: Optional[RoadNetworkGraph] = None,
+    calib_accel_bias: Optional[np.ndarray] = None,
 ) -> ReplayResult:
     """Execute a fully deterministic end-to-end replay on resampled sensor data.
 
@@ -77,6 +79,7 @@ def run_offline_replay(
         core_config: NavigationCoreConfig specifying which modules (GNSS, ML, NHC, ZUPT) are active.
         replay_config: ReplayConfig specifying slice range, outage window, and rates.
         road_graph: Optional RoadNetworkGraph for downstream map matching.
+        calib_accel_bias: Optional 3-vector calibrated initial accelerometer bias.
 
     Returns:
         ReplayResult containing full state trajectories, diagnostics, and metrics.
@@ -112,7 +115,9 @@ def run_offline_replay(
         v0_enu=v_init,
         q0=q0,
         gyro_bias0=calib_gyro_bias,
+        accel_bias0=calib_accel_bias,
         timestamp_ns=t0_ns,
+        assume_prealigned=replay_config.assume_prealigned,
     )
 
     matcher: Optional[MapMatcher] = None

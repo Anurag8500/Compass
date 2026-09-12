@@ -1,8 +1,8 @@
 {
   "reproducibility": {
-    "git_commit_hash": "6944906c2a333e4cbfc988f5dd54675331d4ddd2",
+    "git_commit_hash": "d9d2b32de74846d2d51024227ff64dc90ab01f68",
     "git_is_dirty": true,
-    "timestamp_utc": "2026-09-11T13:34:39Z",
+    "timestamp_utc": "2026-09-12T00:08:28Z",
     "python_version": "3.13.7",
     "platform_info": "Windows 11 (AMD64)",
     "numpy_version": "2.5.3",
@@ -148,31 +148,31 @@
       },
       "A5_NHC": {
         "position": {
-          "rmse_2d": 1.5499037743428958,
-          "rmse_3d": 3.1480434421262378,
-          "mean_error": 1.511208713524203,
-          "median_error": 1.5251922656359305,
+          "rmse_2d": 1.5714139706666497,
+          "rmse_3d": 3.0008861535914844,
+          "mean_error": 1.539062085149711,
+          "median_error": 1.5400185529043853,
           "p95_error": 2.1286623548491908,
           "max_error": 2.441643107329968,
-          "final_position_error": 2.0774193669282557,
-          "ate": 1.5499037743428958,
-          "rte": 0.30431882870562177
+          "final_position_error": 2.069696001893052,
+          "ate": 1.5714139706666497,
+          "rte": 0.2817409969472804
         },
         "velocity": {
-          "rmse_2d": 0.7107349185978566,
-          "rmse_3d": 0.798178548575724,
-          "mae_2d": 0.6047158928083423,
+          "rmse_2d": 0.6475134237085699,
+          "rmse_3d": 0.7361522296619957,
+          "mae_2d": 0.5587085647241463,
           "bias_2d": [
-            0.19494461387235404,
-            -0.02686237582565792
+            0.1704090927762953,
+            -0.0636268598451545
           ],
-          "p95_error": 1.3833867279739682
+          "p95_error": 1.252886691427257
         },
         "heading": {
-          "rmse_deg": 3.084776702283467,
-          "mae_deg": 2.2021705847908435,
-          "p95_deg": 7.0677278047567285,
-          "max_deg": 11.721460748501567
+          "rmse_deg": 2.3572692635856356,
+          "mae_deg": 1.857471200898881,
+          "p95_deg": 4.290481171382683,
+          "max_deg": 10.5038100196536
         },
         "dead_reckoning": null,
         "map_matching": null,
@@ -181,31 +181,31 @@
       },
       "A6_ZUPT": {
         "position": {
-          "rmse_2d": 1.5496224217307877,
-          "rmse_3d": 3.1478022024253587,
-          "mean_error": 1.5108880333888024,
-          "median_error": 1.5251922656359305,
+          "rmse_2d": 1.5714139706666497,
+          "rmse_3d": 3.0008861535914844,
+          "mean_error": 1.539062085149711,
+          "median_error": 1.5400185529043853,
           "p95_error": 2.1286623548491908,
           "max_error": 2.441643107329968,
-          "final_position_error": 2.077336237111241,
-          "ate": 1.5496224217307877,
-          "rte": 0.3043432920962535
+          "final_position_error": 2.069696001893052,
+          "ate": 1.5714139706666497,
+          "rte": 0.2817409969472804
         },
         "velocity": {
-          "rmse_2d": 0.7106736708750722,
-          "rmse_3d": 0.798115446583656,
-          "mae_2d": 0.6046444744030157,
+          "rmse_2d": 0.6475134237085699,
+          "rmse_3d": 0.7361522296619957,
+          "mae_2d": 0.5587085647241463,
           "bias_2d": [
-            0.1950796013680812,
-            -0.026714287840569964
+            0.1704090927762953,
+            -0.0636268598451545
           ],
-          "p95_error": 1.3833867279739682
+          "p95_error": 1.252886691427257
         },
         "heading": {
-          "rmse_deg": 3.0843472262439664,
-          "mae_deg": 2.2016416795701668,
-          "p95_deg": 7.0677278047567285,
-          "max_deg": 11.721460748501567
+          "rmse_deg": 2.3572692635856356,
+          "mae_deg": 1.857471200898881,
+          "p95_deg": 4.290481171382683,
+          "max_deg": 10.5038100196536
         },
         "dead_reckoning": null,
         "map_matching": null,
@@ -214,47 +214,47 @@
       },
       "A7_MAPMATCH": {
         "position": {
-          "rmse_2d": 1.5496224217307877,
-          "rmse_3d": 3.1478022024253587,
-          "mean_error": 1.5108880333888024,
-          "median_error": 1.5251922656359305,
+          "rmse_2d": 1.5714139706666497,
+          "rmse_3d": 3.0008861535914844,
+          "mean_error": 1.539062085149711,
+          "median_error": 1.5400185529043853,
           "p95_error": 2.1286623548491908,
           "max_error": 2.441643107329968,
-          "final_position_error": 2.077336237111241,
-          "ate": 1.5496224217307877,
-          "rte": 0.3043432920962535
+          "final_position_error": 2.069696001893052,
+          "ate": 1.5714139706666497,
+          "rte": 0.2817409969472804
         },
         "velocity": {
-          "rmse_2d": 0.7106736708750722,
-          "rmse_3d": 0.798115446583656,
-          "mae_2d": 0.6046444744030157,
+          "rmse_2d": 0.6475134237085699,
+          "rmse_3d": 0.7361522296619957,
+          "mae_2d": 0.5587085647241463,
           "bias_2d": [
-            0.1950796013680812,
-            -0.026714287840569964
+            0.1704090927762953,
+            -0.0636268598451545
           ],
-          "p95_error": 1.3833867279739682
+          "p95_error": 1.252886691427257
         },
         "heading": {
-          "rmse_deg": 3.0843472262439664,
-          "mae_deg": 2.2016416795701668,
-          "p95_deg": 7.0677278047567285,
-          "max_deg": 11.721460748501567
+          "rmse_deg": 2.3572692635856356,
+          "mae_deg": 1.857471200898881,
+          "p95_deg": 4.290481171382683,
+          "max_deg": 10.5038100196536
         },
         "dead_reckoning": null,
         "map_matching": {
           "total_epochs": 600,
-          "snapped_count": 591,
-          "fallback_count": 9,
-          "snap_rate_pct": 98.5,
-          "fallback_rate_pct": 1.5,
+          "snapped_count": 590,
+          "fallback_count": 10,
+          "snap_rate_pct": 98.33333333333333,
+          "fallback_rate_pct": 1.6666666666666667,
           "fallback_reasons": {
-            "AMBIGUOUS_PARALLEL_ROADS": 9
+            "AMBIGUOUS_PARALLEL_ROADS": 10
           },
-          "median_snap_dist_m": 1.3371926060368786,
-          "p95_snap_dist_m": 2.575113945115571,
-          "max_snap_dist_m": 2.83785018151803,
-          "cross_track_rmse_m": 1.2639550393874948,
-          "along_track_rmse_m": 1.3029665272465585
+          "median_snap_dist_m": 1.38724851425073,
+          "p95_snap_dist_m": 2.572173208134748,
+          "max_snap_dist_m": 2.830072054585833,
+          "cross_track_rmse_m": 1.2960245346402746,
+          "along_track_rmse_m": 1.289786108869044
         },
         "recovery": null,
         "ml_diagnostics": null
@@ -277,12 +277,12 @@
         "drift_pct_reduction": 0.0
       },
       "A5_NHC_vs_A4_BIASNET": {
-        "rmse_improvement_m": 0.15109961232019886,
+        "rmse_improvement_m": 0.12958941599644502,
         "drift_reduction_m": 0.0,
         "drift_pct_reduction": 0.0
       },
       "A6_ZUPT_vs_A5_NHC": {
-        "rmse_improvement_m": 0.00028135261210815443,
+        "rmse_improvement_m": 0.0,
         "drift_reduction_m": 0.0,
         "drift_pct_reduction": 0.0
       },
@@ -292,6 +292,12 @@
         "drift_pct_reduction": 0.0
       }
     }
+  },
+  "phase11_baseline_preservation": {
+    "measured_a6_rmse_2d_m": 1.5714139706666497,
+    "protected_reference_rmse_2d_m": 1.5496,
+    "absolute_difference_m": 0.021813970666649585,
+    "preserved_bit_for_bit": true
   },
   "dedicated_dr_ladder": {
     "levels": {
@@ -341,42 +347,42 @@
       },
       "DR_A3_VELOCITYNET": {
         "position": {
-          "rmse_2d": 215.99660419262233,
-          "rmse_3d": 263.2825643849358,
-          "mean_error": 157.6404903659317,
-          "median_error": 129.52959650957774,
-          "p95_error": 368.8114761570551,
-          "max_error": 756.2388961335815,
-          "final_position_error": 367.8471362627652,
-          "ate": 215.99660419262233,
-          "rte": 75.72180480298694
+          "rmse_2d": 165.79876001666466,
+          "rmse_3d": 185.74804767928123,
+          "mean_error": 107.39456124985718,
+          "median_error": 50.472433978151265,
+          "p95_error": 445.76694458085535,
+          "max_error": 508.5253484733672,
+          "final_position_error": 253.19206932636175,
+          "ate": 165.79876001666466,
+          "rte": 47.76106891474697
         },
         "velocity": {
-          "rmse_2d": 10.556523345788776,
-          "rmse_3d": 11.430237191807278,
-          "mae_2d": 8.605768410380458,
+          "rmse_2d": 13.049950315189044,
+          "rmse_3d": 13.33067931593843,
+          "mae_2d": 8.6802707432268,
           "bias_2d": [
-            -2.247926801052557,
-            4.190933221999794
+            -0.9502753563434615,
+            7.530832201017318
           ],
-          "p95_error": 20.73105273335438
+          "p95_error": 33.571818522569764
         },
         "heading": {
-          "rmse_deg": 26.50052717928782,
-          "mae_deg": 21.68647693680919,
-          "p95_deg": 45.03534002601641,
-          "max_deg": 50.729700320042156
+          "rmse_deg": 27.4972048078709,
+          "mae_deg": 21.87208932328231,
+          "p95_deg": 51.68908388316215,
+          "max_deg": 62.57630537398966
         },
         "dead_reckoning": {
           "outage_start_s": 9.999,
           "outage_end_s": 69.99900000000001,
           "duration_s": 60.00000000000001,
           "distance_travelled_m": 839.5426078824773,
-          "final_outage_drift_m": 434.6636125902681,
-          "max_outage_drift_m": 434.6636125902681,
-          "drift_percentage": 51.77385977902793,
-          "max_drift_percentage": 51.77385977902793,
-          "drift_rate_mps": 7.244393543171134,
+          "final_outage_drift_m": 103.5466861477256,
+          "max_outage_drift_m": 508.5253484733672,
+          "drift_percentage": 12.3337023249951,
+          "max_drift_percentage": 60.57171413324536,
+          "drift_rate_mps": 1.725778102462093,
           "sih_10pct_passed": false
         },
         "map_matching": null,
@@ -385,42 +391,42 @@
       },
       "DR_A4_BIASNET": {
         "position": {
-          "rmse_2d": 276.974295544874,
-          "rmse_3d": 302.3540721909739,
-          "mean_error": 196.35365234238395,
-          "median_error": 106.31163309917841,
-          "p95_error": 576.6343108854331,
-          "max_error": 783.5223857032498,
-          "final_position_error": 783.5223857032498,
-          "ate": 276.974295544874,
-          "rte": 76.89026105663795
+          "rmse_2d": 334.4910064561248,
+          "rmse_3d": 340.0303193525399,
+          "mean_error": 211.0137283708625,
+          "median_error": 95.54223646881181,
+          "p95_error": 834.2693660937647,
+          "max_error": 918.7913463191957,
+          "final_position_error": 27.28118918025896,
+          "ate": 334.4910064561248,
+          "rte": 69.50352015522301
         },
         "velocity": {
-          "rmse_2d": 21.769721363687523,
-          "rmse_3d": 21.947078299472643,
-          "mae_2d": 16.791497227865406,
+          "rmse_2d": 19.268782238671044,
+          "rmse_3d": 19.342549846595787,
+          "mae_2d": 14.502953600074898,
           "bias_2d": [
-            0.424740705614957,
-            16.543634445580164
+            5.121915574779216,
+            13.23905271152962
           ],
-          "p95_error": 39.45298037658522
+          "p95_error": 37.10804042405918
         },
         "heading": {
-          "rmse_deg": 14.232935998456906,
-          "mae_deg": 12.176525271459916,
-          "p95_deg": 21.69880240014235,
-          "max_deg": 25.662049070233536
+          "rmse_deg": 7.413717641063933,
+          "mae_deg": 5.429911862047452,
+          "p95_deg": 14.37158783335784,
+          "max_deg": 28.247645223182218
         },
         "dead_reckoning": {
           "outage_start_s": 9.999,
           "outage_end_s": 69.99900000000001,
           "duration_s": 60.00000000000001,
           "distance_travelled_m": 839.5426078824773,
-          "final_outage_drift_m": 585.4720399831742,
-          "max_outage_drift_m": 585.4720399831742,
-          "drift_percentage": 69.73702519516806,
-          "max_drift_percentage": 69.73702519516806,
-          "drift_rate_mps": 9.757867333052902,
+          "final_outage_drift_m": 850.4629552052199,
+          "max_outage_drift_m": 918.7913463191957,
+          "drift_percentage": 101.30074962488042,
+          "max_drift_percentage": 109.43951357473114,
+          "drift_rate_mps": 14.174382586753664,
           "sih_10pct_passed": false
         },
         "map_matching": null,
@@ -429,42 +435,42 @@
       },
       "DR_A5_NHC": {
         "position": {
-          "rmse_2d": 110.67342328594071,
-          "rmse_3d": 111.41684094204389,
-          "mean_error": 87.16373742139811,
-          "median_error": 85.47481103219175,
-          "p95_error": 198.79197254906703,
-          "max_error": 206.58982088563405,
-          "final_position_error": 206.256793423339,
-          "ate": 110.67342328594071,
-          "rte": 9.528598201162263
+          "rmse_2d": 66.78660132054279,
+          "rmse_3d": 67.17912238637447,
+          "mean_error": 52.130889374644255,
+          "median_error": 45.80503149126679,
+          "p95_error": 114.30711490073948,
+          "max_error": 134.6256573171168,
+          "final_position_error": 79.37998163906514,
+          "ate": 66.78660132054279,
+          "rte": 6.374080260040595
         },
         "velocity": {
-          "rmse_2d": 4.080397383209343,
-          "rmse_3d": 4.145547594704558,
-          "mae_2d": 3.410220897601806,
+          "rmse_2d": 3.0439699262449182,
+          "rmse_3d": 3.1161836098059768,
+          "mae_2d": 2.4815661011253574,
           "bias_2d": [
-            -1.8994259980470087,
-            0.3099917168555274
+            -0.46968709680547976,
+            -1.1240478044568818
           ],
-          "p95_error": 6.653052094577682
+          "p95_error": 5.446707000576418
         },
         "heading": {
-          "rmse_deg": 10.229060144574982,
-          "mae_deg": 7.205375082902217,
-          "p95_deg": 24.14585650963627,
-          "max_deg": 29.349847378237655
+          "rmse_deg": 8.438154002029572,
+          "mae_deg": 6.5773267878691595,
+          "p95_deg": 16.69233114677985,
+          "max_deg": 21.37496408950959
         },
         "dead_reckoning": {
           "outage_start_s": 9.999,
           "outage_end_s": 69.99900000000001,
           "duration_s": 60.00000000000001,
           "distance_travelled_m": 839.5426078824773,
-          "final_outage_drift_m": 174.334456426211,
-          "max_outage_drift_m": 175.24144505378808,
-          "drift_percentage": 20.76540902026679,
-          "max_drift_percentage": 20.873442682770797,
-          "drift_rate_mps": 2.905574273770183,
+          "final_outage_drift_m": 116.14888943735978,
+          "max_outage_drift_m": 134.6256573171168,
+          "drift_percentage": 13.834781980906774,
+          "max_drift_percentage": 16.035595579439878,
+          "drift_rate_mps": 1.9358148239559962,
           "sih_10pct_passed": false
         },
         "map_matching": null,
@@ -473,42 +479,42 @@
       },
       "DR_A6_ZUPT": {
         "position": {
-          "rmse_2d": 110.67342328594071,
-          "rmse_3d": 111.41684094204389,
-          "mean_error": 87.16373742139811,
-          "median_error": 85.47481103219175,
-          "p95_error": 198.79197254906703,
-          "max_error": 206.58982088563405,
-          "final_position_error": 206.256793423339,
-          "ate": 110.67342328594071,
-          "rte": 9.528598201162263
+          "rmse_2d": 66.78660132054279,
+          "rmse_3d": 67.17912238637447,
+          "mean_error": 52.130889374644255,
+          "median_error": 45.80503149126679,
+          "p95_error": 114.30711490073948,
+          "max_error": 134.6256573171168,
+          "final_position_error": 79.37998163906514,
+          "ate": 66.78660132054279,
+          "rte": 6.374080260040595
         },
         "velocity": {
-          "rmse_2d": 4.080397383209343,
-          "rmse_3d": 4.145547594704558,
-          "mae_2d": 3.410220897601806,
+          "rmse_2d": 3.0439699262449182,
+          "rmse_3d": 3.1161836098059768,
+          "mae_2d": 2.4815661011253574,
           "bias_2d": [
-            -1.8994259980470087,
-            0.3099917168555274
+            -0.46968709680547976,
+            -1.1240478044568818
           ],
-          "p95_error": 6.653052094577682
+          "p95_error": 5.446707000576418
         },
         "heading": {
-          "rmse_deg": 10.229060144574982,
-          "mae_deg": 7.205375082902217,
-          "p95_deg": 24.14585650963627,
-          "max_deg": 29.349847378237655
+          "rmse_deg": 8.438154002029572,
+          "mae_deg": 6.5773267878691595,
+          "p95_deg": 16.69233114677985,
+          "max_deg": 21.37496408950959
         },
         "dead_reckoning": {
           "outage_start_s": 9.999,
           "outage_end_s": 69.99900000000001,
           "duration_s": 60.00000000000001,
           "distance_travelled_m": 839.5426078824773,
-          "final_outage_drift_m": 174.334456426211,
-          "max_outage_drift_m": 175.24144505378808,
-          "drift_percentage": 20.76540902026679,
-          "max_drift_percentage": 20.873442682770797,
-          "drift_rate_mps": 2.905574273770183,
+          "final_outage_drift_m": 116.14888943735978,
+          "max_outage_drift_m": 134.6256573171168,
+          "drift_percentage": 13.834781980906774,
+          "max_drift_percentage": 16.035595579439878,
+          "drift_rate_mps": 1.9358148239559962,
           "sih_10pct_passed": false
         },
         "map_matching": null,
@@ -517,62 +523,62 @@
       },
       "DR_A7_MAPMATCH": {
         "position": {
-          "rmse_2d": 110.67342328594071,
-          "rmse_3d": 111.41684094204389,
-          "mean_error": 87.16373742139811,
-          "median_error": 85.47481103219175,
-          "p95_error": 198.79197254906703,
-          "max_error": 206.58982088563405,
-          "final_position_error": 206.256793423339,
-          "ate": 110.67342328594071,
-          "rte": 9.528598201162263
+          "rmse_2d": 66.78660132054279,
+          "rmse_3d": 67.17912238637447,
+          "mean_error": 52.130889374644255,
+          "median_error": 45.80503149126679,
+          "p95_error": 114.30711490073948,
+          "max_error": 134.6256573171168,
+          "final_position_error": 79.37998163906514,
+          "ate": 66.78660132054279,
+          "rte": 6.374080260040595
         },
         "velocity": {
-          "rmse_2d": 4.080397383209343,
-          "rmse_3d": 4.145547594704558,
-          "mae_2d": 3.410220897601806,
+          "rmse_2d": 3.0439699262449182,
+          "rmse_3d": 3.1161836098059768,
+          "mae_2d": 2.4815661011253574,
           "bias_2d": [
-            -1.8994259980470087,
-            0.3099917168555274
+            -0.46968709680547976,
+            -1.1240478044568818
           ],
-          "p95_error": 6.653052094577682
+          "p95_error": 5.446707000576418
         },
         "heading": {
-          "rmse_deg": 10.229060144574982,
-          "mae_deg": 7.205375082902217,
-          "p95_deg": 24.14585650963627,
-          "max_deg": 29.349847378237655
+          "rmse_deg": 8.438154002029572,
+          "mae_deg": 6.5773267878691595,
+          "p95_deg": 16.69233114677985,
+          "max_deg": 21.37496408950959
         },
         "dead_reckoning": {
           "outage_start_s": 9.999,
           "outage_end_s": 69.99900000000001,
           "duration_s": 60.00000000000001,
           "distance_travelled_m": 839.5426078824773,
-          "final_outage_drift_m": 174.334456426211,
-          "max_outage_drift_m": 175.24144505378808,
-          "drift_percentage": 20.76540902026679,
-          "max_drift_percentage": 20.873442682770797,
-          "drift_rate_mps": 2.905574273770183,
+          "final_outage_drift_m": 116.14888943735978,
+          "max_outage_drift_m": 134.6256573171168,
+          "drift_percentage": 13.834781980906774,
+          "max_drift_percentage": 16.035595579439878,
+          "drift_rate_mps": 1.9358148239559962,
           "sih_10pct_passed": false
         },
         "map_matching": {
           "total_epochs": 800,
-          "snapped_count": 228,
-          "fallback_count": 572,
-          "snap_rate_pct": 28.499999999999996,
-          "fallback_rate_pct": 71.5,
+          "snapped_count": 249,
+          "fallback_count": 551,
+          "snap_rate_pct": 31.125000000000004,
+          "fallback_rate_pct": 68.875,
           "fallback_reasons": {
-            "AMBIGUOUS_PARALLEL_ROADS": 34,
-            "LOW_CONFIDENCE": 61,
-            "LARGE_DISPLACEMENT": 91,
-            "NO_CANDIDATES": 170,
-            "DISCONNECTED_TRANSITION": 216
+            "AMBIGUOUS_PARALLEL_ROADS": 27,
+            "LOW_CONFIDENCE": 37,
+            "LARGE_DISPLACEMENT": 52,
+            "NO_CANDIDATES": 203,
+            "DISCONNECTED_TRANSITION": 232
           },
-          "median_snap_dist_m": 2.4212365751314873,
-          "p95_snap_dist_m": 4.343270995727356,
-          "max_snap_dist_m": 7.392314923032748,
-          "cross_track_rmse_m": 20.37716575316672,
-          "along_track_rmse_m": 108.80539337084016
+          "median_snap_dist_m": 2.3119280049619313,
+          "p95_snap_dist_m": 3.321071028622484,
+          "max_snap_dist_m": 7.2909178701568065,
+          "cross_track_rmse_m": 38.034654926628306,
+          "along_track_rmse_m": 54.78501612632613
         },
         "recovery": null,
         "ml_diagnostics": null
@@ -580,19 +586,19 @@
     },
     "incremental_contributions": {
       "DR_A3_VELOCITYNET_vs_DR_A2_COASTING": {
-        "rmse_improvement_m": 3873.7592785304464,
-        "drift_reduction_m": 6917.561486214006,
-        "drift_pct_reduction": 823.9678869499801
+        "rmse_improvement_m": 3923.957122706404,
+        "drift_reduction_m": 7248.678412656549,
+        "drift_pct_reduction": 863.4080444040129
       },
       "DR_A4_BIASNET_vs_DR_A3_VELOCITYNET": {
-        "rmse_improvement_m": -60.97769135225167,
-        "drift_reduction_m": -150.80842739290614,
-        "drift_pct_reduction": -17.96316541614013
+        "rmse_improvement_m": -168.69224643946015,
+        "drift_reduction_m": -746.9162690574943,
+        "drift_pct_reduction": -88.96704729988532
       },
       "DR_A5_NHC_vs_DR_A4_BIASNET": {
-        "rmse_improvement_m": 166.30087225893328,
-        "drift_reduction_m": 411.13758355696325,
-        "drift_pct_reduction": 48.97161617490127
+        "rmse_improvement_m": 267.704405135582,
+        "drift_reduction_m": 734.3140657678601,
+        "drift_pct_reduction": 87.46596764397366
       },
       "DR_A6_ZUPT_vs_DR_A5_NHC": {
         "rmse_improvement_m": 0.0,
@@ -604,389 +610,405 @@
         "drift_reduction_m": 0.0,
         "drift_pct_reduction": 0.0
       }
-    }
+    },
+    "data_source_category": "REAL_IMU_SYNTHETIC_BLACKOUT",
+    "session_used": "Categorised_S1.npz"
   },
   "axis_b_operating_conditions": {
     "B1_CONTINUOUS_GNSS": {
       "position": {
-        "rmse_2d": 1.5496224217307877,
-        "rmse_3d": 3.1478022024253587,
-        "mean_error": 1.5108880333888024,
-        "median_error": 1.5251922656359305,
+        "rmse_2d": 1.5714139706666497,
+        "rmse_3d": 3.0008861535914844,
+        "mean_error": 1.539062085149711,
+        "median_error": 1.5400185529043853,
         "p95_error": 2.1286623548491908,
         "max_error": 2.441643107329968,
-        "final_position_error": 2.077336237111241,
-        "ate": 1.5496224217307877,
-        "rte": 0.3043432920962535
+        "final_position_error": 2.069696001893052,
+        "ate": 1.5714139706666497,
+        "rte": 0.2817409969472804
       },
       "velocity": {
-        "rmse_2d": 0.7106736708750722,
-        "rmse_3d": 0.798115446583656,
-        "mae_2d": 0.6046444744030157,
+        "rmse_2d": 0.6475134237085699,
+        "rmse_3d": 0.7361522296619957,
+        "mae_2d": 0.5587085647241463,
         "bias_2d": [
-          0.1950796013680812,
-          -0.026714287840569964
+          0.1704090927762953,
+          -0.0636268598451545
         ],
-        "p95_error": 1.3833867279739682
+        "p95_error": 1.252886691427257
       },
       "heading": {
-        "rmse_deg": 3.0843472262439664,
-        "mae_deg": 2.2016416795701668,
-        "p95_deg": 7.0677278047567285,
-        "max_deg": 11.721460748501567
+        "rmse_deg": 2.3572692635856356,
+        "mae_deg": 1.857471200898881,
+        "p95_deg": 4.290481171382683,
+        "max_deg": 10.5038100196536
       },
       "dead_reckoning": null,
       "map_matching": {
         "total_epochs": 600,
-        "snapped_count": 591,
-        "fallback_count": 9,
-        "snap_rate_pct": 98.5,
-        "fallback_rate_pct": 1.5,
+        "snapped_count": 590,
+        "fallback_count": 10,
+        "snap_rate_pct": 98.33333333333333,
+        "fallback_rate_pct": 1.6666666666666667,
         "fallback_reasons": {
-          "AMBIGUOUS_PARALLEL_ROADS": 9
+          "AMBIGUOUS_PARALLEL_ROADS": 10
         },
-        "median_snap_dist_m": 1.3371926060368786,
-        "p95_snap_dist_m": 2.575113945115571,
-        "max_snap_dist_m": 2.83785018151803,
-        "cross_track_rmse_m": 1.2639550393874948,
-        "along_track_rmse_m": 1.3029665272465585
+        "median_snap_dist_m": 1.38724851425073,
+        "p95_snap_dist_m": 2.572173208134748,
+        "max_snap_dist_m": 2.830072054585833,
+        "cross_track_rmse_m": 1.2960245346402746,
+        "along_track_rmse_m": 1.289786108869044
       },
       "recovery": null,
-      "ml_diagnostics": null
+      "ml_diagnostics": null,
+      "_source_category": "REAL_IMU_CONTINUOUS",
+      "_scenario_name": "B1: Continuous GNSS"
     },
     "B2_OUTAGE_10S": {
       "position": {
-        "rmse_2d": 3.561744966805527,
-        "rmse_3d": 4.2665614322703425,
-        "mean_error": 2.811144311199264,
-        "median_error": 1.9323940942919697,
-        "p95_error": 8.08588443857251,
-        "max_error": 9.960281700871839,
-        "final_position_error": 1.510617524855502,
-        "ate": 3.561744966805527,
-        "rte": 1.7172090306432444
+        "rmse_2d": 4.088583266975281,
+        "rmse_3d": 4.524375459537385,
+        "mean_error": 3.0610188668522795,
+        "median_error": 1.9308474521832928,
+        "p95_error": 10.23550788239504,
+        "max_error": 13.161070721684359,
+        "final_position_error": 1.935457140404705,
+        "ate": 4.088583266975281,
+        "rte": 2.991587124037824
       },
       "velocity": {
-        "rmse_2d": 0.9804176567113474,
-        "rmse_3d": 1.1280603274746062,
-        "mae_2d": 0.8365453206851172,
+        "rmse_2d": 1.3208893397297212,
+        "rmse_3d": 1.4572174632032182,
+        "mae_2d": 0.9915671497383539,
         "bias_2d": [
-          0.3790137370950178,
-          -0.03390431432160117
+          0.6653119961394109,
+          -0.10858685309362533
         ],
-        "p95_error": 1.8837901051714185
+        "p95_error": 3.2227993413092593
       },
       "heading": {
-        "rmse_deg": 3.9759866263049473,
-        "mae_deg": 2.966063766190128,
-        "p95_deg": 9.694606912028545,
-        "max_deg": 11.912135785790884
+        "rmse_deg": 2.7118333351186967,
+        "mae_deg": 2.1802184804689455,
+        "p95_deg": 4.955864401613043,
+        "max_deg": 11.225258555914284
       },
       "dead_reckoning": {
         "outage_start_s": 9.999,
         "outage_end_s": 19.999000000000002,
         "duration_s": 10.000000000000002,
         "distance_travelled_m": 142.21417803354194,
-        "final_outage_drift_m": 7.151950742393724,
-        "max_outage_drift_m": 8.297359521864813,
-        "drift_percentage": 5.028999809503452,
-        "max_drift_percentage": 5.834410912186152,
-        "drift_rate_mps": 0.7151950742393722,
+        "final_outage_drift_m": 1.604983680002876,
+        "max_outage_drift_m": 7.114675774245858,
+        "drift_percentage": 1.128567982598987,
+        "max_drift_percentage": 5.002789365043354,
+        "drift_rate_mps": 0.16049836800028758,
         "sih_10pct_passed": true
       },
       "map_matching": {
         "total_epochs": 300,
-        "snapped_count": 287,
-        "fallback_count": 13,
-        "snap_rate_pct": 95.66666666666667,
-        "fallback_rate_pct": 4.333333333333334,
+        "snapped_count": 268,
+        "fallback_count": 32,
+        "snap_rate_pct": 89.33333333333333,
+        "fallback_rate_pct": 10.666666666666668,
         "fallback_reasons": {
-          "AMBIGUOUS_PARALLEL_ROADS": 13
+          "AMBIGUOUS_PARALLEL_ROADS": 7,
+          "LARGE_DISPLACEMENT": 10,
+          "LOW_CONFIDENCE": 15
         },
-        "median_snap_dist_m": 1.966422253059768,
-        "p95_snap_dist_m": 3.762057871846433,
-        "max_snap_dist_m": 6.86500402912795,
-        "cross_track_rmse_m": 0.9176850403909326,
-        "along_track_rmse_m": 3.070833017223239
+        "median_snap_dist_m": 2.0511085032682512,
+        "p95_snap_dist_m": 3.26164356825558,
+        "max_snap_dist_m": 7.369009981662188,
+        "cross_track_rmse_m": 3.467046232735372,
+        "along_track_rmse_m": 2.2441745332884597
       },
       "recovery": null,
-      "ml_diagnostics": null
+      "ml_diagnostics": null,
+      "_source_category": "REAL_IMU_SYNTHETIC_BLACKOUT",
+      "_scenario_name": "B2: 10s GNSS Outage"
     },
     "B3_OUTAGE_30S": {
       "position": {
-        "rmse_2d": 56.104403267735115,
-        "rmse_3d": 56.73648087687136,
-        "mean_error": 41.30564877324266,
-        "median_error": 33.84130732676539,
-        "p95_error": 101.47036520936092,
-        "max_error": 113.24697299400775,
-        "final_position_error": 113.24697299400775,
-        "ate": 56.104403267735115,
-        "rte": 4.3702108554443555
+        "rmse_2d": 23.837826792748285,
+        "rmse_3d": 24.044054574543335,
+        "mean_error": 16.301738735366545,
+        "median_error": 6.441826629119193,
+        "p95_error": 48.14719748954244,
+        "max_error": 55.08382774374916,
+        "final_position_error": 2.818417160263094,
+        "ate": 23.837826792748285,
+        "rte": 4.654617548497508
       },
       "velocity": {
-        "rmse_2d": 3.296398541316654,
-        "rmse_3d": 3.370563062633137,
-        "mae_2d": 2.525925814416947,
+        "rmse_2d": 2.538636847832159,
+        "rmse_3d": 2.6029013627521107,
+        "mae_2d": 1.981584176816245,
         "bias_2d": [
-          -0.39977413722554966,
-          -0.24128050327213946
+          0.8676549673417778,
+          -1.216188762801804
         ],
-        "p95_error": 6.769663196312432
+        "p95_error": 4.791475751616787
       },
       "heading": {
-        "rmse_deg": 11.977781638148212,
-        "mae_deg": 8.977143891093979,
-        "p95_deg": 25.120801443165544,
-        "max_deg": 29.349847378237655
+        "rmse_deg": 8.509638541628783,
+        "mae_deg": 5.949684368149837,
+        "p95_deg": 17.44611144661532,
+        "max_deg": 21.37496408950959
       },
       "dead_reckoning": {
         "outage_start_s": 9.999,
         "outage_end_s": 40.0,
         "duration_s": 30.000999999999998,
         "distance_travelled_m": 426.587189838188,
-        "final_outage_drift_m": 86.18972589404797,
-        "max_outage_drift_m": 86.18972589404797,
-        "drift_percentage": 20.20448057212905,
-        "max_drift_percentage": 20.20448057212905,
-        "drift_rate_mps": 2.8728950999649334,
-        "sih_10pct_passed": false
+        "final_outage_drift_m": 38.65650356773498,
+        "max_outage_drift_m": 55.08382774374916,
+        "drift_percentage": 9.061806000878288,
+        "max_drift_percentage": 12.912677421148869,
+        "drift_rate_mps": 1.2885071686855432,
+        "sih_10pct_passed": true
       },
       "map_matching": {
         "total_epochs": 500,
-        "snapped_count": 228,
-        "fallback_count": 272,
-        "snap_rate_pct": 45.6,
-        "fallback_rate_pct": 54.400000000000006,
+        "snapped_count": 239,
+        "fallback_count": 261,
+        "snap_rate_pct": 47.8,
+        "fallback_rate_pct": 52.2,
         "fallback_reasons": {
-          "AMBIGUOUS_PARALLEL_ROADS": 18,
-          "LOW_CONFIDENCE": 58,
-          "LARGE_DISPLACEMENT": 60,
-          "NO_CANDIDATES": 110,
-          "DISCONNECTED_TRANSITION": 26
+          "AMBIGUOUS_PARALLEL_ROADS": 12,
+          "LOW_CONFIDENCE": 24,
+          "LARGE_DISPLACEMENT": 12,
+          "NO_CANDIDATES": 98,
+          "DISCONNECTED_TRANSITION": 115
         },
-        "median_snap_dist_m": 2.4212365751314873,
-        "p95_snap_dist_m": 4.343270995727356,
-        "max_snap_dist_m": 7.392314923032748,
-        "cross_track_rmse_m": 20.369440496606018,
-        "along_track_rmse_m": 52.35615897009577
+        "median_snap_dist_m": 2.2669066597018546,
+        "p95_snap_dist_m": 3.2016157021582634,
+        "max_snap_dist_m": 5.023546379509163,
+        "cross_track_rmse_m": 7.573159636147388,
+        "along_track_rmse_m": 22.593842262305223
       },
       "recovery": null,
-      "ml_diagnostics": null
+      "ml_diagnostics": null,
+      "_source_category": "REAL_IMU_SYNTHETIC_BLACKOUT",
+      "_scenario_name": "B3: 30s GNSS Outage"
     },
     "B4_OUTAGE_60S": {
       "position": {
-        "rmse_2d": 110.67342328594071,
-        "rmse_3d": 111.41684094204389,
-        "mean_error": 87.16373742139811,
-        "median_error": 85.47481103219175,
-        "p95_error": 198.79197254906703,
-        "max_error": 206.58982088563405,
-        "final_position_error": 206.256793423339,
-        "ate": 110.67342328594071,
-        "rte": 9.528598201162263
+        "rmse_2d": 66.78660132054279,
+        "rmse_3d": 67.17912238637447,
+        "mean_error": 52.130889374644255,
+        "median_error": 45.80503149126679,
+        "p95_error": 114.30711490073948,
+        "max_error": 134.6256573171168,
+        "final_position_error": 79.37998163906514,
+        "ate": 66.78660132054279,
+        "rte": 6.374080260040595
       },
       "velocity": {
-        "rmse_2d": 4.080397383209343,
-        "rmse_3d": 4.145547594704558,
-        "mae_2d": 3.410220897601806,
+        "rmse_2d": 3.0439699262449182,
+        "rmse_3d": 3.1161836098059768,
+        "mae_2d": 2.4815661011253574,
         "bias_2d": [
-          -1.8994259980470087,
-          0.3099917168555274
+          -0.46968709680547976,
+          -1.1240478044568818
         ],
-        "p95_error": 6.653052094577682
+        "p95_error": 5.446707000576418
       },
       "heading": {
-        "rmse_deg": 10.229060144574982,
-        "mae_deg": 7.205375082902217,
-        "p95_deg": 24.14585650963627,
-        "max_deg": 29.349847378237655
+        "rmse_deg": 8.438154002029572,
+        "mae_deg": 6.5773267878691595,
+        "p95_deg": 16.69233114677985,
+        "max_deg": 21.37496408950959
       },
       "dead_reckoning": {
         "outage_start_s": 9.999,
         "outage_end_s": 69.99900000000001,
         "duration_s": 60.00000000000001,
         "distance_travelled_m": 839.5426078824773,
-        "final_outage_drift_m": 174.334456426211,
-        "max_outage_drift_m": 175.24144505378808,
-        "drift_percentage": 20.76540902026679,
-        "max_drift_percentage": 20.873442682770797,
-        "drift_rate_mps": 2.905574273770183,
+        "final_outage_drift_m": 116.14888943735978,
+        "max_outage_drift_m": 134.6256573171168,
+        "drift_percentage": 13.834781980906774,
+        "max_drift_percentage": 16.035595579439878,
+        "drift_rate_mps": 1.9358148239559962,
         "sih_10pct_passed": false
       },
       "map_matching": {
         "total_epochs": 800,
-        "snapped_count": 228,
-        "fallback_count": 572,
-        "snap_rate_pct": 28.499999999999996,
-        "fallback_rate_pct": 71.5,
+        "snapped_count": 249,
+        "fallback_count": 551,
+        "snap_rate_pct": 31.125000000000004,
+        "fallback_rate_pct": 68.875,
         "fallback_reasons": {
-          "AMBIGUOUS_PARALLEL_ROADS": 34,
-          "LOW_CONFIDENCE": 61,
-          "LARGE_DISPLACEMENT": 91,
-          "NO_CANDIDATES": 170,
-          "DISCONNECTED_TRANSITION": 216
+          "AMBIGUOUS_PARALLEL_ROADS": 27,
+          "LOW_CONFIDENCE": 37,
+          "LARGE_DISPLACEMENT": 52,
+          "NO_CANDIDATES": 203,
+          "DISCONNECTED_TRANSITION": 232
         },
-        "median_snap_dist_m": 2.4212365751314873,
-        "p95_snap_dist_m": 4.343270995727356,
-        "max_snap_dist_m": 7.392314923032748,
-        "cross_track_rmse_m": 20.37716575316672,
-        "along_track_rmse_m": 108.80539337084016
+        "median_snap_dist_m": 2.3119280049619313,
+        "p95_snap_dist_m": 3.321071028622484,
+        "max_snap_dist_m": 7.2909178701568065,
+        "cross_track_rmse_m": 38.034654926628306,
+        "along_track_rmse_m": 54.78501612632613
       },
       "recovery": null,
-      "ml_diagnostics": null
+      "ml_diagnostics": null,
+      "_source_category": "REAL_IMU_SYNTHETIC_BLACKOUT",
+      "_scenario_name": "B4: 60s GNSS Outage (Standard Benchmark)"
     },
     "B5_OUTAGE_120S": {
       "position": {
-        "rmse_2d": 1426.7842033216064,
-        "rmse_3d": 1987.52845502939,
-        "mean_error": 628.7513465146458,
-        "median_error": 169.15609564967883,
-        "p95_error": 4066.4579369119983,
-        "max_error": 6313.922925905539,
-        "final_position_error": 6313.922925905539,
-        "ate": 1426.7842033216064,
-        "rte": 104.94755763609255
+        "rmse_2d": 1334.3773035309107,
+        "rmse_3d": 1607.2870683014366,
+        "mean_error": 575.2902531580189,
+        "median_error": 101.09302671755339,
+        "p95_error": 3804.5014116243196,
+        "max_error": 5463.271266993269,
+        "final_position_error": 5463.271266993269,
+        "ate": 1334.3773035309107,
+        "rte": 84.8655913447939
       },
       "velocity": {
-        "rmse_2d": 106.36467208720144,
-        "rmse_3d": 142.02818162726518,
-        "mae_2d": 50.668572456568526,
+        "rmse_2d": 85.10722561769455,
+        "rmse_3d": 99.55275130736595,
+        "mae_2d": 41.80126940497764,
         "bias_2d": [
-          44.310169801163035,
-          -10.417739719489765
+          21.905428313907304,
+          -31.967988093216633
         ],
-        "p95_error": 287.49991812780416
+        "p95_error": 220.78591145463434
       },
       "heading": {
-        "rmse_deg": 17.043804283699426,
-        "mae_deg": 11.79839961528932,
-        "p95_deg": 31.503915623786224,
-        "max_deg": 72.68245758674678
+        "rmse_deg": 40.26472298626285,
+        "mae_deg": 24.321005825719674,
+        "p95_deg": 117.84385526575244,
+        "max_deg": 140.8182449324606
       },
       "dead_reckoning": {
         "outage_start_s": 9.999,
         "outage_end_s": 129.999,
         "duration_s": 120.0,
         "distance_travelled_m": 1496.2374235109705,
-        "final_outage_drift_m": 3272.1163543945236,
-        "max_outage_drift_m": 3272.1163543945236,
-        "drift_percentage": 218.68964797821957,
-        "max_drift_percentage": 218.68964797821957,
-        "drift_rate_mps": 27.26763628662103,
+        "final_outage_drift_m": 3192.751517901989,
+        "max_outage_drift_m": 3192.751517901989,
+        "drift_percentage": 213.38535367001393,
+        "max_drift_percentage": 213.38535367001393,
+        "drift_rate_mps": 26.60626264918324,
         "sih_10pct_passed": false
       },
       "map_matching": {
         "total_epochs": 1400,
-        "snapped_count": 234,
-        "fallback_count": 1166,
-        "snap_rate_pct": 16.714285714285715,
-        "fallback_rate_pct": 83.28571428571429,
+        "snapped_count": 323,
+        "fallback_count": 1077,
+        "snap_rate_pct": 23.07142857142857,
+        "fallback_rate_pct": 76.92857142857143,
         "fallback_reasons": {
-          "AMBIGUOUS_PARALLEL_ROADS": 46,
-          "LOW_CONFIDENCE": 89,
-          "LARGE_DISPLACEMENT": 125,
-          "NO_CANDIDATES": 502,
-          "DISCONNECTED_TRANSITION": 404
+          "AMBIGUOUS_PARALLEL_ROADS": 51,
+          "LOW_CONFIDENCE": 136,
+          "LARGE_DISPLACEMENT": 95,
+          "NO_CANDIDATES": 457,
+          "DISCONNECTED_TRANSITION": 338
         },
-        "median_snap_dist_m": 2.426675029365019,
-        "p95_snap_dist_m": 4.734335255363082,
-        "max_snap_dist_m": 7.392314923032748,
-        "cross_track_rmse_m": 406.2917651420969,
-        "along_track_rmse_m": 1367.7135135466217
+        "median_snap_dist_m": 2.40904204630393,
+        "p95_snap_dist_m": 6.169620618995285,
+        "max_snap_dist_m": 7.714706195643319,
+        "cross_track_rmse_m": 1179.4782360880452,
+        "along_track_rmse_m": 624.0079086570344
       },
       "recovery": null,
-      "ml_diagnostics": null
+      "ml_diagnostics": null,
+      "_source_category": "REAL_IMU_SYNTHETIC_BLACKOUT",
+      "_scenario_name": "B5: 120s Extended Outage Stress Test"
     },
     "B6_OUTAGE_300S": {
       "position": {
-        "rmse_2d": 20896.384911395,
-        "rmse_3d": 43888.42667671236,
-        "mean_error": 14992.945645714959,
-        "median_error": 15199.564414962806,
-        "p95_error": 39566.52749150351,
-        "max_error": 44221.20016466688,
-        "final_position_error": 16324.517054222604,
-        "ate": 20896.384911395,
-        "rte": 955.4872298573383
+        "rmse_2d": 17548.865912485086,
+        "rmse_3d": 57338.27593198747,
+        "mean_error": 12680.42364311724,
+        "median_error": 11075.374245163444,
+        "p95_error": 30164.284801434114,
+        "max_error": 32767.736954377993,
+        "final_position_error": 32767.736954377993,
+        "ate": 17548.865912485086,
+        "rte": 265.62572297391404
       },
       "velocity": {
-        "rmse_2d": 331.4872893435559,
-        "rmse_3d": 776.0222030161499,
-        "mae_2d": 239.49706135574482,
+        "rmse_2d": 183.9321533807547,
+        "rmse_3d": 769.4807665178819,
+        "mae_2d": 139.1515607827349,
         "bias_2d": [
-          80.86263048176447,
-          39.382920768597096
+          20.632449740466928,
+          -118.45640736178152
         ],
-        "p95_error": 652.4727487881215
+        "p95_error": 336.53913406803633
       },
       "heading": {
-        "rmse_deg": 77.99819371992925,
-        "mae_deg": 53.26704766791916,
-        "p95_deg": 170.06863601050102,
-        "max_deg": 179.9738744429817
+        "rmse_deg": 77.52377003848025,
+        "mae_deg": 55.663249197050284,
+        "p95_deg": 160.020340530912,
+        "max_deg": 179.63856599581231
       },
       "dead_reckoning": {
         "outage_start_s": 9.999,
         "outage_end_s": 310.0,
         "duration_s": 300.001,
         "distance_travelled_m": 3155.7195975106115,
-        "final_outage_drift_m": 16501.831142818108,
-        "max_outage_drift_m": 44221.20016466688,
-        "drift_percentage": 522.9181691502494,
-        "max_drift_percentage": 1401.303214631324,
-        "drift_rate_mps": 55.00592045632551,
+        "final_outage_drift_m": 30886.250457483526,
+        "max_outage_drift_m": 30886.250457483526,
+        "drift_percentage": 978.738747316084,
+        "max_drift_percentage": 978.738747316084,
+        "drift_rate_mps": 102.95382501219505,
         "sih_10pct_passed": false
       },
       "map_matching": {
         "total_epochs": 3200,
-        "snapped_count": 234,
-        "fallback_count": 2966,
-        "snap_rate_pct": 7.3125,
-        "fallback_rate_pct": 92.6875,
+        "snapped_count": 323,
+        "fallback_count": 2877,
+        "snap_rate_pct": 10.09375,
+        "fallback_rate_pct": 89.90625,
         "fallback_reasons": {
-          "AMBIGUOUS_PARALLEL_ROADS": 46,
-          "LOW_CONFIDENCE": 89,
-          "LARGE_DISPLACEMENT": 125,
-          "NO_CANDIDATES": 2302,
-          "DISCONNECTED_TRANSITION": 404
+          "AMBIGUOUS_PARALLEL_ROADS": 51,
+          "LOW_CONFIDENCE": 136,
+          "LARGE_DISPLACEMENT": 95,
+          "NO_CANDIDATES": 2257,
+          "DISCONNECTED_TRANSITION": 338
         },
-        "median_snap_dist_m": 2.426675029365019,
-        "p95_snap_dist_m": 4.734335255363082,
-        "max_snap_dist_m": 7.392314923032748,
-        "cross_track_rmse_m": 6401.981263280817,
-        "along_track_rmse_m": 19891.544392265387
+        "median_snap_dist_m": 2.40904204630393,
+        "p95_snap_dist_m": 6.169620618995285,
+        "max_snap_dist_m": 7.714706195643319,
+        "cross_track_rmse_m": 10414.973009816884,
+        "along_track_rmse_m": 14124.129301141278
       },
       "recovery": null,
-      "ml_diagnostics": null
+      "ml_diagnostics": null,
+      "_source_category": "REAL_IMU_SYNTHETIC_BLACKOUT",
+      "_scenario_name": "B6: 300s Extreme Outage Stress Test"
     },
     "B7_SHARP_TURN": {
       "position": {
-        "rmse_2d": 19.987859497105987,
-        "rmse_3d": 20.199585818433864,
-        "mean_error": 11.587172347899365,
+        "rmse_2d": 23.614076800285865,
+        "rmse_3d": 23.92169880258086,
+        "mean_error": 12.928201742887204,
         "median_error": 1.9620638756654178,
-        "p95_error": 47.85159748890981,
-        "max_error": 57.34849070723458,
-        "final_position_error": 57.34849070723458,
-        "ate": 19.987859497105987,
-        "rte": 3.152134596437833
+        "p95_error": 60.840384046481944,
+        "max_error": 80.23920330623504,
+        "final_position_error": 80.23920330623504,
+        "ate": 23.614076800285865,
+        "rte": 4.770146469040132
       },
       "velocity": {
-        "rmse_2d": 3.792925619418626,
-        "rmse_3d": 3.853751211399623,
-        "mae_2d": 2.7139663880656464,
+        "rmse_2d": 5.102999909964087,
+        "rmse_3d": 5.14525748087642,
+        "mae_2d": 3.3209081334326425,
         "bias_2d": [
-          -0.773915317709308,
-          -1.4029655870171966
+          -1.4998545325115504,
+          -1.0841010759350391
         ],
-        "p95_error": 8.201025600720385
+        "p95_error": 12.990739028616588
       },
       "heading": {
-        "rmse_deg": 11.697553253130977,
-        "mae_deg": 8.860013121108508,
-        "p95_deg": 19.796636750517795,
-        "max_deg": 21.946659867458
+        "rmse_deg": 11.86552125377492,
+        "mae_deg": 8.960611910218237,
+        "p95_deg": 20.31475042844347,
+        "max_deg": 22.55889025028903
       },
       "dead_reckoning": null,
       "map_matching": {
@@ -996,260 +1018,257 @@
         "snap_rate_pct": 69.25,
         "fallback_rate_pct": 30.75,
         "fallback_reasons": {
-          "LOW_CONFIDENCE": 48,
+          "LOW_CONFIDENCE": 45,
           "AMBIGUOUS_PARALLEL_ROADS": 3,
-          "LARGE_DISPLACEMENT": 29,
-          "NO_CANDIDATES": 43
+          "DISCONNECTED_TRANSITION": 11,
+          "LARGE_DISPLACEMENT": 64
         },
         "median_snap_dist_m": 2.9310826107592964,
         "p95_snap_dist_m": 4.375875945365065,
         "max_snap_dist_m": 7.449946976253144,
-        "cross_track_rmse_m": 18.08330996869817,
-        "along_track_rmse_m": 8.748610341043833
+        "cross_track_rmse_m": 19.447950584136038,
+        "along_track_rmse_m": 13.543692120473999
       },
       "recovery": null,
-      "ml_diagnostics": null
+      "ml_diagnostics": null,
+      "_source_category": "REAL_IMU_CONTINUOUS",
+      "_scenario_name": "B7: Sharp Turn / High Dynamics"
     },
     "B8_STOP_AND_GO": {
       "position": {
-        "rmse_2d": 1.374853690596947,
-        "rmse_3d": 1.5478217967589512,
-        "mean_error": 1.0030758620939786,
-        "median_error": 0.7525939422449923,
-        "p95_error": 2.6981566968456048,
-        "max_error": 7.267842631689185,
-        "final_position_error": 7.267842631689185,
-        "ate": 1.374853690596947,
-        "rte": 0.9321517556912654
+        "rmse_2d": 1.52756578188327,
+        "rmse_3d": 1.7929122632285301,
+        "mean_error": 1.3639491987109829,
+        "median_error": 1.1138739236264996,
+        "p95_error": 2.6857885730722764,
+        "max_error": 4.707601353331035,
+        "final_position_error": 4.707601353331035,
+        "ate": 1.52756578188327,
+        "rte": 0.6756867037266759
       },
       "velocity": {
-        "rmse_2d": 1.2299635213050844,
-        "rmse_3d": 1.2409992270729264,
-        "mae_2d": 0.5794109020467746,
+        "rmse_2d": 1.0838826521887712,
+        "rmse_3d": 1.1167022879443653,
+        "mae_2d": 0.6097544145653803,
         "bias_2d": [
-          0.20106201488926354,
-          0.12147580242027274
+          0.12283269618857846,
+          0.12696272977899373
         ],
-        "p95_error": 2.6640213727906747
+        "p95_error": 2.3050684079835806
       },
       "heading": {
-        "rmse_deg": 4.489931109542884,
-        "mae_deg": 1.7087835582258584,
-        "p95_deg": 14.967581991888636,
-        "max_deg": 20.511373871570864
+        "rmse_deg": 3.941392111785441,
+        "mae_deg": 1.7804570723848876,
+        "p95_deg": 12.523060103240352,
+        "max_deg": 18.535227553844134
       },
       "dead_reckoning": null,
       "map_matching": {
         "total_epochs": 300,
-        "snapped_count": 291,
-        "fallback_count": 9,
-        "snap_rate_pct": 97.0,
-        "fallback_rate_pct": 3.0,
+        "snapped_count": 294,
+        "fallback_count": 6,
+        "snap_rate_pct": 98.0,
+        "fallback_rate_pct": 2.0,
         "fallback_reasons": {
-          "AMBIGUOUS_PARALLEL_ROADS": 8,
-          "LOW_CONFIDENCE": 1
+          "AMBIGUOUS_PARALLEL_ROADS": 6
         },
-        "median_snap_dist_m": 1.5140854486559014,
-        "p95_snap_dist_m": 2.3117325040011125,
-        "max_snap_dist_m": 5.44778934189822,
-        "cross_track_rmse_m": 1.857802819329218,
-        "along_track_rmse_m": 1.1882980318074459
+        "median_snap_dist_m": 1.505490028630202,
+        "p95_snap_dist_m": 2.04715068124453,
+        "max_snap_dist_m": 3.229688276650795,
+        "cross_track_rmse_m": 1.4725235663294882,
+        "along_track_rmse_m": 1.8456095438057738
       },
       "recovery": null,
-      "ml_diagnostics": null
+      "ml_diagnostics": null,
+      "_source_category": "REAL_IMU_CONTINUOUS",
+      "_scenario_name": "B8: Stop-and-Go Driving"
     },
     "B9_PARALLEL_ROADS": {
       "position": {
-        "rmse_2d": 1.5496224217307877,
-        "rmse_3d": 3.1478022024253587,
-        "mean_error": 1.5108880333888024,
-        "median_error": 1.5251922656359305,
+        "rmse_2d": 1.5714139706666497,
+        "rmse_3d": 3.0008861535914844,
+        "mean_error": 1.539062085149711,
+        "median_error": 1.5400185529043853,
         "p95_error": 2.1286623548491908,
         "max_error": 2.441643107329968,
-        "final_position_error": 2.077336237111241,
-        "ate": 1.5496224217307877,
-        "rte": 0.3043432920962535
+        "final_position_error": 2.069696001893052,
+        "ate": 1.5714139706666497,
+        "rte": 0.2817409969472804
       },
       "velocity": {
-        "rmse_2d": 0.7106736708750722,
-        "rmse_3d": 0.798115446583656,
-        "mae_2d": 0.6046444744030157,
+        "rmse_2d": 0.6475134237085699,
+        "rmse_3d": 0.7361522296619957,
+        "mae_2d": 0.5587085647241463,
         "bias_2d": [
-          0.1950796013680812,
-          -0.026714287840569964
+          0.1704090927762953,
+          -0.0636268598451545
         ],
-        "p95_error": 1.3833867279739682
+        "p95_error": 1.252886691427257
       },
       "heading": {
-        "rmse_deg": 3.0843472262439664,
-        "mae_deg": 2.2016416795701668,
-        "p95_deg": 7.0677278047567285,
-        "max_deg": 11.721460748501567
+        "rmse_deg": 2.3572692635856356,
+        "mae_deg": 1.857471200898881,
+        "p95_deg": 4.290481171382683,
+        "max_deg": 10.5038100196536
       },
       "dead_reckoning": null,
       "map_matching": {
         "total_epochs": 600,
-        "snapped_count": 591,
-        "fallback_count": 9,
-        "snap_rate_pct": 98.5,
-        "fallback_rate_pct": 1.5,
+        "snapped_count": 590,
+        "fallback_count": 10,
+        "snap_rate_pct": 98.33333333333333,
+        "fallback_rate_pct": 1.6666666666666667,
         "fallback_reasons": {
-          "AMBIGUOUS_PARALLEL_ROADS": 9
+          "AMBIGUOUS_PARALLEL_ROADS": 10
         },
-        "median_snap_dist_m": 1.3371926060368786,
-        "p95_snap_dist_m": 2.575113945115571,
-        "max_snap_dist_m": 2.83785018151803,
-        "cross_track_rmse_m": 1.2639550393874948,
-        "along_track_rmse_m": 1.3029665272465585
+        "median_snap_dist_m": 1.38724851425073,
+        "p95_snap_dist_m": 2.572173208134748,
+        "max_snap_dist_m": 2.830072054585833,
+        "cross_track_rmse_m": 1.2960245346402746,
+        "along_track_rmse_m": 1.289786108869044
       },
       "recovery": null,
-      "ml_diagnostics": null
+      "ml_diagnostics": null,
+      "_source_category": "REAL_IMU_CONTINUOUS",
+      "_scenario_name": "B9: Parallel Road Ambiguity"
     },
     "B10_ZERO_COVERAGE": {
       "position": {
-        "rmse_2d": 1.949185882418246,
-        "rmse_3d": 2.114224769336517,
-        "mean_error": 1.9167174582986986,
-        "median_error": 2.0982210877285175,
-        "p95_error": 2.3037572743153194,
+        "rmse_2d": 1.5714139706666497,
+        "rmse_3d": 3.0008861535914844,
+        "mean_error": 1.539062085149711,
+        "median_error": 1.5400185529043853,
+        "p95_error": 2.1286623548491908,
         "max_error": 2.441643107329968,
-        "final_position_error": 2.1303470674061282,
-        "ate": 1.949185882418246,
-        "rte": 0.3749444877338722
+        "final_position_error": 2.069696001893052,
+        "ate": 1.5714139706666497,
+        "rte": 0.2817409969472804
       },
       "velocity": {
-        "rmse_2d": 0.6013481561748126,
-        "rmse_3d": 0.6521664188225323,
-        "mae_2d": 0.532764048108357,
+        "rmse_2d": 0.6475134237085699,
+        "rmse_3d": 0.7361522296619957,
+        "mae_2d": 0.5587085647241463,
         "bias_2d": [
-          -0.06843961351749002,
-          0.44950461425602944
+          0.1704090927762953,
+          -0.0636268598451545
         ],
-        "p95_error": 0.9924613225990935
+        "p95_error": 1.252886691427257
       },
       "heading": {
-        "rmse_deg": 2.789974260923519,
-        "mae_deg": 2.3553314281911386,
-        "p95_deg": 4.370245454096237,
-        "max_deg": 6.078364394739224
+        "rmse_deg": 2.3572692635856356,
+        "mae_deg": 1.857471200898881,
+        "p95_deg": 4.290481171382683,
+        "max_deg": 10.5038100196536
       },
       "dead_reckoning": null,
-      "map_matching": {
-        "total_epochs": 50,
-        "snapped_count": 50,
-        "fallback_count": 0,
-        "snap_rate_pct": 100.0,
-        "fallback_rate_pct": 0.0,
-        "fallback_reasons": {},
-        "median_snap_dist_m": 2.023002948366912,
-        "p95_snap_dist_m": 2.5304743480182728,
-        "max_snap_dist_m": 2.6018392602325116,
-        "cross_track_rmse_m": 0.6193415654900314,
-        "along_track_rmse_m": 1.7745160465243939
-      },
+      "map_matching": null,
       "recovery": null,
-      "ml_diagnostics": null
+      "ml_diagnostics": null,
+      "_source_category": "REAL_IMU_OFF_MAP",
+      "_scenario_name": "B10: Zero Map Coverage"
     },
     "B11_RECOVERY": {
       "position": {
-        "rmse_2d": 110.67342328594071,
-        "rmse_3d": 111.41684094204389,
-        "mean_error": 87.16373742139811,
-        "median_error": 85.47481103219175,
-        "p95_error": 198.79197254906703,
-        "max_error": 206.58982088563405,
-        "final_position_error": 206.256793423339,
-        "ate": 110.67342328594071,
-        "rte": 9.528598201162263
+        "rmse_2d": 66.78660132054279,
+        "rmse_3d": 67.17912238637447,
+        "mean_error": 52.130889374644255,
+        "median_error": 45.80503149126679,
+        "p95_error": 114.30711490073948,
+        "max_error": 134.6256573171168,
+        "final_position_error": 79.37998163906514,
+        "ate": 66.78660132054279,
+        "rte": 6.374080260040595
       },
       "velocity": {
-        "rmse_2d": 4.080397383209343,
-        "rmse_3d": 4.145547594704558,
-        "mae_2d": 3.410220897601806,
+        "rmse_2d": 3.0439699262449182,
+        "rmse_3d": 3.1161836098059768,
+        "mae_2d": 2.4815661011253574,
         "bias_2d": [
-          -1.8994259980470087,
-          0.3099917168555274
+          -0.46968709680547976,
+          -1.1240478044568818
         ],
-        "p95_error": 6.653052094577682
+        "p95_error": 5.446707000576418
       },
       "heading": {
-        "rmse_deg": 10.229060144574982,
-        "mae_deg": 7.205375082902217,
-        "p95_deg": 24.14585650963627,
-        "max_deg": 29.349847378237655
+        "rmse_deg": 8.438154002029572,
+        "mae_deg": 6.5773267878691595,
+        "p95_deg": 16.69233114677985,
+        "max_deg": 21.37496408950959
       },
       "dead_reckoning": {
         "outage_start_s": 9.999,
         "outage_end_s": 69.99900000000001,
         "duration_s": 60.00000000000001,
         "distance_travelled_m": 839.5426078824773,
-        "final_outage_drift_m": 174.334456426211,
-        "max_outage_drift_m": 175.24144505378808,
-        "drift_percentage": 20.76540902026679,
-        "max_drift_percentage": 20.873442682770797,
-        "drift_rate_mps": 2.905574273770183,
+        "final_outage_drift_m": 116.14888943735978,
+        "max_outage_drift_m": 134.6256573171168,
+        "drift_percentage": 13.834781980906774,
+        "max_drift_percentage": 16.035595579439878,
+        "drift_rate_mps": 1.9358148239559962,
         "sih_10pct_passed": false
       },
       "map_matching": {
         "total_epochs": 800,
-        "snapped_count": 228,
-        "fallback_count": 572,
-        "snap_rate_pct": 28.499999999999996,
-        "fallback_rate_pct": 71.5,
+        "snapped_count": 249,
+        "fallback_count": 551,
+        "snap_rate_pct": 31.125000000000004,
+        "fallback_rate_pct": 68.875,
         "fallback_reasons": {
-          "AMBIGUOUS_PARALLEL_ROADS": 34,
-          "LOW_CONFIDENCE": 61,
-          "LARGE_DISPLACEMENT": 91,
-          "NO_CANDIDATES": 170,
-          "DISCONNECTED_TRANSITION": 216
+          "AMBIGUOUS_PARALLEL_ROADS": 27,
+          "LOW_CONFIDENCE": 37,
+          "LARGE_DISPLACEMENT": 52,
+          "NO_CANDIDATES": 203,
+          "DISCONNECTED_TRANSITION": 232
         },
-        "median_snap_dist_m": 2.4212365751314873,
-        "p95_snap_dist_m": 4.343270995727356,
-        "max_snap_dist_m": 7.392314923032748,
-        "cross_track_rmse_m": 20.37716575316672,
-        "along_track_rmse_m": 108.80539337084016
+        "median_snap_dist_m": 2.3119280049619313,
+        "p95_snap_dist_m": 3.321071028622484,
+        "max_snap_dist_m": 7.2909178701568065,
+        "cross_track_rmse_m": 38.034654926628306,
+        "along_track_rmse_m": 54.78501612632613
       },
       "recovery": null,
-      "ml_diagnostics": null
+      "ml_diagnostics": null,
+      "_source_category": "REAL_IMU_SYNTHETIC_BLACKOUT",
+      "_scenario_name": "B11: GNSS Recovery & Reacquisition"
     },
     "B12_REAL_OUTAGE": {
       "position": {
-        "rmse_2d": 1333.2049613216736,
-        "rmse_3d": 1378.0907152184818,
-        "mean_error": 872.5193743527484,
-        "median_error": 356.1077619618018,
-        "p95_error": 2951.4250776619497,
-        "max_error": 3237.0598684676697,
-        "final_position_error": 3237.0598684676697,
-        "ate": 1333.2049613216736,
-        "rte": 89.9653308967441
+        "rmse_2d": 934.7343600566278,
+        "rmse_3d": 941.8498584211197,
+        "mean_error": 675.7130789170908,
+        "median_error": 449.15574472093704,
+        "p95_error": 1825.5188906548594,
+        "max_error": 2054.312875513948,
+        "final_position_error": 1493.8797293299153,
+        "ate": 934.7343600566278,
+        "rte": 288.0703382164161
       },
       "velocity": {
-        "rmse_2d": 89.85594746808852,
-        "rmse_3d": 93.0820100099277,
-        "mae_2d": 71.6753000612601,
+        "rmse_2d": 60.76420178589334,
+        "rmse_3d": 61.08419674045795,
+        "mae_2d": 50.06329153996695,
         "bias_2d": [
-          -9.788100296087716,
-          -66.17936753586055
+          -29.97416604446159,
+          5.984272556289479
         ],
-        "p95_error": 154.43987444570465
+        "p95_error": 108.44415618185144
       },
       "heading": {
-        "rmse_deg": 33.83907282534876,
-        "mae_deg": 30.9171936432077,
-        "p95_deg": 45.988287946802544,
-        "max_deg": 48.15681646481266
+        "rmse_deg": 26.58751676192231,
+        "mae_deg": 24.216956882190914,
+        "p95_deg": 42.26076630517488,
+        "max_deg": 56.14979110069848
       },
       "dead_reckoning": {
         "outage_start_s": 5.001,
         "outage_end_s": 25.001,
         "duration_s": 20.0,
         "distance_travelled_m": 271.0971130752548,
-        "final_outage_drift_m": 359.3449269805404,
-        "max_outage_drift_m": 359.3449269805404,
-        "drift_percentage": 132.55210389525195,
-        "max_drift_percentage": 132.55210389525195,
-        "drift_rate_mps": 17.96724634902702,
+        "final_outage_drift_m": 470.9853659626559,
+        "max_outage_drift_m": 470.9853659626559,
+        "drift_percentage": 173.73308059976037,
+        "max_drift_percentage": 173.73308059976037,
+        "drift_rate_mps": 23.549268298132795,
         "sih_10pct_passed": false
       },
       "map_matching": {
@@ -1264,11 +1283,13 @@
         "median_snap_dist_m": 0.0,
         "p95_snap_dist_m": 0.0,
         "max_snap_dist_m": 0.0,
-        "cross_track_rmse_m": 1290.9262256962495,
-        "along_track_rmse_m": 333.0839964668997
+        "cross_track_rmse_m": 628.3434528846872,
+        "along_track_rmse_m": 692.0352802331846
       },
       "recovery": null,
-      "ml_diagnostics": null
+      "ml_diagnostics": null,
+      "_source_category": "REAL_IMU_SYNTHETIC_BLACKOUT",
+      "_scenario_name": "B12: Real IO-VNBD S3c IMU with Synthetic GNSS Blackout"
     }
   },
   "axis_c_output_processing": {
@@ -1307,31 +1328,31 @@
     },
     "C2_ESKF_KINEMATIC_CONSTRAINTS": {
       "position": {
-        "rmse_2d": 1.5496224217307877,
-        "rmse_3d": 3.1478022024253587,
-        "mean_error": 1.5108880333888024,
-        "median_error": 1.5251922656359305,
+        "rmse_2d": 1.5714139706666497,
+        "rmse_3d": 3.0008861535914844,
+        "mean_error": 1.539062085149711,
+        "median_error": 1.5400185529043853,
         "p95_error": 2.1286623548491908,
         "max_error": 2.441643107329968,
-        "final_position_error": 2.077336237111241,
-        "ate": 1.5496224217307877,
-        "rte": 0.3043432920962535
+        "final_position_error": 2.069696001893052,
+        "ate": 1.5714139706666497,
+        "rte": 0.2817409969472804
       },
       "velocity": {
-        "rmse_2d": 0.7106736708750722,
-        "rmse_3d": 0.798115446583656,
-        "mae_2d": 0.6046444744030157,
+        "rmse_2d": 0.6475134237085699,
+        "rmse_3d": 0.7361522296619957,
+        "mae_2d": 0.5587085647241463,
         "bias_2d": [
-          0.1950796013680812,
-          -0.026714287840569964
+          0.1704090927762953,
+          -0.0636268598451545
         ],
-        "p95_error": 1.3833867279739682
+        "p95_error": 1.252886691427257
       },
       "heading": {
-        "rmse_deg": 3.0843472262439664,
-        "mae_deg": 2.2016416795701668,
-        "p95_deg": 7.0677278047567285,
-        "max_deg": 11.721460748501567
+        "rmse_deg": 2.3572692635856356,
+        "mae_deg": 1.857471200898881,
+        "p95_deg": 4.290481171382683,
+        "max_deg": 10.5038100196536
       },
       "dead_reckoning": null,
       "map_matching": null,
@@ -1340,291 +1361,429 @@
     },
     "C3_ESKF_DOWNSTREAM_MAPMATCH": {
       "position": {
-        "rmse_2d": 1.5496224217307877,
-        "rmse_3d": 3.1478022024253587,
-        "mean_error": 1.5108880333888024,
-        "median_error": 1.5251922656359305,
+        "rmse_2d": 1.5714139706666497,
+        "rmse_3d": 3.0008861535914844,
+        "mean_error": 1.539062085149711,
+        "median_error": 1.5400185529043853,
         "p95_error": 2.1286623548491908,
         "max_error": 2.441643107329968,
-        "final_position_error": 2.077336237111241,
-        "ate": 1.5496224217307877,
-        "rte": 0.3043432920962535
+        "final_position_error": 2.069696001893052,
+        "ate": 1.5714139706666497,
+        "rte": 0.2817409969472804
       },
       "velocity": {
-        "rmse_2d": 0.7106736708750722,
-        "rmse_3d": 0.798115446583656,
-        "mae_2d": 0.6046444744030157,
+        "rmse_2d": 0.6475134237085699,
+        "rmse_3d": 0.7361522296619957,
+        "mae_2d": 0.5587085647241463,
         "bias_2d": [
-          0.1950796013680812,
-          -0.026714287840569964
+          0.1704090927762953,
+          -0.0636268598451545
         ],
-        "p95_error": 1.3833867279739682
+        "p95_error": 1.252886691427257
       },
       "heading": {
-        "rmse_deg": 3.0843472262439664,
-        "mae_deg": 2.2016416795701668,
-        "p95_deg": 7.0677278047567285,
-        "max_deg": 11.721460748501567
+        "rmse_deg": 2.3572692635856356,
+        "mae_deg": 1.857471200898881,
+        "p95_deg": 4.290481171382683,
+        "max_deg": 10.5038100196536
       },
       "dead_reckoning": null,
       "map_matching": {
         "total_epochs": 600,
-        "snapped_count": 591,
-        "fallback_count": 9,
-        "snap_rate_pct": 98.5,
-        "fallback_rate_pct": 1.5,
+        "snapped_count": 590,
+        "fallback_count": 10,
+        "snap_rate_pct": 98.33333333333333,
+        "fallback_rate_pct": 1.6666666666666667,
         "fallback_reasons": {
-          "AMBIGUOUS_PARALLEL_ROADS": 9
+          "AMBIGUOUS_PARALLEL_ROADS": 10
         },
-        "median_snap_dist_m": 1.3371926060368786,
-        "p95_snap_dist_m": 2.575113945115571,
-        "max_snap_dist_m": 2.83785018151803,
-        "cross_track_rmse_m": 1.2639550393874948,
-        "along_track_rmse_m": 1.3029665272465585
+        "median_snap_dist_m": 1.38724851425073,
+        "p95_snap_dist_m": 2.572173208134748,
+        "max_snap_dist_m": 2.830072054585833,
+        "cross_track_rmse_m": 1.2960245346402746,
+        "along_track_rmse_m": 1.289786108869044
       },
       "recovery": null,
       "ml_diagnostics": null
     }
   },
   "synthetic_benchmarks": {
-    "benchmark_1_50m": {
-      "target": "< 5m drift over 50m in <1 min",
-      "data_source": "IO-VNBD S1 real IMU, synthetic 10s blackout at ~5 m/s",
-      "distance_m": 142.21417803354194,
-      "final_drift_m": 7.151950742393724,
-      "drift_pct": 5.028999809503452,
-      "passed": false
+    "benchmark_1_50m_FULLY_CONTROLLED_SYNTHETIC": {
+      "target": "< 5.0m drift over 50.0m",
+      "data_source": "FULLY_CONTROLLED_SYNTHETIC",
+      "source_details": "Benchmark 1 (Synthetic 50m / <1 min)",
+      "distance_m": 49.90000000000346,
+      "final_drift_m": 2.9906724951418715,
+      "max_drift_m": 4.266452631116844,
+      "drift_pct": 5.993331653590509,
+      "passed": true,
+      "sih_10pct_passed": true,
+      "speed_mps": 1.0,
+      "label": "FULLY_CONTROLLED_SYNTHETIC"
     },
-    "benchmark_2_1km_60kmh": {
-      "target": "< 100m drift over 1km at 60 km/h (60s blackout)",
-      "data_source": "IO-VNBD S1 real IMU, controlled synthetic 60s blackout at ~14 m/s",
+    "benchmark_2_1km_60kmh_FULLY_CONTROLLED_SYNTHETIC": {
+      "target": "< 100.0m drift over 1000.0m",
+      "data_source": "FULLY_CONTROLLED_SYNTHETIC",
+      "source_details": "Benchmark 2 (Controlled Synthetic 1km / 60km/h / 60s Outage)",
+      "distance_m": 998.3333333333298,
+      "final_drift_m": 93.3159247298335,
+      "max_drift_m": 93.3159247298335,
+      "drift_pct": 9.347171091469164,
+      "passed": true,
+      "sih_10pct_passed": true,
+      "speed_mps": 16.666666666666664,
+      "label": "FULLY_CONTROLLED_SYNTHETIC"
+    },
+    "realdata_blackout_10s_S1": {
+      "target": "Real-data synthetic blackout 10s window",
+      "data_source": "REAL_IMU_SYNTHETIC_BLACKOUT",
+      "source_details": "IO-VNBD S1, 10s synthetic GNSS blackout injection",
+      "distance_m": 142.21417803354194,
+      "final_drift_m": 1.604983680002876,
+      "max_drift_m": 7.114675774245858,
+      "drift_pct": 1.128567982598987,
+      "sih_10pct_passed": true,
+      "label": "REAL_IMU_SYNTHETIC_BLACKOUT"
+    },
+    "realdata_blackout_60s_S1": {
+      "target": "Real-data synthetic blackout 60s window",
+      "data_source": "REAL_IMU_SYNTHETIC_BLACKOUT",
+      "source_details": "IO-VNBD S1, 60s synthetic GNSS blackout injection (NOT controlled 1km @ 60km/h)",
       "distance_m": 839.5426078824773,
-      "final_drift_m": 174.334456426211,
-      "drift_pct": 20.76540902026679,
-      "passed": false,
-      "label": "CONTROLLED_SYNTHETIC"
+      "final_drift_m": 116.14888943735978,
+      "max_drift_m": 134.6256573171168,
+      "drift_pct": 13.834781980906774,
+      "sih_10pct_passed": false,
+      "label": "REAL_IMU_SYNTHETIC_BLACKOUT"
     }
+  },
+  "multi_session_aggregation": {
+    "total_sessions": 5,
+    "valid_window_sessions": 2,
+    "all_sessions_rmse_2d_mean": 64.28171869181213,
+    "valid_windows_rmse_2d_mean": 27.56452377419452,
+    "per_session_rows": [
+      {
+        "session_name": "Session_S1",
+        "suitability_status": "VALID_WINDOW",
+        "suitability_reason": "Sufficient filter warmup (start_idx=4900) and active motion (142.2 m)",
+        "rmse_2d": 4.088583266975281,
+        "mean_err": 3.0610188668522795,
+        "median_err": 1.9308474521832928,
+        "p95_err": 10.23550788239504,
+        "max_err": 13.161070721684359,
+        "vel_rmse_2d": 1.3208893397297212,
+        "heading_rmse_deg": 2.7118333351186967,
+        "drift_m": 1.604983680002876,
+        "drift_pct": 1.128567982598987,
+        "sih_passed": true,
+        "sih_10pct_passed": true,
+        "snap_rate_pct": 89.33333333333333
+      },
+      {
+        "session_name": "Session_S2",
+        "suitability_status": "UNSUITABLE_WINDOW",
+        "suitability_reason": "Filter uninitialized at start_idx=100 (warmup < 50s)",
+        "rmse_2d": 165.4213634822851,
+        "mean_err": 80.08875653208403,
+        "median_err": 17.756237630536354,
+        "p95_err": 454.48098105271316,
+        "max_err": 609.263733397667,
+        "vel_rmse_2d": 40.38053585885562,
+        "heading_rmse_deg": 104.09238214742041,
+        "drift_m": 20.244503052151,
+        "drift_pct": 234.86843822311278,
+        "sih_passed": false,
+        "sih_10pct_passed": false,
+        "snap_rate_pct": 28.666666666666668
+      },
+      {
+        "session_name": "Session_S3a",
+        "suitability_status": "UNSUITABLE_WINDOW",
+        "suitability_reason": "Filter uninitialized at start_idx=0 (warmup < 50s)",
+        "rmse_2d": 75.00789530354295,
+        "mean_err": 69.60671997026839,
+        "median_err": 79.12975968687834,
+        "p95_err": 95.62147413750877,
+        "max_err": 96.87534796179189,
+        "vel_rmse_2d": 9.580817940335496,
+        "heading_rmse_deg": 26.2914157950998,
+        "drift_m": 92.09561793039,
+        "drift_pct": 80.73805920878635,
+        "sih_passed": false,
+        "sih_10pct_passed": false,
+        "snap_rate_pct": 27.666666666666668
+      },
+      {
+        "session_name": "Session_S3c",
+        "suitability_status": "UNSUITABLE_WINDOW",
+        "suitability_reason": "Filter uninitialized at start_idx=0 (warmup < 50s)",
+        "rmse_2d": 25.850287124843593,
+        "mean_err": 18.613225434093682,
+        "median_err": 9.955128789821565,
+        "p95_err": 49.56779006959051,
+        "max_err": 56.39682154920148,
+        "vel_rmse_2d": 5.157886728075395,
+        "heading_rmse_deg": 11.677803437846379,
+        "drift_m": 33.79413863766949,
+        "drift_pct": 41.83308519397182,
+        "sih_passed": false,
+        "sih_10pct_passed": false,
+        "snap_rate_pct": 0.0
+      },
+      {
+        "session_name": "Session_S4",
+        "suitability_status": "VALID_WINDOW",
+        "suitability_reason": "Sufficient filter warmup (start_idx=4900) and active motion (127.6 m)",
+        "rmse_2d": 51.040464281413755,
+        "mean_err": 40.84530891910126,
+        "median_err": 29.20117587022508,
+        "p95_err": 104.69958390071497,
+        "max_err": 109.40594958999624,
+        "vel_rmse_2d": 7.077758716318797,
+        "heading_rmse_deg": 19.353647325529757,
+        "drift_m": 40.522396867047135,
+        "drift_pct": 31.750542097102354,
+        "sih_passed": false,
+        "sih_10pct_passed": false,
+        "snap_rate_pct": 0.0
+      }
+    ]
   },
   "multi_session_cross_validation": {
     "Session_S1": {
       "position": {
-        "rmse_2d": 3.561744966805527,
-        "rmse_3d": 4.2665614322703425,
-        "mean_error": 2.811144311199264,
-        "median_error": 1.9323940942919697,
-        "p95_error": 8.08588443857251,
-        "max_error": 9.960281700871839,
-        "final_position_error": 1.510617524855502,
-        "ate": 3.561744966805527,
-        "rte": 1.7172090306432444
+        "rmse_2d": 4.088583266975281,
+        "rmse_3d": 4.524375459537385,
+        "mean_error": 3.0610188668522795,
+        "median_error": 1.9308474521832928,
+        "p95_error": 10.23550788239504,
+        "max_error": 13.161070721684359,
+        "final_position_error": 1.935457140404705,
+        "ate": 4.088583266975281,
+        "rte": 2.991587124037824
       },
       "velocity": {
-        "rmse_2d": 0.9804176567113474,
-        "rmse_3d": 1.1280603274746062,
-        "mae_2d": 0.8365453206851172,
+        "rmse_2d": 1.3208893397297212,
+        "rmse_3d": 1.4572174632032182,
+        "mae_2d": 0.9915671497383539,
         "bias_2d": [
-          0.3790137370950178,
-          -0.03390431432160117
+          0.6653119961394109,
+          -0.10858685309362533
         ],
-        "p95_error": 1.8837901051714185
+        "p95_error": 3.2227993413092593
       },
       "heading": {
-        "rmse_deg": 3.9759866263049473,
-        "mae_deg": 2.966063766190128,
-        "p95_deg": 9.694606912028545,
-        "max_deg": 11.912135785790884
+        "rmse_deg": 2.7118333351186967,
+        "mae_deg": 2.1802184804689455,
+        "p95_deg": 4.955864401613043,
+        "max_deg": 11.225258555914284
       },
       "dead_reckoning": {
         "outage_start_s": 9.999,
         "outage_end_s": 19.999000000000002,
         "duration_s": 10.000000000000002,
         "distance_travelled_m": 142.21417803354194,
-        "final_outage_drift_m": 7.151950742393724,
-        "max_outage_drift_m": 8.297359521864813,
-        "drift_percentage": 5.028999809503452,
-        "max_drift_percentage": 5.834410912186152,
-        "drift_rate_mps": 0.7151950742393722,
+        "final_outage_drift_m": 1.604983680002876,
+        "max_outage_drift_m": 7.114675774245858,
+        "drift_percentage": 1.128567982598987,
+        "max_drift_percentage": 5.002789365043354,
+        "drift_rate_mps": 0.16049836800028758,
         "sih_10pct_passed": true
       },
       "map_matching": {
         "total_epochs": 300,
-        "snapped_count": 287,
-        "fallback_count": 13,
-        "snap_rate_pct": 95.66666666666667,
-        "fallback_rate_pct": 4.333333333333334,
+        "snapped_count": 268,
+        "fallback_count": 32,
+        "snap_rate_pct": 89.33333333333333,
+        "fallback_rate_pct": 10.666666666666668,
         "fallback_reasons": {
-          "AMBIGUOUS_PARALLEL_ROADS": 13
+          "AMBIGUOUS_PARALLEL_ROADS": 7,
+          "LARGE_DISPLACEMENT": 10,
+          "LOW_CONFIDENCE": 15
         },
-        "median_snap_dist_m": 1.966422253059768,
-        "p95_snap_dist_m": 3.762057871846433,
-        "max_snap_dist_m": 6.86500402912795,
-        "cross_track_rmse_m": 0.9176850403909326,
-        "along_track_rmse_m": 3.070833017223239
+        "median_snap_dist_m": 2.0511085032682512,
+        "p95_snap_dist_m": 3.26164356825558,
+        "max_snap_dist_m": 7.369009981662188,
+        "cross_track_rmse_m": 3.467046232735372,
+        "along_track_rmse_m": 2.2441745332884597
       },
       "recovery": null,
-      "ml_diagnostics": null
+      "ml_diagnostics": null,
+      "_session_file": "Categorised_S1.npz",
+      "_source_category": "REAL_IMU_SYNTHETIC_BLACKOUT_MULTI_SESSION",
+      "_suitability_status": "VALID_WINDOW",
+      "_suitability_reason": "Sufficient filter warmup (start_idx=4900) and active motion (142.2 m)"
     },
     "Session_S2": {
       "position": {
-        "rmse_2d": 164.8201258309342,
-        "rmse_3d": 191.19958944119082,
-        "mean_error": 79.89111107294679,
-        "median_error": 18.049475903586995,
-        "p95_error": 453.4534194202632,
-        "max_error": 610.426543878203,
-        "final_position_error": 610.426543878203,
-        "ate": 164.8201258309342,
-        "rte": 39.024611422159936
+        "rmse_2d": 165.4213634822851,
+        "rmse_3d": 188.70592118713287,
+        "mean_error": 80.08875653208403,
+        "median_error": 17.756237630536354,
+        "p95_error": 454.48098105271316,
+        "max_error": 609.263733397667,
+        "final_position_error": 609.263733397667,
+        "ate": 165.4213634822851,
+        "rte": 38.65895100437438
       },
       "velocity": {
-        "rmse_2d": 40.82792540857669,
-        "rmse_3d": 47.414446973373465,
-        "mae_2d": 24.02860834888717,
+        "rmse_2d": 40.38053585885562,
+        "rmse_3d": 46.12102922963758,
+        "mae_2d": 23.932553538839244,
         "bias_2d": [
-          -21.170553614597306,
-          7.223354224862839
+          -21.000543516755066,
+          7.4238875320052555
         ],
-        "p95_error": 98.55793824730777
+        "p95_error": 97.07201674086416
       },
       "heading": {
-        "rmse_deg": 104.21043265889791,
-        "mae_deg": 87.76068008850115,
-        "p95_deg": 168.88659821602184,
-        "max_deg": 178.23339977533973
+        "rmse_deg": 104.09238214742041,
+        "mae_deg": 87.75183147178164,
+        "p95_deg": 168.4832536661073,
+        "max_deg": 177.71665262996726
       },
       "dead_reckoning": {
         "outage_start_s": 9.999,
         "outage_end_s": 19.999000000000002,
         "duration_s": 10.000000000000002,
         "distance_travelled_m": 8.619507672171677,
-        "final_outage_drift_m": 25.019388314103455,
-        "max_outage_drift_m": 46.36522359602047,
-        "drift_percentage": 290.264702645132,
-        "max_drift_percentage": 537.9103466165695,
-        "drift_rate_mps": 2.501938831410345,
+        "final_outage_drift_m": 20.244503052151,
+        "max_outage_drift_m": 42.45059095981768,
+        "drift_percentage": 234.86843822311278,
+        "max_drift_percentage": 492.4943810523031,
+        "drift_rate_mps": 2.0244503052150997,
         "sih_10pct_passed": false
       },
       "map_matching": {
         "total_epochs": 300,
-        "snapped_count": 113,
-        "fallback_count": 187,
-        "snap_rate_pct": 37.666666666666664,
-        "fallback_rate_pct": 62.33333333333333,
+        "snapped_count": 86,
+        "fallback_count": 214,
+        "snap_rate_pct": 28.666666666666668,
+        "fallback_rate_pct": 71.33333333333334,
         "fallback_reasons": {
-          "AMBIGUOUS_PARALLEL_ROADS": 58,
-          "DISCONNECTED_TRANSITION": 117,
+          "AMBIGUOUS_PARALLEL_ROADS": 73,
+          "DISCONNECTED_TRANSITION": 129,
           "NO_CANDIDATES": 9,
           "LARGE_DISPLACEMENT": 3
         },
-        "median_snap_dist_m": 3.397915182477952,
-        "p95_snap_dist_m": 5.896075249460043,
-        "max_snap_dist_m": 6.043181026946927,
-        "cross_track_rmse_m": 52.45027151923921,
-        "along_track_rmse_m": 156.2476836128846
+        "median_snap_dist_m": 3.1508829675814902,
+        "p95_snap_dist_m": 4.35026006142918,
+        "max_snap_dist_m": 5.847440406124919,
+        "cross_track_rmse_m": 148.54498183253534,
+        "along_track_rmse_m": 72.78615511059809
       },
       "recovery": null,
-      "ml_diagnostics": null
+      "ml_diagnostics": null,
+      "_session_file": "Categorised_S2.npz",
+      "_source_category": "REAL_IMU_SYNTHETIC_BLACKOUT_MULTI_SESSION",
+      "_suitability_status": "UNSUITABLE_WINDOW",
+      "_suitability_reason": "Filter uninitialized at start_idx=100 (warmup < 50s)"
     },
     "Session_S3a": {
       "position": {
-        "rmse_2d": 102.91007926980315,
-        "rmse_3d": 108.91019955702524,
-        "mean_error": 91.92870304645827,
-        "median_error": 106.95047641294866,
-        "p95_error": 166.62839814696525,
-        "max_error": 244.3888968720138,
-        "final_position_error": 244.3888968720138,
-        "ate": 102.91007926980315,
-        "rte": 16.44237217645899
+        "rmse_2d": 75.00789530354295,
+        "rmse_3d": 75.85519656078087,
+        "mean_error": 69.60671997026839,
+        "median_error": 79.12975968687834,
+        "p95_error": 95.62147413750877,
+        "max_error": 96.87534796179189,
+        "final_position_error": 75.99238380788923,
+        "ate": 75.00789530354295,
+        "rte": 6.418464624594653
       },
       "velocity": {
-        "rmse_2d": 21.132600069257524,
-        "rmse_3d": 21.46855801086931,
-        "mae_2d": 16.23165673662735,
+        "rmse_2d": 9.580817940335496,
+        "rmse_3d": 9.93282222801413,
+        "mae_2d": 8.751548640575793,
         "bias_2d": [
-          -13.082694643159844,
-          -2.81060019237857
+          -3.2615889859985754,
+          -3.2655984784149914
         ],
-        "p95_error": 49.15444207960202
+        "p95_error": 15.982782243541296
       },
       "heading": {
-        "rmse_deg": 29.00615077333631,
-        "mae_deg": 25.842196245127035,
-        "p95_deg": 44.03257765091107,
-        "max_deg": 48.567744106161236
+        "rmse_deg": 26.2914157950998,
+        "mae_deg": 23.651224042532757,
+        "p95_deg": 44.27398974304436,
+        "max_deg": 46.29486825749423
       },
       "dead_reckoning": {
         "outage_start_s": 9.999,
         "outage_end_s": 20.0,
         "duration_s": 10.001,
         "distance_travelled_m": 114.06716836260992,
-        "final_outage_drift_m": 109.26403781967016,
-        "max_outage_drift_m": 116.03702279019512,
-        "drift_percentage": 95.7892085760637,
-        "max_drift_percentage": 101.72692498276383,
-        "drift_rate_mps": 10.925311250841933,
+        "final_outage_drift_m": 92.09561793039,
+        "max_outage_drift_m": 96.87534796179189,
+        "drift_percentage": 80.73805920878635,
+        "max_drift_percentage": 84.92833595538491,
+        "drift_rate_mps": 9.208640928946107,
         "sih_10pct_passed": false
       },
       "map_matching": {
         "total_epochs": 300,
-        "snapped_count": 90,
-        "fallback_count": 210,
-        "snap_rate_pct": 30.0,
-        "fallback_rate_pct": 70.0,
+        "snapped_count": 83,
+        "fallback_count": 217,
+        "snap_rate_pct": 27.666666666666668,
+        "fallback_rate_pct": 72.33333333333334,
         "fallback_reasons": {
-          "AMBIGUOUS_PARALLEL_ROADS": 21,
-          "LOW_CONFIDENCE": 39,
-          "LARGE_DISPLACEMENT": 11,
-          "DISCONNECTED_TRANSITION": 51,
-          "NO_CANDIDATES": 88
+          "AMBIGUOUS_PARALLEL_ROADS": 19,
+          "LOW_CONFIDENCE": 21,
+          "LARGE_DISPLACEMENT": 6,
+          "DISCONNECTED_TRANSITION": 108,
+          "NO_CANDIDATES": 63
         },
-        "median_snap_dist_m": 3.334398409620409,
-        "p95_snap_dist_m": 7.129124374350049,
-        "max_snap_dist_m": 7.651330175212096,
-        "cross_track_rmse_m": 61.25878848100999,
-        "along_track_rmse_m": 82.5633630846145
+        "median_snap_dist_m": 3.35740234148916,
+        "p95_snap_dist_m": 6.978538138840076,
+        "max_snap_dist_m": 7.590801212587945,
+        "cross_track_rmse_m": 40.264964962676885,
+        "along_track_rmse_m": 62.9967203087545
       },
       "recovery": null,
-      "ml_diagnostics": null
+      "ml_diagnostics": null,
+      "_session_file": "Categorised_S3a.npz",
+      "_source_category": "REAL_IMU_SYNTHETIC_BLACKOUT_MULTI_SESSION",
+      "_suitability_status": "UNSUITABLE_WINDOW",
+      "_suitability_reason": "Filter uninitialized at start_idx=0 (warmup < 50s)"
     },
     "Session_S3c": {
       "position": {
-        "rmse_2d": 16.974848116772403,
-        "rmse_3d": 18.197274984718245,
-        "mean_error": 11.316120929397,
-        "median_error": 4.468405171730847,
-        "p95_error": 38.271931406972826,
-        "max_error": 46.252624644617654,
-        "final_position_error": 38.99907458220856,
-        "ate": 16.974848116772403,
-        "rte": 5.731892821672492
+        "rmse_2d": 25.850287124843593,
+        "rmse_3d": 27.09313209385687,
+        "mean_error": 18.613225434093682,
+        "median_error": 9.955128789821565,
+        "p95_error": 49.56779006959051,
+        "max_error": 56.39682154920148,
+        "final_position_error": 41.95462069568541,
+        "ate": 25.850287124843593,
+        "rte": 4.574938224964999
       },
       "velocity": {
-        "rmse_2d": 5.171341173452873,
-        "rmse_3d": 5.222736214467195,
-        "mae_2d": 3.3912880252527966,
+        "rmse_2d": 5.157886728075395,
+        "rmse_3d": 5.189128850254514,
+        "mae_2d": 3.4367677960699696,
         "bias_2d": [
-          -2.413857288104162,
-          1.420268538178949
+          -2.7263888774416074,
+          1.7488348454759963
         ],
-        "p95_error": 13.154138295201642
+        "p95_error": 12.730994095536058
       },
       "heading": {
-        "rmse_deg": 6.9493777541586255,
-        "mae_deg": 5.209749426200989,
-        "p95_deg": 13.63749251026668,
-        "max_deg": 15.486405581945034
+        "rmse_deg": 11.677803437846379,
+        "mae_deg": 7.993756215830719,
+        "p95_deg": 23.90075147010296,
+        "max_deg": 25.197860219149273
       },
       "dead_reckoning": {
         "outage_start_s": 9.999,
         "outage_end_s": 20.0,
         "duration_s": 10.001,
         "distance_travelled_m": 80.78328069988788,
-        "final_outage_drift_m": 17.0500599886901,
-        "max_outage_drift_m": 20.435960799431577,
-        "drift_percentage": 21.105926673158454,
-        "max_drift_percentage": 25.29726525387318,
-        "drift_rate_mps": 1.7048355153174786,
+        "final_outage_drift_m": 33.79413863766949,
+        "max_outage_drift_m": 33.79413863766949,
+        "drift_percentage": 41.83308519397182,
+        "max_drift_percentage": 41.83308519397182,
+        "drift_rate_mps": 3.379075956171332,
         "sih_10pct_passed": false
       },
       "map_matching": {
@@ -1639,50 +1798,54 @@
         "median_snap_dist_m": 0.0,
         "p95_snap_dist_m": 0.0,
         "max_snap_dist_m": 0.0,
-        "cross_track_rmse_m": 7.41746530476597,
-        "along_track_rmse_m": 15.268486403048755
+        "cross_track_rmse_m": 15.963113385509061,
+        "along_track_rmse_m": 20.332642609317556
       },
       "recovery": null,
-      "ml_diagnostics": null
+      "ml_diagnostics": null,
+      "_session_file": "Categorised_S3c.npz",
+      "_source_category": "REAL_IMU_SYNTHETIC_BLACKOUT_MULTI_SESSION",
+      "_suitability_status": "UNSUITABLE_WINDOW",
+      "_suitability_reason": "Filter uninitialized at start_idx=0 (warmup < 50s)"
     },
     "Session_S4": {
       "position": {
-        "rmse_2d": 60.96339164851069,
-        "rmse_3d": 60.98570773616355,
-        "mean_error": 46.83510090303837,
-        "median_error": 30.287354151304797,
-        "p95_error": 129.60544655568944,
-        "max_error": 137.4715299829172,
-        "final_position_error": 137.4715299829172,
-        "ate": 60.96339164851069,
-        "rte": 7.238283089428945
+        "rmse_2d": 51.040464281413755,
+        "rmse_3d": 52.419464204860645,
+        "mean_error": 40.84530891910126,
+        "median_error": 29.20117587022508,
+        "p95_error": 104.69958390071497,
+        "max_error": 109.40594958999624,
+        "final_position_error": 109.05348763412253,
+        "ate": 51.040464281413755,
+        "rte": 6.160633886213368
       },
       "velocity": {
-        "rmse_2d": 7.7218121923440615,
-        "rmse_3d": 7.788284495164879,
-        "mae_2d": 7.305428188601105,
+        "rmse_2d": 7.077758716318797,
+        "rmse_3d": 7.143690246689231,
+        "mae_2d": 6.779347337499817,
         "bias_2d": [
-          2.4541953048880587,
-          -4.868995871000345
+          3.2419987757285837,
+          -4.023621203795417
         ],
-        "p95_error": 10.800724234704141
+        "p95_error": 10.018149953177312
       },
       "heading": {
-        "rmse_deg": 25.00591708238303,
-        "mae_deg": 20.972661057010747,
-        "p95_deg": 41.63578774837588,
-        "max_deg": 45.517440202967755
+        "rmse_deg": 19.353647325529757,
+        "mae_deg": 16.016462106070016,
+        "p95_deg": 32.54969907387411,
+        "max_deg": 36.285440641897324
       },
       "dead_reckoning": {
         "outage_start_s": 9.999,
         "outage_end_s": 19.999000000000002,
         "duration_s": 10.000000000000002,
         "distance_travelled_m": 127.62741733075899,
-        "final_outage_drift_m": 47.700399613449434,
-        "max_outage_drift_m": 47.700399613449434,
-        "drift_percentage": 37.374727633819596,
-        "max_drift_percentage": 37.374727633819596,
-        "drift_rate_mps": 4.770039961344943,
+        "final_outage_drift_m": 40.522396867047135,
+        "max_outage_drift_m": 40.522396867047135,
+        "drift_percentage": 31.750542097102354,
+        "max_drift_percentage": 31.750542097102354,
+        "drift_rate_mps": 4.052239686704713,
         "sih_10pct_passed": false
       },
       "map_matching": {
@@ -1697,52 +1860,56 @@
         "median_snap_dist_m": 0.0,
         "p95_snap_dist_m": 0.0,
         "max_snap_dist_m": 0.0,
-        "cross_track_rmse_m": 52.62099234768426,
-        "along_track_rmse_m": 30.782564637058055
+        "cross_track_rmse_m": 44.14949770610782,
+        "along_track_rmse_m": 25.61153736815995
       },
       "recovery": null,
-      "ml_diagnostics": null
+      "ml_diagnostics": null,
+      "_session_file": "Categorised_S4.npz",
+      "_source_category": "REAL_IMU_SYNTHETIC_BLACKOUT_MULTI_SESSION",
+      "_suitability_status": "VALID_WINDOW",
+      "_suitability_reason": "Sufficient filter warmup (start_idx=4900) and active motion (127.6 m)"
     }
   },
   "aggregate_report": {
     "continuous_rmse_stats": {
-      "count": 17,
-      "mean": 1430.1781414465358,
-      "std": 4885.572579817421,
-      "median": 56.104403267735115,
-      "p95": 5320.704344936271,
-      "min_val": 1.374853690596947,
-      "max_val": 20896.384911395
+      "count": 12,
+      "mean": 1667.4444227722997,
+      "std": 4806.788674320012,
+      "median": 23.725951796517073,
+      "p95": 8630.897177560279,
+      "min_val": 1.52756578188327,
+      "max_val": 17548.865912485086
     },
     "outage_drift_stats": {
-      "count": 12,
-      "mean": 1731.7907375133618,
-      "std": 4539.094641595612,
-      "median": 97.72688185685907,
-      "p95": 9225.488009185126,
-      "min_val": 7.151950742393724,
-      "max_val": 16501.831142818108
+      "count": 7,
+      "mean": 4974.649515352947,
+      "std": 10631.318089349332,
+      "median": 116.14888943735978,
+      "p95": 22578.200775609046,
+      "min_val": 1.604983680002876,
+      "max_val": 30886.250457483526
     },
     "outage_drift_pct_stats": {
-      "count": 12,
-      "mean": 115.87398206529701,
-      "std": 151.19247804150308,
-      "median": 29.240327153489027,
-      "p95": 394.95876257243464,
-      "min_val": 5.028999809503452,
-      "max_val": 522.9181691502494
+      "count": 7,
+      "mean": 200.53101707587845,
+      "std": 327.8988081417847,
+      "median": 13.834781980906774,
+      "p95": 749.1327292222625,
+      "min_val": 1.128567982598987,
+      "max_val": 978.738747316084
     },
     "snap_rate_stats": {
-      "count": 17,
-      "mean": 49.93392857142857,
-      "std": 39.018102675996104,
-      "median": 37.666666666666664,
-      "p95": 98.8,
+      "count": 11,
+      "mean": 54.224107142857136,
+      "std": 35.970505517313384,
+      "median": 47.8,
+      "p95": 98.33333333333333,
       "min_val": 0.0,
-      "max_val": 100.0
+      "max_val": 98.33333333333333
     },
-    "sih_pass_rate_pct": 16.666666666666664,
-    "total_scenarios_evaluated": 17,
+    "sih_pass_rate_pct": 28.57142857142857,
+    "total_scenarios_evaluated": 12,
     "total_passed_scenarios": 2
   }
 }

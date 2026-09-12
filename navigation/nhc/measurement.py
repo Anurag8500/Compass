@@ -52,7 +52,7 @@ class NHCConfig:
     enabled: bool = True
     sigma_vy: float = 0.10
     sigma_vz: float = 0.05
-    min_forward_speed_mps: float = 0.50
+    min_forward_speed_mps: float = 0.10
     enable_attitude_coupling: bool = True
     preserve_forward_speed: bool = True
     skid_detector: SkidDetectorConfig = field(default_factory=SkidDetectorConfig)
@@ -197,10 +197,12 @@ class NHCMeasurementModel:
 
         # 2. Formulate measurement model and candidate Jacobian
         z, h_val, v_v, H, R_base = self.create_measurement(state)
-        forward_speed = float(v_v[0])
+        total_speed = float(np.linalg.norm(v_v))
 
-        # 3. Minimum forward speed gate: suppress near standstill
-        if forward_speed < self.config.min_forward_speed_mps:
+        # 3. Minimum forward speed gate: suppress near true standstill to allow ZUPT
+        # Uses speed magnitude rather than signed forward component to prevent deadlock
+        # during sharp corners or transient attitude misalignment.
+        if total_speed < self.config.min_forward_speed_mps:
             return state, NHCDiagnostics(
                 status=NHCStatus.SKIPPED_LOW_SPEED,
                 applied=False,

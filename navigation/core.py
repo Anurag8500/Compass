@@ -184,6 +184,7 @@ class NavigationCore:
         self.mounting_aligner = DynamicMountingAligner()
         self._last_gnss_speed: Optional[float] = None
         self._last_gnss_accel: Optional[float] = None
+        self._vnet_gnss_diffs: list[float] = []
 
         self._ml_telemetry: dict[str, Any] = {
             "velocitynet": {
@@ -235,6 +236,7 @@ class NavigationCore:
         p0_cov: Optional[np.ndarray] = None,
         timestamp_ns: int = 0,
         mode: GNSSMode = GNSSMode.GNSS_AIDED,
+        assume_prealigned: bool = False,
     ) -> None:
         """Initialize the navigation core and local geographic tangent plane."""
         self.geo_ref = GeoReference(lat_ref=float(lat0), lon_ref=float(lon0), alt_ref=float(alt0))
@@ -252,8 +254,11 @@ class NavigationCore:
         self._last_update_nis = None
         self._last_gnss_nis = None
         self.mounting_aligner.reset()
+        if assume_prealigned:
+            self.mounting_aligner.set_prealigned(0.0)
         self._last_gnss_speed = None
         self._last_gnss_accel = None
+        self._vnet_gnss_diffs.clear()
 
         nom = ESKFNominalState.from_components(
             position_enu=p0_enu,
@@ -359,14 +364,26 @@ class NavigationCore:
         # 1. Update causal history buffer
         self.window_buffer.push(timestamp_ns=t_ns, f_m_v=f_arr, omega_m_v=w_arr)
 
-        # 2. ESKF strapdown INS propagation
+        # 2. ESKF strapdown INS propagation with outage-adaptive process noise
+        current_pnoise = self.config.process_noise
+        if self.mode == GNSSMode.DR_ONLY:
+            # During dead reckoning, increase gyro bias random walk std to 0.0015 to allow
+            # ESKF error covariance to match true MEMS physical temperature/sensor drift,
+            # empowering NHC updates to dynamically calibrate gyro bias during motion.
+            current_pnoise = ProcessNoiseConfig(
+                accel_noise_std=current_pnoise.accel_noise_std,
+                gyro_noise_std=current_pnoise.gyro_noise_std,
+                accel_bias_rw_std=current_pnoise.accel_bias_rw_std,
+                gyro_bias_rw_std=max(current_pnoise.gyro_bias_rw_std, 0.0015),
+            )
+
         self.state = predict_eskf(
             state=self.state,
             f_m_v=f_arr,
             omega_m_v=w_arr,
             dt=float(dt_s),
             timestamp_ns=t_ns,
-            process_noise=self.config.process_noise,
+            process_noise=current_pnoise,
         )
 
         # 3. Evaluate time-based cadence for neural models (VelocityNet, BiasNet)
@@ -379,10 +396,27 @@ class NavigationCore:
             if has_win and raw_feats is not None:
                 self._ml_telemetry["velocitynet"]["inference_executed"] += 1
                 vnet_out = self.model_runner.run_velocitynet(raw_feats, win_ts)
+
+                # Causal pre-outage speed bias compensation:
+                # If entering or operating in DR_ONLY, subtract learned median bias from prediction
+                if self.mode == GNSSMode.DR_ONLY and self._vnet_gnss_diffs:
+                    bias_corr = float(np.median(self._vnet_gnss_diffs))
+                    corrected_spd = max(0.0, float(vnet_out.speed_mps) - bias_corr)
+                    vnet_out = VelocityNetOutput(
+                        speed_mps=corrected_spd,
+                        log_variance=vnet_out.log_variance,
+                        variance=vnet_out.variance,
+                        valid=vnet_out.valid,
+                        reason=vnet_out.reason,
+                    )
+
                 self.state, vnet_diag = self.vnet_model.update(self.state, vnet_out, timestamp_ns=t_ns)
                 self.scheduler.mark_velocitynet_executed(t_ns)
                 if vnet_diag.applied:
                     self._ml_telemetry["velocitynet"]["update_accepted"] += 1
+                    # Track difference against trusted GNSS speed during GNSS-aided operation
+                    if self.mode == GNSSMode.GNSS_AIDED and self._last_gnss_speed is not None:
+                        self._vnet_gnss_diffs.append(float(vnet_diag.z_speed - self._last_gnss_speed))
                 else:
                     self._ml_telemetry["velocitynet"]["update_rejected"] += 1
                     rej = vnet_diag.reason or "UNKNOWN"
@@ -430,7 +464,8 @@ class NavigationCore:
         is_stationary = False
         if self.config.zupt_enabled:
             self._zupt_telemetry["standstill_evaluations"] += 1
-            zupt_diag = self.zupt_detector.push(omega_v=w_arr, f_v=f_arr)
+            speed_est = float(np.linalg.norm(self.state.nominal.velocity_enu))
+            zupt_diag = self.zupt_detector.push(omega_v=w_arr, f_v=f_arr, speed_mps=speed_est)
             is_stationary = zupt_diag.is_stationary
             if is_stationary:
                 self._zupt_telemetry["standstill_confirmed"] += 1
